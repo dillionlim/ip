@@ -3,6 +3,9 @@
 /out/
 /*.iml
 
+# Compiled Java bytecode (e.g. when compiling with javac outside the IDE)
+*.class
+
 # Gradle build files
 /.gradle/
 /build/
