@@ -33,10 +33,12 @@ stream closes instead.
 
 ## Coverage
 
-These cases cover Level-0 through Level-4 and the `A-Classes` and `A-Inheritance`
-extensions. Error handling is deliberately not covered yet: `Level-5` is the
-increment that defines what Tally should say for bad input, and cases for it
-belong here once that behaviour exists.
+These cases cover Level-0 through Level-6, and the `A-Classes`, `A-Inheritance`,
+`A-Exceptions` and `A-Collections` extensions.
+
+Cases that exercise a rejected command also issue a good command afterwards and
+list the tally at the end. Checking only the error message would miss a bad
+command that printed the right complaint but still altered the stored tasks.
 
 ---
 
@@ -370,7 +372,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-I don't know that one. I understand: todo, deadline, event, list, mark, unmark, bye.
+I don't know that one. I understand: todo, deadline, event, list, mark, unmark, delete, bye.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -541,6 +543,181 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[T][X] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-12 - Delete a task
+
+**Aim:** `delete` removes the named task, reports which one went, and the remaining tasks are renumbered so the positions stay contiguous. Deleting the middle of three proves later tasks shift up rather than leaving a gap.
+
+**Input**
+```text
+todo read book
+todo return book
+todo borrow book
+delete 2
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] return book
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] borrow book
+Now you have 3 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Noted. I've removed this task:
+[T][ ] return book
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] read book
+2.[T][ ] borrow book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-13 - Deleting the last task empties the tally
+
+**Aim:** Removing the only task leaves the tally empty rather than in a broken state, and the count reads "0 tasks". Listing afterwards falls back to the empty-tally message, and marking into the empty tally is refused.
+
+**Input**
+```text
+todo read book
+delete 1
+list
+mark 1
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Noted. I've removed this task:
+[T][ ] read book
+Now you have 0 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+There is no task 1 on your tally. Type list to see what is there.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-14 - A bad delete number is rejected
+
+**Aim:** `delete` with no number and with a number past the end are refused, and the error names `delete` rather than another command. A good delete afterwards shows the tally was untouched by the rejected attempts.
+
+**Input**
+```text
+todo read book
+delete
+delete 5
+delete 1
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+delete needs the number of a task. Try: delete 2
+____________________________________________________________
+
+____________________________________________________________
+There is no task 5 on your tally. Type list to see what is there.
+____________________________________________________________
+
+____________________________________________________________
+Noted. I've removed this task:
+[T][ ] read book
+Now you have 0 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
 ____________________________________________________________
 
 ____________________________________________________________

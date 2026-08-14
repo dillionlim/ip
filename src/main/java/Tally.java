@@ -84,6 +84,11 @@ public class Tally {
             task.markAsNotDone();
             say("OK, I've marked this task as not done yet:", task.toString());
         }
+        case "delete" -> {
+            Task task = findTask(tasks, arguments, "delete");
+            tasks.remove(task);
+            say("Noted. I've removed this task:", task.toString(), countSentence(tasks));
+        }
         case "todo" -> {
             if (arguments.isEmpty()) {
                 throw new TallyException("A todo needs a description. Try: todo read book");
@@ -109,7 +114,8 @@ public class Tally {
             addTask(tasks, new Event(fields[0].trim(), fields[1].trim(), fields[2].trim()));
         }
         default -> throw new TallyException(
-                "I don't know that one. I understand: todo, deadline, event, list, mark, unmark, bye.");
+                "I don't know that one. I understand:"
+                        + " todo, deadline, event, list, mark, unmark, delete, bye.");
         }
     }
 
@@ -151,11 +157,19 @@ public class Tally {
      */
     private static void addTask(List<Task> tasks, Task task) {
         tasks.add(task);
+        say("Got it. I've added this task:", task.toString(), countSentence(tasks));
+    }
+
+    /**
+     * Returns the sentence reporting how many tasks the tally now holds.
+     *
+     * @param tasks the tally to count.
+     * @return for example "Now you have 3 tasks in the list."
+     */
+    private static String countSentence(List<Task> tasks) {
         // AI identified grammatical error, manual fix.
-        say("Got it. I've added this task:",
-                task.toString(),
-                String.format("Now you have %d %s in the list.",
-                        tasks.size(), tasks.size() == 1 ? "task" : "tasks"));
+        return String.format("Now you have %d %s in the list.",
+                tasks.size(), tasks.size() == 1 ? "task" : "tasks");
     }
 
     /**
