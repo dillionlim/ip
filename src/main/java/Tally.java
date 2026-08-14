@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /** Tally is a command-line chatbot that helps the user keep a tally of their tasks. */
@@ -21,25 +23,49 @@ public class Tally {
                            |___/""";
 
     /**
-     * Runs the chatbot by greeting the user, echoing each command entered, and
-     * saying goodbye once the user types "bye".
+     * Runs the chatbot by greeting the user, storing each task entered, listing
+     * them on request, and saying goodbye once the user types "bye".
      *
      * @param args command-line arguments, which Tally does not use for now.
      */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        List<String> tasks = new ArrayList<>();
         say(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
 
         while (scanner.hasNextLine()) {
             String command = scanner.nextLine();
             if (command.equals("bye")) {
                 break;
+            } else if (command.equals("list")) {
+                if (tasks.isEmpty()) {
+                    say("Nothing on your tally yet.");
+                } else {
+                    say(formatTasks(tasks));
+                }
+            } else {
+                tasks.add(command);
+                say("added: " + command);
             }
-            say(command);
         }
 
         say("Bye. Hope to see you again soon!");
         scanner.close();
+    }
+
+    /**
+     * Returns the given tasks as display lines, each prefixed with its position
+     * in the list counting from 1.
+     *
+     * @param tasks the tasks to format, in the order they were added.
+     * @return one line per task.
+     */
+    private static String[] formatTasks(List<String> tasks) {
+        String[] lines = new String[tasks.size()];
+        for (int i = 0; i < tasks.size(); i++) {
+            lines[i] = String.format("%d. %s", i + 1, tasks.get(i));
+        }
+        return lines;
     }
 
     /**
