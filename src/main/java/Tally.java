@@ -51,14 +51,34 @@ public class Tally {
                 Task task = tasks.get(parseTaskNumber(command, "unmark "));
                 task.markAsNotDone();
                 say("OK, I've marked this task as not done yet:", task.toString());
+            } else if (command.startsWith("todo ")) {
+                addTask(tasks, new Todo(command.substring("todo ".length()).trim()));
+            } else if (command.startsWith("deadline ")) {
+                String[] parts = command.substring("deadline ".length()).split(" /by ", 2);
+                addTask(tasks, new Deadline(parts[0].trim(), parts[1].trim()));
+            } else if (command.startsWith("event ")) {
+                String[] parts = command.substring("event ".length()).split(" /from | /to ", 3);
+                addTask(tasks, new Event(parts[0].trim(), parts[1].trim(), parts[2].trim()));
             } else {
-                tasks.add(new Todo(command));
-                say("added: " + command);
+                addTask(tasks, new Todo(command));
             }
         }
 
         say("Bye. Hope to see you again soon!");
         scanner.close();
+    }
+
+    /**
+     * Adds a task to the tally and tells the user what was recorded.
+     *
+     * @param tasks the tally to add to.
+     * @param task the task to add.
+     */
+    private static void addTask(List<Task> tasks, Task task) {
+        tasks.add(task);
+        say("Got it. I've added this task:",
+                task.toString(),
+                String.format("Now you have %d tasks in the list.", tasks.size()));
     }
 
     /**
