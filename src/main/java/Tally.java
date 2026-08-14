@@ -30,7 +30,7 @@ public class Tally {
      */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        List<String> tasks = new ArrayList<>();
+        List<Task> tasks = new ArrayList<>();
         say(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
 
         while (scanner.hasNextLine()) {
@@ -44,7 +44,7 @@ public class Tally {
                     say(formatTasks(tasks));
                 }
             } else {
-                tasks.add(command);
+                tasks.add(new Task(command));
                 say("added: " + command);
             }
         }
@@ -54,16 +54,17 @@ public class Tally {
     }
 
     /**
-     * Returns the given tasks as display lines, each prefixed with its position
-     * in the list counting from 1.
+     * Returns the lines Tally prints in reply to "list": a heading, then one line
+     * per task, each prefixed with its position counting from 1.
      *
      * @param tasks the tasks to format, in the order they were added.
-     * @return one line per task.
+     * @return the lines of the listing.
      */
-    private static String[] formatTasks(List<String> tasks) {
-        String[] lines = new String[tasks.size()];
+    private static String[] formatTasks(List<Task> tasks) {
+        String[] lines = new String[tasks.size() + 1];
+        lines[0] = "Here are the tasks in your list:";
         for (int i = 0; i < tasks.size(); i++) {
-            lines[i] = String.format("%d. %s", i + 1, tasks.get(i));
+            lines[i + 1] = String.format("%d.%s", i + 1, tasks.get(i));
         }
         return lines;
     }
