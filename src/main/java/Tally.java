@@ -74,12 +74,12 @@ public class Tally {
             }
         }
         case "mark" -> {
-            Task task = tasks.get(Integer.parseInt(arguments) - 1);
+            Task task = findTask(tasks, arguments, "mark");
             task.markAsDone();
             say("Nice! I've marked this task as done:", task.toString());
         }
         case "unmark" -> {
-            Task task = tasks.get(Integer.parseInt(arguments) - 1);
+            Task task = findTask(tasks, arguments, "unmark");
             task.markAsNotDone();
             say("OK, I've marked this task as not done yet:", task.toString());
         }
@@ -91,15 +91,55 @@ public class Tally {
         }
         case "deadline" -> {
             String[] fields = arguments.split(" /by ", 2);
+            if (fields.length < 2 || fields[0].isBlank() || fields[1].isBlank()) {
+                throw new TallyException(
+                        "A deadline needs a description and a /by time."
+                                + " Try: deadline return book /by Sunday");
+            }
             addTask(tasks, new Deadline(fields[0].trim(), fields[1].trim()));
         }
         case "event" -> {
             String[] fields = arguments.split(" /from | /to ", 3);
+            if (fields.length < 3 || fields[0].isBlank() || fields[1].isBlank() || fields[2].isBlank()) {
+                throw new TallyException(
+                        "An event needs a description, a /from time and a /to time."
+                                + " Try: event project meeting /from Mon 2pm /to 4pm");
+            }
             addTask(tasks, new Event(fields[0].trim(), fields[1].trim(), fields[2].trim()));
         }
         default -> throw new TallyException(
                 "I don't know that one. I understand: todo, deadline, event, list, mark, unmark, bye.");
         }
+    }
+
+    /**
+     * Returns the task named by a command such as "mark 2".
+     *
+     * <p>The number the user types counts from 1, while the list is indexed from 0.
+     * Doing the conversion here keeps it out of every command that names a task.
+     *
+     * @param tasks the tasks currently on the tally.
+     * @param arguments what the user typed after the command word.
+     * @param keyword the command word, used to word the error.
+     * @return the task at the position given.
+     * @throws TallyException if no number was given, it is not a number, or no task
+     *     has that position.
+     */
+    private static Task findTask(List<Task> tasks, String arguments, String keyword)
+            throws TallyException {
+        int position;
+        try {
+            position = Integer.parseInt(arguments);
+        } catch (NumberFormatException exception) {
+            throw new TallyException(String.format(
+                    "%s needs the number of a task. Try: %s 2", keyword, keyword));
+        }
+        if (position < 1 || position > tasks.size()) {
+            throw new TallyException(String.format(
+                    "There is no task %d on your tally. Type list to see what is there.",
+                    position));
+        }
+        return tasks.get(position - 1);
     }
 
     /**

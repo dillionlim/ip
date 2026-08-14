@@ -427,3 +427,123 @@ ____________________________________________________________
 Bye. Hope to see you again soon!
 ____________________________________________________________
 ```
+
+---
+
+## TC-10 - A deadline or event missing its times is rejected
+
+**Aim:** `deadline` without `/by`, and `event` without `/to`, are refused rather than throwing. A good deadline afterwards confirms the rejected lines did not disturb the tally.
+
+**Input**
+```text
+deadline return book
+event project meeting /from Mon 2pm
+deadline return book /by Sunday
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+A deadline needs a description and a /by time. Try: deadline return book /by Sunday
+____________________________________________________________
+
+____________________________________________________________
+An event needs a description, a /from time and a /to time. Try: event project meeting /from Mon 2pm /to 4pm
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] return book (by: Sunday)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[D][ ] return book (by: Sunday)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-11 - A bad task number is rejected
+
+**Aim:** `mark` with no number, with text instead of a number, and with a number past the end of the list are each refused with their own explanation. The task marked in between shows the tally still works, and the final listing shows the rejected commands changed nothing.
+
+**Input**
+```text
+todo read book
+mark
+mark abc
+mark 4
+mark 1
+mark 0
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+mark needs the number of a task. Try: mark 2
+____________________________________________________________
+
+____________________________________________________________
+mark needs the number of a task. Try: mark 2
+____________________________________________________________
+
+____________________________________________________________
+There is no task 4 on your tally. Type list to see what is there.
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[T][X] read book
+____________________________________________________________
+
+____________________________________________________________
+There is no task 0 on your tally. Type list to see what is there.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
