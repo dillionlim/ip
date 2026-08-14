@@ -34,38 +34,72 @@ public class Tally {
         say(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
 
         while (scanner.hasNextLine()) {
-            String command = scanner.nextLine();
+            String command = scanner.nextLine().trim();
             if (command.equals("bye")) {
                 break;
-            } else if (command.equals("list")) {
-                if (tasks.isEmpty()) {
-                    say("Nothing on your tally yet.");
-                } else {
-                    say(formatTasks(tasks));
-                }
-            } else if (command.startsWith("mark ")) {
-                Task task = tasks.get(parseTaskNumber(command, "mark "));
-                task.markAsDone();
-                say("Nice! I've marked this task as done:", task.toString());
-            } else if (command.startsWith("unmark ")) {
-                Task task = tasks.get(parseTaskNumber(command, "unmark "));
-                task.markAsNotDone();
-                say("OK, I've marked this task as not done yet:", task.toString());
-            } else if (command.startsWith("todo ")) {
-                addTask(tasks, new Todo(command.substring("todo ".length()).trim()));
-            } else if (command.startsWith("deadline ")) {
-                String[] parts = command.substring("deadline ".length()).split(" /by ", 2);
-                addTask(tasks, new Deadline(parts[0].trim(), parts[1].trim()));
-            } else if (command.startsWith("event ")) {
-                String[] parts = command.substring("event ".length()).split(" /from | /to ", 3);
-                addTask(tasks, new Event(parts[0].trim(), parts[1].trim(), parts[2].trim()));
-            } else {
-                addTask(tasks, new Todo(command));
+            }
+            try {
+                handleCommand(command, tasks);
+            } catch (TallyException exception) {
+                say(exception.getMessage());
             }
         }
 
         say("Bye. Hope to see you again soon!");
         scanner.close();
+    }
+
+    /**
+     * Carries out one command from the user.
+     *
+     * <p>The command word decides what happens; whatever follows it is that
+     * command's arguments. Splitting the two apart is what lets Tally tell an
+     * unknown command from a known one that was given nothing to work with.
+     *
+     * @param command the line the user typed, with surrounding spaces removed.
+     * @param tasks the tally to read from and add to.
+     * @throws TallyException if Tally cannot carry out the command.
+     */
+    private static void handleCommand(String command, List<Task> tasks) throws TallyException {
+        String[] words = command.split(" ", 2);
+        String keyword = words[0];
+        String arguments = words.length > 1 ? words[1].trim() : "";
+
+        switch (keyword) {
+        case "list" -> {
+            if (tasks.isEmpty()) {
+                say("Nothing on your tally yet.");
+            } else {
+                say(formatTasks(tasks));
+            }
+        }
+        case "mark" -> {
+            Task task = tasks.get(Integer.parseInt(arguments) - 1);
+            task.markAsDone();
+            say("Nice! I've marked this task as done:", task.toString());
+        }
+        case "unmark" -> {
+            Task task = tasks.get(Integer.parseInt(arguments) - 1);
+            task.markAsNotDone();
+            say("OK, I've marked this task as not done yet:", task.toString());
+        }
+        case "todo" -> {
+            if (arguments.isEmpty()) {
+                throw new TallyException("A todo needs a description. Try: todo read book");
+            }
+            addTask(tasks, new Todo(arguments));
+        }
+        case "deadline" -> {
+            String[] fields = arguments.split(" /by ", 2);
+            addTask(tasks, new Deadline(fields[0].trim(), fields[1].trim()));
+        }
+        case "event" -> {
+            String[] fields = arguments.split(" /from | /to ", 3);
+            addTask(tasks, new Event(fields[0].trim(), fields[1].trim(), fields[2].trim()));
+        }
+        default -> throw new TallyException(
+                "I don't know that one. I understand: todo, deadline, event, list, mark, unmark, bye.");
+        }
     }
 
     /**
@@ -81,18 +115,6 @@ public class Tally {
                 task.toString(),
                 String.format("Now you have %d %s in the list.",
                         tasks.size(), tasks.size() == 1 ? "task" : "tasks"));
-    }
-
-    /**
-     * Returns the list position named by a command such as "mark 2", converted
-     * from the 1-based number the user types to a 0-based index.
-     *
-     * @param command the whole command line the user entered.
-     * @param prefix the command word and its trailing space, such as "mark ".
-     * @return the index of the task the command refers to.
-     */
-    private static int parseTaskNumber(String command, String prefix) {
-        return Integer.parseInt(command.substring(prefix.length()).trim()) - 1;
     }
 
     /**

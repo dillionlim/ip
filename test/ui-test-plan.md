@@ -344,13 +344,14 @@ ____________________________________________________________
 
 ---
 
-## TC-08 - A description with no keyword becomes a todo
+## TC-08 - An unrecognised command is rejected
 
-**Aim:** Text entered without a type keyword is recorded as a todo, since a bare description carries no date. `Level-5` may replace this with an error, at which point this case changes.
+**Aim:** Text that is not a known command is refused with an explanation rather than being stored, which is the first of the two errors Level-5 requires. Interleaving a good command afterwards shows the rejected line left no trace on the tally.
 
 **Input**
 ```text
-borrow book
+blah
+todo read book
 list
 bye
 ```
@@ -369,14 +370,57 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
+I don't know that one. I understand: todo, deadline, event, list, mark, unmark, bye.
+____________________________________________________________
+
+____________________________________________________________
 Got it. I've added this task:
-[T][ ] borrow book
+[T][ ] read book
 Now you have 1 task in the list.
 ____________________________________________________________
 
 ____________________________________________________________
 Here are the tasks in your list:
-1.[T][ ] borrow book
+1.[T][ ] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-09 - A todo with no description is rejected
+
+**Aim:** `todo` with nothing after it is refused with a message naming the fix, which is the second of the two errors Level-5 requires. The tally stays empty afterwards, proving the bad command added nothing.
+
+**Input**
+```text
+todo
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+A todo needs a description. Try: todo read book
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
 ____________________________________________________________
 
 ____________________________________________________________
