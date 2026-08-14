@@ -104,19 +104,40 @@ public class Tally {
             }
             addTask(tasks, new Deadline(fields[0].trim(), fields[1].trim()));
         }
-        case "event" -> {
-            String[] fields = arguments.split(" /from | /to ", 3);
-            if (fields.length < 3 || fields[0].isBlank() || fields[1].isBlank() || fields[2].isBlank()) {
-                throw new TallyException(
-                        "An event needs a description, a /from time and a /to time."
-                                + " Try: event project meeting /from Mon 2pm /to 4pm");
-            }
-            addTask(tasks, new Event(fields[0].trim(), fields[1].trim(), fields[2].trim()));
-        }
+        case "event" -> addTask(tasks, parseEvent(arguments));
         default -> throw new TallyException(
                 "I don't know that one. I understand:"
                         + " todo, deadline, event, list, mark, unmark, delete, bye.");
         }
+    }
+
+    /**
+     * Returns the event described by the arguments of an "event" command.
+     *
+     * <p>The arguments are split on /from first, and on /to within what follows.
+     * Splitting in that order is what makes the order of the two markers matter:
+     * an event written /to first leaves no /to in the remainder, so it is refused
+     * rather than recorded with its start and end the wrong way round.
+     *
+     * @param arguments what the user typed after the command word.
+     * @return the event described.
+     * @throws TallyException if the description, the start or the end is missing,
+     *     or if /to is written before /from.
+     */
+    private static Event parseEvent(String arguments) throws TallyException {
+        // AI found the bug, manually fixed.
+        String usage = "An event needs a description, a /from time and a /to time,"
+                + " in that order. Try: event project meeting /from Mon 2pm /to 4pm";
+        String[] descriptionAndRest = arguments.split(" /from ", 2);
+        if (descriptionAndRest.length < 2) {
+            throw new TallyException(usage);
+        }
+        String[] fromAndTo = descriptionAndRest[1].split(" /to ", 2);
+        if (fromAndTo.length < 2 || descriptionAndRest[0].isBlank()
+                || fromAndTo[0].isBlank() || fromAndTo[1].isBlank()) {
+            throw new TallyException(usage);
+        }
+        return new Event(descriptionAndRest[0].trim(), fromAndTo[0].trim(), fromAndTo[1].trim());
     }
 
     /**

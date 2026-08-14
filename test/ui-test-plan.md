@@ -463,7 +463,7 @@ A deadline needs a description and a /by time. Try: deadline return book /by Sun
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from time and a /to time. Try: event project meeting /from Mon 2pm /to 4pm
+An event needs a description, a /from time and a /to time, in that order. Try: event project meeting /from Mon 2pm /to 4pm
 ____________________________________________________________
 
 ____________________________________________________________
@@ -718,6 +718,53 @@ ____________________________________________________________
 
 ____________________________________________________________
 Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-15 - An event with /to before /from is rejected
+
+**Aim:** Writing `/to` before `/from` is refused rather than recorded with the start and end swapped. Regression test: this input previously produced `(from: 4pm to: 2pm)` silently. The correctly ordered event afterwards shows the markers still work when written the right way round.
+
+**Input**
+```text
+event meeting /to 4pm /from 2pm
+event meeting /from 2pm /to 4pm
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+An event needs a description, a /from time and a /to time, in that order. Try: event project meeting /from Mon 2pm /to 4pm
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[E][ ] meeting (from: 2pm to: 4pm)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[E][ ] meeting (from: 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________
