@@ -28,6 +28,25 @@ Unless the user says otherwise, assume that you are assisting a student working 
 
 Ensure that Java 25 is used when running the application or build tasks. This machine runs Linux with several JDKs installed under `/usr/lib/jvm`; the default `java`/`javac` on the PATH is already JDK 25. If a different version is ever active, switch with `sudo update-alternatives --config java` (and `--config javac`), or set `JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64` for a single command.
 
+## Testing
+
+After every change to code under `src/main/java/`, and before proposing a commit:
+
+1. **Update `test/ui-test-plan.md` if the change alters console behaviour.** Add a case for a new command or behaviour, update the expected output of every case that shows wording or formatting you changed, and delete cases for behaviour you removed. A change that alters no console output needs no plan change.
+2. **Run the UI tests**, via the `test-ui` skill if your harness supports skills, or directly:
+
+   ```bash
+   python3 test/run-ui-tests.py
+   ```
+
+3. **Show the user the session transcript the runner prints**, so the commands typed and the output returned are visible rather than merely summarised.
+
+Rules that make this worth doing:
+
+* Write expected output from what the increment's specification requires, not by pasting what the program currently prints. Pasting actual output turns a test into the claim that today's behaviour equals today's behaviour, which cannot fail and therefore proves nothing.
+* When a case fails, work out which side is wrong before changing anything. A failure means the code and the plan disagree; editing the plan to match broken code hides the bug instead of fixing it.
+* Never describe a failing or unrun suite as passing. If the tests were not run, say so.
+
 ## Git
 
 Do not commit or push unless explicitly asked.

@@ -1,0 +1,385 @@
+# Tally UI test plan
+
+Manual-style tests of Tally's console behaviour, run automatically.
+
+> **Attribution:** this plan was written by Claude (AI). The AI chose the test
+> cases and wrote their expected outputs, deriving them from the increment
+> specifications on the course website rather than from the program's output.
+
+## How to run
+
+```bash
+python3 test/run-ui-tests.py           # every case
+python3 test/run-ui-tests.py TC-03     # one case
+```
+
+The runner compiles `src/main/java/*.java` into `bin/`, then replays each case's
+commands through the program and compares what was printed against the expected
+output below. It prints the whole session as it goes, and stops at the first
+failure, reporting the expected output, the actual output, and a diff.
+
+## How to write a case
+
+Each case needs a `## TC-nn - Title` heading, an `**Aim:**` line, an `**Input**`
+fenced block, and an `**Expected output**` fenced block. Input is one command per
+line, exactly as the user would type it. Expected output is everything the
+program prints, including the greeting banner.
+
+Two things are ignored when comparing, so they cannot cause a false failure:
+trailing spaces on a line, and blank lines at the very end of the output.
+
+A case whose input does not end with `bye` tests what happens when the input
+stream closes instead.
+
+## Coverage
+
+These cases cover Level-0 through Level-4 and the `A-Classes` and `A-Inheritance`
+extensions. Error handling is deliberately not covered yet: `Level-5` is the
+increment that defines what Tally should say for bad input, and cases for it
+belong here once that behaviour exists.
+
+---
+
+## TC-01 - Greet and exit
+
+**Aim:** Tally greets the user on startup and says goodbye when told `bye`, which is Level-0's requirement.
+
+**Input**
+```text
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-02 - Exit when the input stream closes
+
+**Aim:** Closing the input without typing `bye` ends the conversation cleanly rather than throwing, so piping a file into Tally does not crash it.
+
+**Input**
+```text
+todo read book
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-03 - List an empty tally
+
+**Aim:** Asking to list before adding anything says so in words, rather than printing an empty block that reads as a fault.
+
+**Input**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-04 - Add each task type and list them
+
+**Aim:** `todo`, `deadline` and `event` each build the right task type, and the listing tags them `[T]`, `[D]` and `[E]` with their times, per Level-4.
+
+**Input**
+```text
+todo read book
+deadline return book /by June 6th
+event project meeting /from Aug 6th 2pm /to 4pm
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] return book (by: June 6th)
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+Now you have 3 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] read book
+2.[D][ ] return book (by: June 6th)
+3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-05 - Mark and unmark a task
+
+**Aim:** `mark` fills a task's checkbox and `unmark` clears it again, and the change survives to the next listing, which is Level-3's requirement.
+
+**Input**
+```text
+todo read book
+todo return book
+mark 2
+list
+unmark 2
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] return book
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[T][X] return book
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] read book
+2.[T][X] return book
+____________________________________________________________
+
+____________________________________________________________
+OK, I've marked this task as not done yet:
+[T][ ] return book
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] read book
+2.[T][ ] return book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-06 - Task count wording
+
+**Aim:** The count after adding reads "1 task" for one task and "2 tasks" for more, so the confirmation is grammatical at every size.
+
+**Input**
+```text
+todo first
+todo second
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] first
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] second
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-07 - Times are kept as typed
+
+**Aim:** Level-4 states that dates and times need not be parsed yet, so whatever the user types after `/by` is stored and echoed back unchanged, punctuation included.
+
+**Input**
+```text
+deadline do homework /by no idea :-p
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] do homework (by: no idea :-p)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-08 - A description with no keyword becomes a todo
+
+**Aim:** Text entered without a type keyword is recorded as a todo, since a bare description carries no date. `Level-5` may replace this with an error, at which point this case changes.
+
+**Input**
+```text
+borrow book
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] borrow book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] borrow book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
