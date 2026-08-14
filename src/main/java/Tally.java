@@ -76,9 +76,11 @@ public class Tally {
      */
     private static void addTask(List<Task> tasks, Task task) {
         tasks.add(task);
+        // AI identified grammatical error, manual fix.
         say("Got it. I've added this task:",
                 task.toString(),
-                String.format("Now you have %d tasks in the list.", tasks.size()));
+                String.format("Now you have %d %s in the list.",
+                        tasks.size(), tasks.size() == 1 ? "task" : "tasks"));
     }
 
     /**
@@ -104,6 +106,7 @@ public class Tally {
         String[] lines = new String[tasks.size() + 1];
         lines[0] = "Here are the tasks in your list:";
         for (int i = 0; i < tasks.size(); i++) {
+            // AI suggested String.format instead of concatenating strings manually.
             lines[i + 1] = String.format("%d.%s", i + 1, tasks.get(i));
         }
         return lines;
