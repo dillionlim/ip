@@ -65,6 +65,7 @@ public class Tally {
         String keyword = words[0];
         String arguments = words.length > 1 ? words[1].trim() : "";
 
+        // AI suggested switching to a switch statement instead of the if-else chain.
         switch (keyword) {
         case "list" -> {
             if (tasks.isEmpty()) {
