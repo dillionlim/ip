@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 /** Tally is a command-line chatbot that helps the user keep a tally of their tasks. */
 public class Tally {
     private static final String NAME = "Tally";
@@ -19,19 +21,30 @@ public class Tally {
                            |___/""";
 
     /**
-     * Runs the chatbot by greeting the user, then immediately says goodbye (for now).
+     * Runs the chatbot by greeting the user, echoing each command entered, and
+     * saying goodbye once the user types "bye".
      *
      * @param args command-line arguments, which Tally does not use for now.
      */
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
         say(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
+
+        while (scanner.hasNextLine()) {
+            String command = scanner.nextLine();
+            if (command.equals("bye")) {
+                break;
+            }
+            say(command);
+        }
+
         say("Bye. Hope to see you again soon!");
-        System.out.println(RULE);
+        scanner.close();
     }
 
     /**
-     * Prints one of the chatbot's messages, preceded by a horizontal rule that
-     * separates it from whatever came before it.
+     * Prints one of the chatbot's messages, fenced between horizontal rules and
+     * followed by a blank line that separates it from the user's next command.
      *
      * @param lines the lines of the message, printed in order.
      */
@@ -40,5 +53,7 @@ public class Tally {
         for (String line : lines) {
             System.out.println(line);
         }
+        System.out.println(RULE);
+        System.out.println();
     }
 }
