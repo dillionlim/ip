@@ -47,6 +47,10 @@ public class Tally {
                 Task task = tasks.get(parseTaskNumber(command, "mark "));
                 task.markAsDone();
                 say("Nice! I've marked this task as done:", task.toString());
+            } else if (command.startsWith("unmark ")) {
+                Task task = tasks.get(parseTaskNumber(command, "unmark "));
+                task.markAsNotDone();
+                say("OK, I've marked this task as not done yet:", task.toString());
             } else {
                 tasks.add(new Task(command));
                 say("added: " + command);

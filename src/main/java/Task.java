@@ -27,6 +27,11 @@ public class Task {
         this.isDone = true;
     }
 
+    /** Records that this task is not done after all. */
+    public void markAsNotDone() {
+        this.isDone = false;
+    }
+
     /**
      * Returns this task as the user sees it: a checkbox followed by the description.
      *
