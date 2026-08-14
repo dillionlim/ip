@@ -43,6 +43,10 @@ public class Tally {
                 } else {
                     say(formatTasks(tasks));
                 }
+            } else if (command.startsWith("mark ")) {
+                Task task = tasks.get(parseTaskNumber(command, "mark "));
+                task.markAsDone();
+                say("Nice! I've marked this task as done:", task.toString());
             } else {
                 tasks.add(new Task(command));
                 say("added: " + command);
@@ -51,6 +55,18 @@ public class Tally {
 
         say("Bye. Hope to see you again soon!");
         scanner.close();
+    }
+
+    /**
+     * Returns the list position named by a command such as "mark 2", converted
+     * from the 1-based number the user types to a 0-based index.
+     *
+     * @param command the whole command line the user entered.
+     * @param prefix the command word and its trailing space, such as "mark ".
+     * @return the index of the task the command refers to.
+     */
+    private static int parseTaskNumber(String command, String prefix) {
+        return Integer.parseInt(command.substring(prefix.length()).trim()) - 1;
     }
 
     /**

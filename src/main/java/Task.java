@@ -22,6 +22,11 @@ public class Task {
         return isDone ? "X" : " ";
     }
 
+    /** Records that this task has been done. */
+    public void markAsDone() {
+        this.isDone = true;
+    }
+
     /**
      * Returns this task as the user sees it: a checkbox followed by the description.
      *
