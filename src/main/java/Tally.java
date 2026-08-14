@@ -33,13 +33,11 @@ public class Tally {
         List<Task> tasks = new ArrayList<>();
         say(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
 
-        while (scanner.hasNextLine()) {
-            String command = scanner.nextLine().trim();
-            if (command.equals("bye")) {
-                break;
-            }
+        boolean isTalking = true;
+        while (isTalking && scanner.hasNextLine()) {
+            String line = scanner.nextLine().trim();
             try {
-                handleCommand(command, tasks);
+                isTalking = handleCommand(line, tasks);
             } catch (TallyException exception) {
                 say(exception.getMessage());
             }
@@ -52,50 +50,54 @@ public class Tally {
     /**
      * Carries out one command from the user.
      *
-     * <p>The command word decides what happens; whatever follows it is that
-     * command's arguments. Splitting the two apart is what lets Tally tell an
-     * unknown command from a known one that was given nothing to work with.
+     * <p>The first word names the command; whatever follows it is that command's
+     * arguments. Splitting the two apart is what lets Tally tell an unknown
+     * command from a known one that was given nothing to work with.
      *
-     * @param command the line the user typed, with surrounding spaces removed.
+     * @param line the line the user typed, with surrounding spaces removed.
      * @param tasks the tally to read from and add to.
+     * @return whether the conversation should carry on afterwards.
      * @throws TallyException if Tally cannot carry out the command.
      */
-    private static void handleCommand(String command, List<Task> tasks) throws TallyException {
-        String[] words = command.split(" ", 2);
-        String keyword = words[0];
+    private static boolean handleCommand(String line, List<Task> tasks) throws TallyException {
+        String[] words = line.split(" ", 2);
+        Command command = Command.parse(words[0]);
         String arguments = words.length > 1 ? words[1].trim() : "";
 
         // AI suggested switching to a switch statement instead of the if-else chain.
-        switch (keyword) {
-        case "list" -> {
+        switch (command) {
+        case BYE -> {
+            return false;
+        }
+        case LIST -> {
             if (tasks.isEmpty()) {
                 say("Nothing on your tally yet.");
             } else {
                 say(formatTasks(tasks));
             }
         }
-        case "mark" -> {
-            Task task = findTask(tasks, arguments, "mark");
+        case MARK -> {
+            Task task = findTask(tasks, arguments, command);
             task.markAsDone();
             say("Nice! I've marked this task as done:", task.toString());
         }
-        case "unmark" -> {
-            Task task = findTask(tasks, arguments, "unmark");
+        case UNMARK -> {
+            Task task = findTask(tasks, arguments, command);
             task.markAsNotDone();
             say("OK, I've marked this task as not done yet:", task.toString());
         }
-        case "delete" -> {
-            Task task = findTask(tasks, arguments, "delete");
+        case DELETE -> {
+            Task task = findTask(tasks, arguments, command);
             tasks.remove(task);
             say("Noted. I've removed this task:", task.toString(), countSentence(tasks));
         }
-        case "todo" -> {
+        case TODO -> {
             if (arguments.isEmpty()) {
                 throw new TallyException("A todo needs a description. Try: todo read book");
             }
             addTask(tasks, new Todo(arguments));
         }
-        case "deadline" -> {
+        case DEADLINE -> {
             String[] fields = arguments.split(" /by ", 2);
             if (fields.length < 2 || fields[0].isBlank() || fields[1].isBlank()) {
                 throw new TallyException(
@@ -104,11 +106,9 @@ public class Tally {
             }
             addTask(tasks, new Deadline(fields[0].trim(), fields[1].trim()));
         }
-        case "event" -> addTask(tasks, parseEvent(arguments));
-        default -> throw new TallyException(
-                "I don't know that one. I understand:"
-                        + " todo, deadline, event, list, mark, unmark, delete, bye.");
+        case EVENT -> addTask(tasks, parseEvent(arguments));
         }
+        return true;
     }
 
     /**
@@ -148,19 +148,20 @@ public class Tally {
      *
      * @param tasks the tasks currently on the tally.
      * @param arguments what the user typed after the command word.
-     * @param keyword the command word, used to word the error.
+     * @param command the command that named the task, used to word the error.
      * @return the task at the position given.
      * @throws TallyException if no number was given, it is not a number, or no task
      *     has that position.
      */
-    private static Task findTask(List<Task> tasks, String arguments, String keyword)
+    private static Task findTask(List<Task> tasks, String arguments, Command command)
             throws TallyException {
         int position;
         try {
             position = Integer.parseInt(arguments);
         } catch (NumberFormatException exception) {
             throw new TallyException(String.format(
-                    "%s needs the number of a task. Try: %s 2", keyword, keyword));
+                    "%s needs the number of a task. Try: %s 2",
+                    command.getKeyword(), command.getKeyword()));
         }
         if (position < 1 || position > tasks.size()) {
             throw new TallyException(String.format(
