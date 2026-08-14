@@ -52,7 +52,7 @@ public class Tally {
                 task.markAsNotDone();
                 say("OK, I've marked this task as not done yet:", task.toString());
             } else {
-                tasks.add(new Task(command));
+                tasks.add(new Todo(command));
                 say("added: " + command);
             }
         }
