@@ -31,6 +31,10 @@ trailing spaces on a line, and blank lines at the very end of the output.
 A case whose input does not end with `bye` tests what happens when the input
 stream closes instead.
 
+A case may add an optional `**Given the data file**` block before the input, to
+write that content into the data file before the run. That is how a damaged file
+is tested.
+
 A case may add an optional `**Then restart and type**` block between the input
 and the expected output. The runner then runs the program a second time against
 the same data file, and the expected output covers both runs one after the
@@ -925,6 +929,109 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[T][ ] return book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-18 - A damaged data file is reported, not obeyed
+
+**Aim:** A line that is not in the saved format makes Tally say which line is wrong and start with an empty tally, rather than throwing or silently loading half the file. Level-7's stretch goal. The good first line is deliberately not kept, so the user is never left working on a tally that is quietly incomplete.
+
+**Given the data file**
+```text
+T | 1 | read book
+this line is nonsense
+D | 0 | return book | June 6th
+```
+
+**Input**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Line 2 of tally.txt is not in a format I recognise, so I am starting with an empty tally. Fix or delete that file to keep what it holds.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-19 - A saved tally is read back and can be worked on
+
+**Aim:** A well-formed data file written by an earlier run is loaded in full, with each type and its done state restored, and the loaded tasks can then be numbered and marked like any other. This is the read half of Level-7, tested without relying on Tally having written the file itself.
+
+**Given the data file**
+```text
+T | 1 | read book
+D | 0 | return book | June 6th
+E | 0 | project meeting | Aug 6th 2pm | 4pm
+```
+
+**Input**
+```text
+list
+mark 2
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: June 6th)
+3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[D][X] return book (by: June 6th)
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][X] return book (by: June 6th)
+3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________

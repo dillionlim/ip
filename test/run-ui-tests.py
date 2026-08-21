@@ -35,9 +35,10 @@ TIMEOUT_SECONDS = 20
 
 HEADING = re.compile(r"^##\s+(TC-\d+)\s*[-–—:]\s*(.+?)\s*$")
 AIM = re.compile(r"^\*\*Aim:?\*\*:?\s*(.*)$")
-SECTION = re.compile(r"^\*\*(Input|Then restart and type|Expected output):?\*\*\s*$")
-SECTION_KEY = {"Input": "input", "Then restart and type": "restart",
-               "Expected output": "expected"}
+SECTION = re.compile(r"^\*\*(Given the data file|Input|Then restart and type"
+                     r"|Expected output):?\*\*\s*$")
+SECTION_KEY = {"Given the data file": "seed", "Input": "input",
+               "Then restart and type": "restart", "Expected output": "expected"}
 
 
 def read_fenced_block(lines, index):
@@ -65,7 +66,8 @@ def parse_plan(text):
         heading = HEADING.match(line)
         if heading:
             current = {"id": heading.group(1), "title": heading.group(2),
-                       "aim": "", "input": None, "restart": None, "expected": None}
+                       "aim": "", "seed": None, "input": None,
+                       "restart": None, "expected": None}
             cases.append(current)
             index += 1
             continue
@@ -133,6 +135,9 @@ def run_case(case, data_file):
     """
     if data_file.exists():
         data_file.unlink()
+    if case["seed"] is not None:
+        data_file.parent.mkdir(parents=True, exist_ok=True)
+        data_file.write_text(case["seed"] + "\n", encoding="utf-8")
     output = invoke(case["input"], data_file)
     if case["restart"] is not None:
         output += invoke(case["restart"], data_file)
@@ -168,6 +173,9 @@ def main():
     for number, case in enumerate(cases, start=1):
         print(f"{'-' * 70}\n[{number}/{len(cases)}] {case['id']} - {case['title']}")
         print(f"Aim: {case['aim']}\n")
+        if case["seed"] is not None:
+            print("--- Data file before the run ---")
+            print(case["seed"])
         print("--- Typed by the user ---")
         print(case["input"] if case["input"] else "(nothing; input closes immediately)")
         if case["restart"] is not None:

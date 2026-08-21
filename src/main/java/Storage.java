@@ -50,7 +50,7 @@ public class Storage {
         try {
             lines = Files.readAllLines(file);
         } catch (IOException exception) {
-            throw new TallyException("I could not read " + file
+            throw new TallyException("I could not read " + file.getFileName()
                     + ", so I am starting with an empty tally.");
         }
 
@@ -64,7 +64,7 @@ public class Storage {
                 throw new TallyException(String.format(
                         "Line %d of %s is not in a format I recognise, so I am starting"
                                 + " with an empty tally. Fix or delete that file to keep"
-                                + " what it holds.", i + 1, file));
+                                + " what it holds.", i + 1, file.getFileName()));
             }
             tasks.add(task);
         }
@@ -92,7 +92,7 @@ public class Storage {
             }
             Files.write(file, lines);
         } catch (IOException exception) {
-            throw new TallyException("I could not save your tally to " + file + ".");
+            throw new TallyException("I could not save your tally to " + file.getFileName() + ".");
         }
     }
 
