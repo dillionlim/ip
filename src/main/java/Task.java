@@ -41,4 +41,16 @@ public class Task {
     public String toString() {
         return String.format("[%s] %s", getStatusIcon(), description);
     }
+
+    /**
+     * Returns the part of this task's data-file line that every task shares.
+     *
+     * <p>Subclasses prefix their type letter and append whatever times they carry,
+     * mirroring the way toString is built up.
+     *
+     * @return for example "1 | read book".
+     */
+    public String toSaveFormat() {
+        return String.format("%d | %s", isDone ? 1 : 0, description);
+    }
 }

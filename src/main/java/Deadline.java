@@ -22,4 +22,14 @@ public class Deadline extends Task {
     public String toString() {
         return String.format("[D]%s (by: %s)", super.toString(), by);
     }
+
+    /**
+     * Returns the line standing for this deadline in the data file.
+     *
+     * @return for example "D | 0 | return book | June 6th".
+     */
+    @Override
+    public String toSaveFormat() {
+        return "D | " + super.toSaveFormat() + " | " + by;
+    }
 }

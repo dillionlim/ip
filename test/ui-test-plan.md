@@ -31,9 +31,17 @@ trailing spaces on a line, and blank lines at the very end of the output.
 A case whose input does not end with `bye` tests what happens when the input
 stream closes instead.
 
+A case may add an optional `**Then restart and type**` block between the input
+and the expected output. The runner then runs the program a second time against
+the same data file, and the expected output covers both runs one after the
+other. That is how the saved tally is checked.
+
+Every case gets a data file of its own, deleted before the case runs, so no case
+can inherit tasks another one saved.
+
 ## Coverage
 
-These cases cover Level-0 through Level-6, and the `A-Classes`, `A-Inheritance`,
+These cases cover Level-0 through Level-7, and the `A-Classes`, `A-Inheritance`,
 `A-Exceptions` and `A-Collections` extensions.
 
 Cases that exercise a rejected command also issue a good command afterwards and
@@ -765,6 +773,158 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[E][ ] meeting (from: 2pm to: 4pm)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-16 - The tally survives a restart
+
+**Aim:** Tasks and their done state are written to disk as they change and read back when Tally next starts, which is Level-7's requirement. Marking before the restart shows the checkbox state is saved too, not just the descriptions.
+
+**Input**
+```text
+todo read book
+deadline return book /by June 6th
+mark 1
+bye
+```
+
+**Then restart and type**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] return book (by: June 6th)
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[T][X] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: June 6th)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-17 - A deletion survives a restart
+
+**Aim:** The file is rewritten when a task is removed, not only when one is added, so a deleted task does not come back on the next start.
+
+**Input**
+```text
+todo read book
+todo return book
+delete 1
+bye
+```
+
+**Then restart and type**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] return book
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Noted. I've removed this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] return book
 ____________________________________________________________
 
 ____________________________________________________________

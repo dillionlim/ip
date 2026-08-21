@@ -25,4 +25,14 @@ public class Event extends Task {
     public String toString() {
         return String.format("[E]%s (from: %s to: %s)", super.toString(), from, to);
     }
+
+    /**
+     * Returns the line standing for this event in the data file.
+     *
+     * @return for example "E | 0 | project meeting | Mon 2pm | 4pm".
+     */
+    @Override
+    public String toSaveFormat() {
+        return "E | " + super.toSaveFormat() + " | " + from + " | " + to;
+    }
 }

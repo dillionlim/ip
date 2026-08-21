@@ -1,0 +1,128 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Keeps the tally on disk: reads it back when Tally starts, and writes it out
+ * again whenever it changes.
+ *
+ * <p>Each task occupies one line, its fields separated by " | ", with the type
+ * letter first and the done flag second:
+ *
+ * <pre>
+ * T | 1 | read book
+ * D | 0 | return book | June 6th
+ * E | 0 | project meeting | Aug 6th 2pm | 4pm
+ * </pre>
+ *
+ * <p>A description containing " | " would be read back as extra fields and
+ * reported as damage. Nothing escapes the separator, because the point of the
+ * format is that a person can read and correct the file by hand.
+ */
+public class Storage {
+    private final Path file;
+
+    /**
+     * Creates storage backed by the given file. The file need not exist yet.
+     *
+     * @param file where the tally is kept.
+     */
+    public Storage(Path file) {
+        this.file = file;
+    }
+
+    /**
+     * Returns the tasks recorded in the file, or no tasks if it does not exist yet.
+     *
+     * @return the tasks, in the order they were written.
+     * @throws TallyException if the file cannot be read, or holds a line that is not
+     *     in the expected format.
+     */
+    public List<Task> load() throws TallyException {
+        List<Task> tasks = new ArrayList<>();
+        if (!Files.exists(file)) {
+            return tasks;
+        }
+
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(file);
+        } catch (IOException exception) {
+            throw new TallyException("I could not read " + file
+                    + ", so I am starting with an empty tally.");
+        }
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            Task task = parseTask(line);
+            if (task == null) {
+                throw new TallyException(String.format(
+                        "Line %d of %s is not in a format I recognise, so I am starting"
+                                + " with an empty tally. Fix or delete that file to keep"
+                                + " what it holds.", i + 1, file));
+            }
+            tasks.add(task);
+        }
+        return tasks;
+    }
+
+    /**
+     * Writes the given tasks to the file, replacing whatever it held before.
+     *
+     * <p>Any missing parent directories are created first, so a fresh checkout
+     * needs no setup.
+     *
+     * @param tasks the tally to record.
+     * @throws TallyException if the file cannot be written.
+     */
+    public void save(List<Task> tasks) throws TallyException {
+        try {
+            Path parent = file.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            List<String> lines = new ArrayList<>();
+            for (Task task : tasks) {
+                lines.add(task.toSaveFormat());
+            }
+            Files.write(file, lines);
+        } catch (IOException exception) {
+            throw new TallyException("I could not save your tally to " + file + ".");
+        }
+    }
+
+    /**
+     * Returns the task a line of the data file stands for.
+     *
+     * <p>Reading is a factory rather than a method on Task, because which subclass
+     * to build is only known once the type letter has been read.
+     *
+     * @param line one line of the data file, with surrounding spaces removed.
+     * @return the task described, or null if the line is not in the expected format.
+     */
+    private static Task parseTask(String line) {
+        String[] fields = line.split(" \\| ");
+        boolean isWellFormed = fields.length >= 3
+                && (fields[1].equals("0") || fields[1].equals("1"));
+        if (!isWellFormed) {
+            return null;
+        }
+
+        Task task = switch (fields[0]) {
+        case "T" -> fields.length == 3 ? new Todo(fields[2]) : null;
+        case "D" -> fields.length == 4 ? new Deadline(fields[2], fields[3]) : null;
+        case "E" -> fields.length == 5 ? new Event(fields[2], fields[3], fields[4]) : null;
+        default -> null;
+        };
+
+        if (task != null && fields[1].equals("1")) {
+            task.markAsDone();
+        }
+        return task;
+    }
+}

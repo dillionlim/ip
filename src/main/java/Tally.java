@@ -1,3 +1,5 @@
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -22,22 +24,40 @@ public class Tally {
               |_|\\__,_|_|_|\\__, |
                            |___/""";
 
+    /** Where the tally is kept, relative to the project root. */
+    private static final Path DATA_FILE = Paths.get("data", "tally.txt");
+
     /**
-     * Runs the chatbot by greeting the user, storing each task entered, listing
-     * them on request, and saying goodbye once the user types "bye".
+     * Runs the chatbot by reading back the saved tally, greeting the user, carrying
+     * out each command entered, and saying goodbye once the user types "bye".
      *
-     * @param args command-line arguments, which Tally does not use for now.
+     * @param args optionally the path of the data file to use, which lets the tests
+     *     run against a file of their own rather than the real tally.
      */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        List<Task> tasks = new ArrayList<>();
+        Storage storage = new Storage(args.length > 0 ? Paths.get(args[0]) : DATA_FILE);
+
+        List<Task> tasks;
+        String loadWarning = null;
+        try {
+            tasks = storage.load();
+        } catch (TallyException exception) {
+            tasks = new ArrayList<>();
+            loadWarning = exception.getMessage();
+        }
+
         say(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
+        if (loadWarning != null) {
+            say(loadWarning);
+        }
 
         boolean isTalking = true;
         while (isTalking && scanner.hasNextLine()) {
             String line = scanner.nextLine().trim();
             try {
                 isTalking = handleCommand(line, tasks);
+                storage.save(tasks);
             } catch (TallyException exception) {
                 say(exception.getMessage());
             }
