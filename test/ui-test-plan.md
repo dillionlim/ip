@@ -31,9 +31,21 @@ trailing spaces on a line, and blank lines at the very end of the output.
 A case whose input does not end with `bye` tests what happens when the input
 stream closes instead.
 
+A case may add an optional `**Given the data file**` block before the input, to
+write that content into the data file before the run. That is how a damaged file
+is tested.
+
+A case may add an optional `**Then restart and type**` block between the input
+and the expected output. The runner then runs the program a second time against
+the same data file, and the expected output covers both runs one after the
+other. That is how the saved tally is checked.
+
+Every case gets a data file of its own, deleted before the case runs, so no case
+can inherit tasks another one saved.
+
 ## Coverage
 
-These cases cover Level-0 through Level-6, and the `A-Classes`, `A-Inheritance`,
+These cases cover Level-0 through Level-7, and the `A-Classes`, `A-Inheritance`,
 `A-Exceptions` and `A-Collections` extensions.
 
 Cases that exercise a rejected command also issue a good command afterwards and
@@ -765,6 +777,261 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[E][ ] meeting (from: 2pm to: 4pm)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-16 - The tally survives a restart
+
+**Aim:** Tasks and their done state are written to disk as they change and read back when Tally next starts, which is Level-7's requirement. Marking before the restart shows the checkbox state is saved too, not just the descriptions.
+
+**Input**
+```text
+todo read book
+deadline return book /by June 6th
+mark 1
+bye
+```
+
+**Then restart and type**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] return book (by: June 6th)
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[T][X] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: June 6th)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-17 - A deletion survives a restart
+
+**Aim:** The file is rewritten when a task is removed, not only when one is added, so a deleted task does not come back on the next start.
+
+**Input**
+```text
+todo read book
+todo return book
+delete 1
+bye
+```
+
+**Then restart and type**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] return book
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Noted. I've removed this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] return book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-18 - A damaged data file is reported, not obeyed
+
+**Aim:** A line that is not in the saved format makes Tally say which line is wrong and start with an empty tally, rather than throwing or silently loading half the file. Level-7's stretch goal. The good first line is deliberately not kept, so the user is never left working on a tally that is quietly incomplete.
+
+**Given the data file**
+```text
+T | 1 | read book
+this line is nonsense
+D | 0 | return book | June 6th
+```
+
+**Input**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Line 2 of tally.txt is not in a format I recognise, so I am starting with an empty tally. Fix or delete that file to keep what it holds.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-19 - A saved tally is read back and can be worked on
+
+**Aim:** A well-formed data file written by an earlier run is loaded in full, with each type and its done state restored, and the loaded tasks can then be numbered and marked like any other. This is the read half of Level-7, tested without relying on Tally having written the file itself.
+
+**Given the data file**
+```text
+T | 1 | read book
+D | 0 | return book | June 6th
+E | 0 | project meeting | Aug 6th 2pm | 4pm
+```
+
+**Input**
+```text
+list
+mark 2
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: June 6th)
+3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[D][X] return book (by: June 6th)
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][X] return book (by: June 6th)
+3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________

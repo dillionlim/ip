@@ -18,4 +18,14 @@ public class Todo extends Task {
     public String toString() {
         return "[T]" + super.toString();
     }
+
+    /**
+     * Returns the line standing for this todo in the data file.
+     *
+     * @return for example "T | 1 | read book".
+     */
+    @Override
+    public String toSaveFormat() {
+        return "T | " + super.toSaveFormat();
+    }
 }

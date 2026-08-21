@@ -23,6 +23,7 @@ import difflib
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -34,7 +35,10 @@ TIMEOUT_SECONDS = 20
 
 HEADING = re.compile(r"^##\s+(TC-\d+)\s*[-–—:]\s*(.+?)\s*$")
 AIM = re.compile(r"^\*\*Aim:?\*\*:?\s*(.*)$")
-SECTION = re.compile(r"^\*\*(Input|Expected output):?\*\*\s*$")
+SECTION = re.compile(r"^\*\*(Given the data file|Input|Then restart and type"
+                     r"|Expected output):?\*\*\s*$")
+SECTION_KEY = {"Given the data file": "seed", "Input": "input",
+               "Then restart and type": "restart", "Expected output": "expected"}
 
 
 def read_fenced_block(lines, index):
@@ -62,7 +66,8 @@ def parse_plan(text):
         heading = HEADING.match(line)
         if heading:
             current = {"id": heading.group(1), "title": heading.group(2),
-                       "aim": "", "input": None, "expected": None}
+                       "aim": "", "seed": None, "input": None,
+                       "restart": None, "expected": None}
             cases.append(current)
             index += 1
             continue
@@ -74,7 +79,7 @@ def parse_plan(text):
                 continue
             section = SECTION.match(line)
             if section:
-                key = "input" if section.group(1) == "Input" else "expected"
+                key = SECTION_KEY[section.group(1)]
                 current[key], index = read_fenced_block(lines, index + 1)
                 continue
         index += 1
@@ -109,16 +114,34 @@ def compile_program():
     print(f"Compiled {len(sources)} source file(s) into {CLASS_DIR.relative_to(ROOT)}/\n")
 
 
-def run_case(case):
-    """Returns what the program printed when fed this case's commands."""
-    commands = case["input"]
+def invoke(commands, data_file):
+    """Returns what one run of the program printed when fed these commands."""
     stdin_text = commands + "\n" if commands else ""
-    result = subprocess.run(["java", "-cp", str(CLASS_DIR), MAIN_CLASS],
+    result = subprocess.run(["java", "-cp", str(CLASS_DIR), MAIN_CLASS, str(data_file)],
                             input=stdin_text, capture_output=True, text=True,
                             timeout=TIMEOUT_SECONDS)
     if result.stderr.strip():
         print(result.stderr, end="")
     return result.stdout
+
+
+def run_case(case, data_file):
+    """Returns what the program printed across this case's one or two runs.
+
+    Each case gets a data file of its own, removed beforehand, so no case can
+    inherit tasks saved by an earlier one. A case with a restart block runs the
+    program twice against that same file, which is what proves the tally
+    survives between runs.
+    """
+    if data_file.exists():
+        data_file.unlink()
+    if case["seed"] is not None:
+        data_file.parent.mkdir(parents=True, exist_ok=True)
+        data_file.write_text(case["seed"] + "\n", encoding="utf-8")
+    output = invoke(case["input"], data_file)
+    if case["restart"] is not None:
+        output += invoke(case["restart"], data_file)
+    return output
 
 
 def report_failure(case, expected, actual):
@@ -144,12 +167,21 @@ def main():
 
     compile_program()
 
+    workspace = Path(tempfile.mkdtemp(prefix="tally-ui-tests-"))
+    data_file = workspace / "tally.txt"
+
     for number, case in enumerate(cases, start=1):
         print(f"{'-' * 70}\n[{number}/{len(cases)}] {case['id']} - {case['title']}")
         print(f"Aim: {case['aim']}\n")
+        if case["seed"] is not None:
+            print("--- Data file before the run ---")
+            print(case["seed"])
         print("--- Typed by the user ---")
         print(case["input"] if case["input"] else "(nothing; input closes immediately)")
-        actual = run_case(case)
+        if case["restart"] is not None:
+            print("--- Then, after restarting Tally ---")
+            print(case["restart"])
+        actual = run_case(case, data_file)
         print("\n--- Printed by Tally ---")
         print(actual, end="" if actual.endswith("\n") else "\n")
 
