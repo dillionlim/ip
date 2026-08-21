@@ -62,7 +62,7 @@ public class Storage {
             Task task = parseTask(line);
             if (task == null) {
                 throw new TallyException(String.format(
-                        "Line %d of %s is not in a format I recognise, so I am starting"
+                        "Line %d of %s is not in a format I recognize, so I am starting"
                                 + " with an empty tally. Fix or delete that file to keep"
                                 + " what it holds.", i + 1, file.getFileName()));
             }

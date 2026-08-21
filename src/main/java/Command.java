@@ -5,7 +5,7 @@ import java.util.List;
  * The commands Tally understands, each paired with the word the user types for it.
  *
  * <p>Holding the words here rather than spelling them out at each branch of the
- * dispatch means the list Tally offers when it does not recognise a command is
+ * dispatch means the list Tally offers when it does not recognize a command is
  * built from the same source, so the two cannot fall out of step.
  */
 public enum Command {

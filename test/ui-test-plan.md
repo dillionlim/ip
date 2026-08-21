@@ -358,7 +358,7 @@ ____________________________________________________________
 
 ---
 
-## TC-08 - An unrecognised command is rejected
+## TC-08 - An unrecognized command is rejected
 
 **Aim:** Text that is not a known command is refused with an explanation rather than being stored, which is the first of the two errors Level-5 requires. Interleaving a good command afterwards shows the rejected line left no trace on the tally.
 
@@ -969,7 +969,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-Line 2 of tally.txt is not in a format I recognise, so I am starting with an empty tally. Fix or delete that file to keep what it holds.
+Line 2 of tally.txt is not in a format I recognize, so I am starting with an empty tally. Fix or delete that file to keep what it holds.
 ____________________________________________________________
 
 ____________________________________________________________
