@@ -11,6 +11,13 @@ The project builds with Gradle, so no JDK setup beyond Java 25 is needed:
 ./gradlew build   # compile, test and package
 ```
 
+To hand the chatbot to someone else, build the jar and give them that one file:
+
+```bash
+./gradlew shadowJar          # writes build/libs/tally.jar
+java -jar "tally.jar"        # run it from any folder; it keeps its tally in ./data
+```
+
 ## Setting up in Intellij
 
 Prerequisites: JDK 25, update Intellij to the most recent version.
