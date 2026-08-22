@@ -21,6 +21,7 @@ and the reporting were the AI's design.
 
 import difflib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -104,6 +105,13 @@ def normalise(text):
 
 
 def compile_program():
+    """Compiles every source into an empty class directory.
+
+    Emptying it first means a class whose source was renamed or deleted cannot
+    linger and be loaded by a later run, which would let a test pass against
+    code that is no longer in the project.
+    """
+    shutil.rmtree(CLASS_DIR, ignore_errors=True)
     sources = sorted(str(path) for path in SOURCE_DIR.rglob("*.java"))
     if not sources:
         sys.exit(f"no Java sources found under {SOURCE_DIR}")
