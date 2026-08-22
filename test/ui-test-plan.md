@@ -50,7 +50,7 @@ can inherit tasks another one saved.
 
 ## Coverage
 
-These cases cover Level-0 through Level-7, and the `A-Classes`, `A-Inheritance`,
+These cases cover Level-0 through Level-8, and the `A-Classes`, `A-Inheritance`,
 `A-Exceptions` and `A-Collections` extensions.
 
 Cases that exercise a rejected command also issue a good command afterwards and
@@ -164,7 +164,7 @@ ____________________________________________________________
 **Input**
 ```text
 todo read book
-deadline return book /by June 6th
+deadline return book /by 2019-06-06
 event project meeting /from Aug 6th 2pm /to 4pm
 list
 bye
@@ -191,7 +191,7 @@ ____________________________________________________________
 
 ____________________________________________________________
 Got it. I've added this task:
-[D][ ] return book (by: June 6th)
+[D][ ] return book (by: Jun 06 2019)
 Now you have 2 tasks in the list.
 ____________________________________________________________
 
@@ -204,7 +204,7 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[T][ ] read book
-2.[D][ ] return book (by: June 6th)
+2.[D][ ] return book (by: Jun 06 2019)
 3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
@@ -327,13 +327,15 @@ ____________________________________________________________
 
 ---
 
-## TC-07 - Times are kept as typed
+## TC-07 - A date that cannot be read is refused
 
-**Aim:** Level-4 states that dates and times need not be parsed yet, so whatever the user types after `/by` is stored and echoed back unchanged, punctuation included.
+**Aim:** A deadline whose `/by` is not a yyyy-mm-dd date is rejected with a message naming what was typed and the form to use, rather than being stored as loose text. Level-8 replaced the old behaviour of keeping whatever was typed. A good deadline afterwards shows the rejected one left nothing behind.
 
 **Input**
 ```text
 deadline do homework /by no idea :-p
+deadline do homework /by 2019-10-15
+list
 bye
 ```
 
@@ -351,9 +353,18 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
+I could not read "no idea :-p" as a date. Write it as yyyy-mm-dd. Try: deadline return book /by 2019-10-15
+____________________________________________________________
+
+____________________________________________________________
 Got it. I've added this task:
-[D][ ] do homework (by: no idea :-p)
+[D][ ] do homework (by: Oct 15 2019)
 Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[D][ ] do homework (by: Oct 15 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -457,7 +468,7 @@ ____________________________________________________________
 ```text
 deadline return book
 event project meeting /from Mon 2pm
-deadline return book /by Sunday
+deadline return book /by 2019-10-15
 list
 bye
 ```
@@ -476,7 +487,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-A deadline needs a description and a /by time. Try: deadline return book /by Sunday
+A deadline needs a description and a /by date. Try: deadline return book /by 2019-10-15
 ____________________________________________________________
 
 ____________________________________________________________
@@ -485,13 +496,13 @@ ____________________________________________________________
 
 ____________________________________________________________
 Got it. I've added this task:
-[D][ ] return book (by: Sunday)
+[D][ ] return book (by: Oct 15 2019)
 Now you have 1 task in the list.
 ____________________________________________________________
 
 ____________________________________________________________
 Here are the tasks in your list:
-1.[D][ ] return book (by: Sunday)
+1.[D][ ] return book (by: Oct 15 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -798,7 +809,7 @@ ____________________________________________________________
 **Input**
 ```text
 todo read book
-deadline return book /by June 6th
+deadline return book /by 2019-06-06
 mark 1
 bye
 ```
@@ -830,7 +841,7 @@ ____________________________________________________________
 
 ____________________________________________________________
 Got it. I've added this task:
-[D][ ] return book (by: June 6th)
+[D][ ] return book (by: Jun 06 2019)
 Now you have 2 tasks in the list.
 ____________________________________________________________
 
@@ -857,7 +868,7 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[T][X] read book
-2.[D][ ] return book (by: June 6th)
+2.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -951,7 +962,7 @@ ____________________________________________________________
 ```text
 T | 1 | read book
 this line is nonsense
-D | 0 | return book | June 6th
+D | 0 | return book | 2019-06-06
 ```
 
 **Input**
@@ -995,7 +1006,7 @@ ____________________________________________________________
 **Given the data file**
 ```text
 T | 1 | read book
-D | 0 | return book | June 6th
+D | 0 | return book | 2019-06-06
 E | 0 | project meeting | Aug 6th 2pm | 4pm
 ```
 
@@ -1023,19 +1034,19 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the tasks in your list:
 1.[T][X] read book
-2.[D][ ] return book (by: June 6th)
+2.[D][ ] return book (by: Jun 06 2019)
 3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________
 Nice! I've marked this task as done:
-[D][X] return book (by: June 6th)
+[D][X] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
 Here are the tasks in your list:
 1.[T][X] read book
-2.[D][X] return book (by: June 6th)
+2.[D][X] return book (by: Jun 06 2019)
 3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
@@ -1097,4 +1108,99 @@ tally.txt >>> T | 0 | start again
 tally.txt.broken >>> T | 0 | precious task
 tally.txt.broken >>> GARBAGE LINE
 tally.txt.broken >>> D | 0 | another | Friday
+```
+
+---
+
+## TC-21 - A date is read, shown and stored in the right forms
+
+**Aim:** Level-8 asks that a date be accepted in one format and printed in another. The command supplies `2019-06-06`, the listing shows `Jun 06 2019`, and the data file keeps `2019-06-06`. Storing the form LocalDate reads back is what lets the deadline survive a restart, so all three are checked together.
+
+**Input**
+```text
+deadline return book /by 2019-06-06
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] return book (by: Jun 06 2019)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[D][ ] return book (by: Jun 06 2019)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> D | 0 | return book | 2019-06-06
+```
+
+---
+
+## TC-22 - A data file holding an unreadable date is damage
+
+**Aim:** A deadline in the data file whose date is not yyyy-mm-dd cannot be turned into a task, so it is reported as damage and the file is moved aside, rather than the user being asked about a file they did not type. This is the file-side counterpart of TC-07.
+
+**Given the data file**
+```text
+D | 0 | return book | last Tuesday
+```
+
+**Input**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Line 1 of tally.txt is not in a format I recognize, so I am starting with an empty tally. I moved it to tally.txt.broken so you can repair it.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt.broken >>> D | 0 | return book | last Tuesday
 ```
