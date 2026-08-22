@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class Storage {
             lines = Files.readAllLines(file);
         } catch (IOException exception) {
             throw new TallyException("I could not read " + file.getFileName()
-                    + ", so I am starting with an empty tally.");
+                    + ", so I am starting with an empty tally." + setAside());
         }
 
         for (int i = 0; i < lines.size(); i++) {
@@ -63,12 +64,34 @@ public class Storage {
             if (task == null) {
                 throw new TallyException(String.format(
                         "Line %d of %s is not in a format I recognize, so I am starting"
-                                + " with an empty tally. Fix or delete that file to keep"
-                                + " what it holds.", i + 1, file.getFileName()));
+                                + " with an empty tally.%s",
+                        i + 1, file.getFileName(), setAside()));
             }
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Moves an unusable file out of the way, so that the next save cannot write over it.
+     *
+     * <p>Without this, Tally would refuse to load a damaged file and then destroy it
+     * anyway, because the first command the user types saves the empty tally over it.
+     *
+     * <p>Renaming needs write access to the directory rather than to the file, so it
+     * usually succeeds even when the file itself could not be read.
+     *
+     * @return a sentence saying where the file was put, or an empty string if it
+     *     could not be moved, in which case nothing is promised about it.
+     */
+    private String setAside() {
+        Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
+        try {
+            Files.move(file, spoiled, StandardCopyOption.REPLACE_EXISTING);
+            return " I moved it to " + spoiled.getFileName() + " so you can repair it.";
+        } catch (IOException exception) {
+            return "";
+        }
     }
 
     /**

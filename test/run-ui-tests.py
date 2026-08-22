@@ -36,9 +36,10 @@ TIMEOUT_SECONDS = 20
 HEADING = re.compile(r"^##\s+(TC-\d+)\s*[-–—:]\s*(.+?)\s*$")
 AIM = re.compile(r"^\*\*Aim:?\*\*:?\s*(.*)$")
 SECTION = re.compile(r"^\*\*(Given the data file|Input|Then restart and type"
-                     r"|Expected output):?\*\*\s*$")
+                     r"|Expected output|Expected files after the run):?\*\*\s*$")
 SECTION_KEY = {"Given the data file": "seed", "Input": "input",
-               "Then restart and type": "restart", "Expected output": "expected"}
+               "Then restart and type": "restart", "Expected output": "expected",
+               "Expected files after the run": "files"}
 
 
 def read_fenced_block(lines, index):
@@ -67,7 +68,7 @@ def parse_plan(text):
         if heading:
             current = {"id": heading.group(1), "title": heading.group(2),
                        "aim": "", "seed": None, "input": None,
-                       "restart": None, "expected": None}
+                       "restart": None, "expected": None, "files": None}
             cases.append(current)
             index += 1
             continue
@@ -133,8 +134,8 @@ def run_case(case, data_file):
     program twice against that same file, which is what proves the tally
     survives between runs.
     """
-    if data_file.exists():
-        data_file.unlink()
+    for stale in data_file.parent.glob("tally.txt*"):
+        stale.unlink()
     if case["seed"] is not None:
         data_file.parent.mkdir(parents=True, exist_ok=True)
         data_file.write_text(case["seed"] + "\n", encoding="utf-8")
@@ -142,6 +143,30 @@ def run_case(case, data_file):
     if case["restart"] is not None:
         output += invoke(case["restart"], data_file)
     return output
+
+
+def check_files(case, data_file):
+    """Returns a complaint about the files left behind, or None if they are right.
+
+    Each line of the block names a file and one line it should hold, written as
+    "name >>> line". Checking the files as well as the console catches a change
+    that prints the right thing and then damages what is on disk.
+    """
+    wanted = {}
+    for entry in case["files"].split("\n"):
+        if not entry.strip():
+            continue
+        name, _, content = entry.partition(" >>> ")
+        wanted.setdefault(name.strip(), []).append(content)
+    for name, lines in wanted.items():
+        path = data_file.parent / name
+        if not path.exists():
+            return f"{name} does not exist after the run"
+        actual = [l for l in path.read_text(encoding="utf-8").split("\n") if l != ""]
+        if actual != lines:
+            return (f"{name} holds:\n    " + "\n    ".join(actual)
+                    + "\n  but should hold:\n    " + "\n    ".join(lines))
+    return None
 
 
 def report_failure(case, expected, actual):
@@ -190,6 +215,17 @@ def main():
         if expected_text != actual_text:
             report_failure(case, expected_text, actual_text)
             return 1
+        if case["files"] is not None:
+            complaint = check_files(case, data_file)
+            print("--- Files left behind ---")
+            for path in sorted(data_file.parent.iterdir()):
+                print(f"  {path.name}: " + " / ".join(
+                    l for l in path.read_text(encoding="utf-8").split("\n") if l))
+            if complaint is not None:
+                print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
+                print(f"\nAim: {case['aim']}\n\n  {complaint}")
+                print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
+                return 1
         print(f"PASS: {case['id']}\n")
 
     print(f"{'-' * 70}\nAll {len(cases)} test case(s) passed.")

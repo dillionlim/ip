@@ -31,6 +31,11 @@ trailing spaces on a line, and blank lines at the very end of the output.
 A case whose input does not end with `bye` tests what happens when the input
 stream closes instead.
 
+A case may add an optional `**Expected files after the run**` block, in which
+each line reads `filename >>> one line that file should hold`. That checks what
+was left on disk, not just what was printed. Console output alone would miss a
+change that says the right thing and then destroys the data.
+
 A case may add an optional `**Given the data file**` block before the input, to
 write that content into the data file before the run. That is how a damaged file
 is tested.
@@ -969,7 +974,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-Line 2 of tally.txt is not in a format I recognize, so I am starting with an empty tally. Fix or delete that file to keep what it holds.
+Line 2 of tally.txt is not in a format I recognize, so I am starting with an empty tally. I moved it to tally.txt.broken so you can repair it.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1037,4 +1042,59 @@ ____________________________________________________________
 ____________________________________________________________
 Bye. Hope to see you again soon!
 ____________________________________________________________
+```
+
+---
+
+## TC-20 - A damaged file is moved aside, not destroyed
+
+**Aim:** A file that fails to load is renamed before anything can write over it, so its contents survive for the user to repair. Regression test: Tally used to refuse the damaged file and then destroy it anyway, because the first command saved the empty tally straight over it. Typing a command here is the point, since that is what used to do the damage.
+
+**Given the data file**
+```text
+T | 0 | precious task
+GARBAGE LINE
+D | 0 | another | Friday
+```
+
+**Input**
+```text
+todo start again
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Line 2 of tally.txt is not in a format I recognize, so I am starting with an empty tally. I moved it to tally.txt.broken so you can repair it.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] start again
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 0 | start again
+tally.txt.broken >>> T | 0 | precious task
+tally.txt.broken >>> GARBAGE LINE
+tally.txt.broken >>> D | 0 | another | Friday
 ```
