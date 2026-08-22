@@ -2,8 +2,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 
 /** Tally is a command-line chatbot that helps the user keep a tally of their tasks. */
 public class Tally {
@@ -21,12 +19,12 @@ public class Tally {
         Ui ui = new Ui();
         Storage storage = new Storage(args.length > 0 ? Paths.get(args[0]) : DATA_FILE);
 
-        List<Task> tasks;
+        TaskList tasks;
         String loadWarning = null;
         try {
-            tasks = storage.load();
+            tasks = new TaskList(storage.load());
         } catch (TallyException exception) {
-            tasks = new ArrayList<>();
+            tasks = new TaskList();
             loadWarning = exception.getMessage();
         }
 
@@ -40,7 +38,7 @@ public class Tally {
             String line = ui.readCommand();
             try {
                 isTalking = handleCommand(line, tasks, ui);
-                storage.save(tasks);
+                storage.save(tasks.asList());
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -63,7 +61,7 @@ public class Tally {
      * @return whether the conversation should carry on afterwards.
      * @throws TallyException if Tally cannot carry out the command.
      */
-    private static boolean handleCommand(String line, List<Task> tasks, Ui ui) throws TallyException {
+    private static boolean handleCommand(String line, TaskList tasks, Ui ui) throws TallyException {
         String[] words = line.split(" ", 2);
         Command command = Command.parse(words[0]);
         String arguments = words.length > 1 ? words[1].trim() : "";
@@ -177,7 +175,7 @@ public class Tally {
      * @throws TallyException if no number was given, it is not a number, or no task
      *     has that position.
      */
-    private static Task findTask(List<Task> tasks, String arguments, Command command)
+    private static Task findTask(TaskList tasks, String arguments, Command command)
             throws TallyException {
         int position;
         try {
@@ -202,7 +200,7 @@ public class Tally {
      * @param ui what Tally replies through.
      * @param task the task to add.
      */
-    private static void addTask(List<Task> tasks, Ui ui, Task task) {
+    private static void addTask(TaskList tasks, Ui ui, Task task) {
         tasks.add(task);
         ui.show("Got it. I've added this task:", task.toString(), countSentence(tasks));
     }
@@ -213,7 +211,7 @@ public class Tally {
      * @param tasks the tally to count.
      * @return for example "Now you have 3 tasks in the list."
      */
-    private static String countSentence(List<Task> tasks) {
+    private static String countSentence(TaskList tasks) {
         // AI identified grammatical error, manual fix.
         return String.format("Now you have %d %s in the list.",
                 tasks.size(), tasks.size() == 1 ? "task" : "tasks");
@@ -226,7 +224,7 @@ public class Tally {
      * @param tasks the tasks to format, in the order they were added.
      * @return the lines of the listing.
      */
-    private static String[] formatTasks(List<Task> tasks) {
+    private static String[] formatTasks(TaskList tasks) {
         String[] lines = new String[tasks.size() + 1];
         lines[0] = "Here are the tasks in your list:";
         for (int i = 0; i < tasks.size(); i++) {
