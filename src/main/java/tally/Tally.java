@@ -58,7 +58,7 @@ public class Tally {
         while (isTalking && ui.hasNextCommand()) {
             String line = ui.readCommand();
             try {
-                isTalking = handleCommand(line);
+                isTalking = isStillTalkingAfter(line);
                 storage.save(tasks.asList());
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
@@ -70,13 +70,13 @@ public class Tally {
     }
 
     /**
-     * Carries out one command from the user.
+     * Carries out one command from the user, and says whether to keep going.
      *
      * @param line the line the user typed, with surrounding spaces removed.
      * @return whether the conversation should carry on afterwards.
      * @throws TallyException if Tally cannot carry out the command.
      */
-    private boolean handleCommand(String line) throws TallyException {
+    private boolean isStillTalkingAfter(String line) throws TallyException {
         Command command = Parser.parseCommand(line);
         String arguments = Parser.parseArguments(line);
 
