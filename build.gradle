@@ -54,3 +54,15 @@ shadowJar {
 run {
     standardInput = System.in
 }
+
+// Lets test/run-ui-tests.py launch the app the same way Gradle would, without
+// having to know where the classes and any dependencies live. The classpath is
+// captured while the build is configured, so the task works under the
+// configuration cache.
+tasks.register('printRuntimeClasspath') {
+    FileCollection classpath = sourceSets.main.runtimeClasspath
+    inputs.files(classpath)
+    doLast {
+        println classpath.asPath
+    }
+}

@@ -21,7 +21,6 @@ and the reporting were the AI's design.
 
 import difflib
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,8 +28,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PLAN = ROOT / "test" / "ui-test-plan.md"
-SOURCE_DIR = ROOT / "src" / "main" / "java"
-CLASS_DIR = ROOT / "bin"
+GRADLEW = ROOT / "gradlew"
 MAIN_CLASS = "tally.Tally"
 TIMEOUT_SECONDS = 20
 
@@ -104,29 +102,36 @@ def normalise(text):
     return "\n".join(lines)
 
 
-def compile_program():
-    """Compiles every source into an empty class directory.
+def build_program():
+    """Builds the app through Gradle and returns the classpath to launch it with.
 
-    Emptying it first means a class whose source was renamed or deleted cannot
-    linger and be loaded by a later run, which would let a test pass against
-    code that is no longer in the project.
+    Going through Gradle rather than calling javac here means the tests run
+    against the same classes, and the same dependencies, that the real build
+    produces. Once the app depends on anything external, a hand-written javac
+    command would be compiling a different program from the one that ships.
     """
-    shutil.rmtree(CLASS_DIR, ignore_errors=True)
-    sources = sorted(str(path) for path in SOURCE_DIR.rglob("*.java"))
-    if not sources:
-        sys.exit(f"no Java sources found under {SOURCE_DIR}")
-    result = subprocess.run(["javac", "-d", str(CLASS_DIR), *sources],
-                            capture_output=True, text=True)
+    result = subprocess.run([str(GRADLEW), "classes", "--console=plain", "-q"],
+                            cwd=ROOT, capture_output=True, text=True)
     if result.returncode != 0:
         print(result.stdout + result.stderr, end="")
-        sys.exit("compilation failed, so no test case was run")
-    print(f"Compiled {len(sources)} source file(s) into {CLASS_DIR.relative_to(ROOT)}/\n")
+        sys.exit("the build failed, so no test case was run")
+
+    result = subprocess.run([str(GRADLEW), "printRuntimeClasspath", "--console=plain", "-q"],
+                            cwd=ROOT, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(result.stdout + result.stderr, end="")
+        sys.exit("could not work out the classpath, so no test case was run")
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if not lines:
+        sys.exit("Gradle reported an empty classpath, so no test case was run")
+    print("Built with Gradle.\n")
+    return lines[-1].strip()
 
 
-def invoke(commands, data_file):
+def invoke(commands, data_file, classpath):
     """Returns what one run of the program printed when fed these commands."""
     stdin_text = commands + "\n" if commands else ""
-    result = subprocess.run(["java", "-cp", str(CLASS_DIR), MAIN_CLASS, str(data_file)],
+    result = subprocess.run(["java", "-cp", classpath, MAIN_CLASS, str(data_file)],
                             input=stdin_text, capture_output=True, text=True,
                             timeout=TIMEOUT_SECONDS)
     if result.stderr.strip():
@@ -134,7 +139,7 @@ def invoke(commands, data_file):
     return result.stdout
 
 
-def run_case(case, data_file):
+def run_case(case, data_file, classpath):
     """Returns what the program printed across this case's one or two runs.
 
     Each case gets a data file of its own, removed beforehand, so no case can
@@ -147,9 +152,9 @@ def run_case(case, data_file):
     if case["seed"] is not None:
         data_file.parent.mkdir(parents=True, exist_ok=True)
         data_file.write_text(case["seed"] + "\n", encoding="utf-8")
-    output = invoke(case["input"], data_file)
+    output = invoke(case["input"], data_file, classpath)
     if case["restart"] is not None:
-        output += invoke(case["restart"], data_file)
+        output += invoke(case["restart"], data_file, classpath)
     return output
 
 
@@ -198,7 +203,7 @@ def main():
         if not cases:
             sys.exit(f"no test case in {PLAN.name} matches {', '.join(sorted(wanted))}")
 
-    compile_program()
+    classpath = build_program()
 
     workspace = Path(tempfile.mkdtemp(prefix="tally-ui-tests-"))
     data_file = workspace / "tally.txt"
@@ -214,7 +219,7 @@ def main():
         if case["restart"] is not None:
             print("--- Then, after restarting Tally ---")
             print(case["restart"])
-        actual = run_case(case, data_file)
+        actual = run_case(case, data_file, classpath)
         print("\n--- Printed by Tally ---")
         print(actual, end="" if actual.endswith("\n") else "\n")
 
