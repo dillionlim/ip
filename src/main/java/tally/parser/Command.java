@@ -1,5 +1,8 @@
+package tally.parser;
+
 import java.util.ArrayList;
 import java.util.List;
+import tally.TallyException;
 
 /**
  * The commands Tally understands, each paired with the word the user types for it.

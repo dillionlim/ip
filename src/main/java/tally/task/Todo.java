@@ -1,3 +1,5 @@
+package tally.task;
+
 /** A task with nothing attached to it but a description: no date, no time. */
 public class Todo extends Task {
     /**

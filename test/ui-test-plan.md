@@ -13,9 +13,9 @@ python3 test/run-ui-tests.py           # every case
 python3 test/run-ui-tests.py TC-03     # one case
 ```
 
-The runner compiles `src/main/java/*.java` into `bin/`, then replays each case's
-commands through the program and compares what was printed against the expected
-output below. It prints the whole session as it goes, and stops at the first
+The runner compiles every `.java` file under `src/main/java` into `bin/`, then
+replays each case's commands through the program and compares what was printed
+against the expected output below. It prints the whole session as it goes, and stops at the first
 failure, reporting the expected output, the actual output, and a diff.
 
 ## How to write a case
