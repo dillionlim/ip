@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,6 +75,25 @@ public class Storage {
     }
 
     /**
+     * Returns the deadline a data-file line describes.
+     *
+     * <p>A date the file cannot offer as yyyy-mm-dd is damage rather than something
+     * to ask the user about, so this reports it the same way as any other malformed
+     * line: by returning null.
+     *
+     * @param description what has to be done.
+     * @param by the date field as it appears in the file.
+     * @return the deadline, or null if the date cannot be read.
+     */
+    private static Task parseDeadline(String description, String by) {
+        try {
+            return new Deadline(description, LocalDate.parse(by));
+        } catch (DateTimeParseException exception) {
+            return null;
+        }
+    }
+
+    /**
      * Moves an unusable file out of the way, so that the next save cannot write over it.
      *
      * <p>Without this, Tally would refuse to load a damaged file and then destroy it
@@ -138,7 +159,7 @@ public class Storage {
 
         Task task = switch (fields[0]) {
         case "T" -> fields.length == 3 ? new Todo(fields[2]) : null;
-        case "D" -> fields.length == 4 ? new Deadline(fields[2], fields[3]) : null;
+        case "D" -> fields.length == 4 ? parseDeadline(fields[2], fields[3]) : null;
         case "E" -> fields.length == 5 ? new Event(fields[2], fields[3], fields[4]) : null;
         default -> null;
         };

@@ -1,5 +1,7 @@
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -121,14 +123,34 @@ public class Tally {
             String[] fields = arguments.split(" /by ", 2);
             if (fields.length < 2 || fields[0].isBlank() || fields[1].isBlank()) {
                 throw new TallyException(
-                        "A deadline needs a description and a /by time."
-                                + " Try: deadline return book /by Sunday");
+                        "A deadline needs a description and a /by date."
+                                + " Try: deadline return book /by 2019-10-15");
             }
-            addTask(tasks, new Deadline(fields[0].trim(), fields[1].trim()));
+            addTask(tasks, new Deadline(fields[0].trim(), parseDate(fields[1].trim())));
         }
         case EVENT -> addTask(tasks, parseEvent(arguments));
         }
         return true;
+    }
+
+    /**
+     * Returns the date named by the text the user typed after /by.
+     *
+     * <p>Dates are read in the yyyy-mm-dd form that LocalDate understands without a
+     * formatter, and shown back in a different form, as Level-8 requires.
+     *
+     * @param text what the user typed as the date.
+     * @return the date it names.
+     * @throws TallyException if the text is not a date written as yyyy-mm-dd.
+     */
+    private static LocalDate parseDate(String text) throws TallyException {
+        try {
+            return LocalDate.parse(text);
+        } catch (DateTimeParseException exception) {
+            throw new TallyException(String.format(
+                    "I could not read \"%s\" as a date. Write it as yyyy-mm-dd."
+                            + " Try: deadline return book /by 2019-10-15", text));
+        }
     }
 
     /**
