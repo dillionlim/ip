@@ -98,6 +98,20 @@ public class Parser {
     }
 
     /**
+     * Returns the word a "find" command is searching for.
+     *
+     * @param arguments what the user typed after the command word.
+     * @return the word to look for.
+     * @throws TallyException if nothing was given to search for.
+     */
+    public static String parseSearchWord(String arguments) throws TallyException {
+        if (arguments.isEmpty()) {
+            throw new TallyException("find needs something to look for. Try: find book");
+        }
+        return arguments;
+    }
+
+    /**
      * Returns the date named by the text the user typed after /by.
      *
      * <p>Dates are read in the yyyy-mm-dd form that LocalDate understands without a

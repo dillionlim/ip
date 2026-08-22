@@ -49,6 +49,48 @@ public class TaskListTest {
     }
 
     @Test
+    public void findPositions_wordInSomeDescriptions_returnsTheirPositions() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("read book"));
+        tasks.add(new Todo("buy bread"));
+        tasks.add(new Todo("return book"));
+        assertEquals(List.of(0, 2), tasks.findPositions("book"));
+    }
+
+    @Test
+    public void findPositions_positionsAreOnTheWholeTally_notAmongTheMatches() {
+        // The second match sits at position 2, not at position 1 of the results.
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("buy bread"));
+        tasks.add(new Todo("read book"));
+        tasks.add(new Todo("return book"));
+        assertEquals(List.of(1, 2), tasks.findPositions("book"));
+    }
+
+    @Test
+    public void findPositions_differentCase_stillMatches() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("Read Book"));
+        assertEquals(List.of(0), tasks.findPositions("book"));
+        assertEquals(List.of(0), tasks.findPositions("BOOK"));
+    }
+
+    @Test
+    public void findPositions_wordInNoDescription_returnsNothing() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("read book"));
+        assertTrue(tasks.findPositions("umbrella").isEmpty());
+        assertTrue(new TaskList().findPositions("book").isEmpty());
+    }
+
+    @Test
+    public void findPositions_matchesPartOfAWord() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("bookshop"));
+        assertEquals(List.of(0), tasks.findPositions("book"));
+    }
+
+    @Test
     public void isEmpty_reflectsWhetherAnythingIsHeld() {
         TaskList tasks = new TaskList();
         assertTrue(tasks.isEmpty());
