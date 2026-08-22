@@ -20,8 +20,8 @@ python3 test/run-ui-tests.py
 
 Add case IDs to run a subset, e.g. `python3 test/run-ui-tests.py TC-03 TC-05`.
 
-The runner compiles `src/main/java/*.java` into `bin/` first, so there is no need
-to compile separately. It exits non-zero if anything fails.
+The runner compiles every `.java` file under `src/main/java` into `bin/` first,
+so there is no need to compile separately. It exits non-zero if anything fails.
 
 ## Reporting the result
 

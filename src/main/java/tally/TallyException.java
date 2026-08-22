@@ -1,3 +1,5 @@
+package tally;
+
 /**
  * Signals that Tally could not carry out what the user asked for.
  *

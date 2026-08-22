@@ -1,5 +1,11 @@
+package tally.parser;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import tally.TallyException;
+import tally.task.Deadline;
+import tally.task.Event;
+import tally.task.Todo;
 
 /**
  * Turns what the user typed into the things Tally acts on.

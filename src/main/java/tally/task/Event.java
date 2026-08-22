@@ -1,3 +1,5 @@
+package tally.task;
+
 /** A task that runs from one stated point in time to another. */
 public class Event extends Task {
     protected String from;

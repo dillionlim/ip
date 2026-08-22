@@ -1,3 +1,5 @@
+package tally.task;
+
 /** A single entry on the user's tally: what has to be done, and whether it is done yet. */
 public class Task {
     protected String description;

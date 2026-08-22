@@ -1,3 +1,5 @@
+package tally.ui;
+
 import java.util.Scanner;
 
 /**

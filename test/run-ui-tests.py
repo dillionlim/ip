@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PLAN = ROOT / "test" / "ui-test-plan.md"
 SOURCE_DIR = ROOT / "src" / "main" / "java"
 CLASS_DIR = ROOT / "bin"
-MAIN_CLASS = "Tally"
+MAIN_CLASS = "tally.Tally"
 TIMEOUT_SECONDS = 20
 
 HEADING = re.compile(r"^##\s+(TC-\d+)\s*[-–—:]\s*(.+?)\s*$")
@@ -104,7 +104,7 @@ def normalise(text):
 
 
 def compile_program():
-    sources = sorted(str(path) for path in SOURCE_DIR.glob("*.java"))
+    sources = sorted(str(path) for path in SOURCE_DIR.rglob("*.java"))
     if not sources:
         sys.exit(f"no Java sources found under {SOURCE_DIR}")
     result = subprocess.run(["javac", "-d", str(CLASS_DIR), *sources],

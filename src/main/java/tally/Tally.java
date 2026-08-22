@@ -1,5 +1,13 @@
+package tally;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import tally.parser.Command;
+import tally.parser.Parser;
+import tally.storage.Storage;
+import tally.task.Task;
+import tally.task.TaskList;
+import tally.ui.Ui;
 
 /**
  * Tally is a command-line chatbot that helps the user keep a tally of their tasks.
