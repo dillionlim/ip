@@ -51,7 +51,7 @@ can inherit tasks another one saved.
 
 ## Coverage
 
-These cases cover Level-0 through Level-8, and the `A-Classes`, `A-Inheritance`,
+These cases cover Level-0 through Level-9, and the `A-Classes`, `A-Inheritance`,
 `A-Exceptions` and `A-Collections` extensions.
 
 Cases that exercise a rejected command also issue a good command afterwards and
@@ -401,7 +401,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-I don't know that one. I understand: todo, deadline, event, list, mark, unmark, delete, bye.
+I don't know that one. I understand: todo, deadline, event, list, mark, unmark, delete, find, bye.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1204,4 +1204,140 @@ ____________________________________________________________
 **Expected files after the run**
 ```text
 tally.txt.broken >>> D | 0 | return book | last Tuesday
+```
+
+---
+
+## TC-23 - Find tasks by a word in their description
+
+**Aim:** `find` shows only the tasks whose description contains the word, keeping each task's number from the whole tally so the user can act on what they see. Matching ignores case. Level-9's requirement.
+
+**Input**
+```text
+todo read book
+deadline return book /by 2019-06-06
+todo buy bread
+mark 1
+find book
+find BOOK
+mark 2
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] return book (by: Jun 06 2019)
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] buy bread
+Now you have 3 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[T][X] read book
+____________________________________________________________
+
+____________________________________________________________
+Here are the matching tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: Jun 06 2019)
+____________________________________________________________
+
+____________________________________________________________
+Here are the matching tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: Jun 06 2019)
+____________________________________________________________
+
+____________________________________________________________
+Nice! I've marked this task as done:
+[D][X] return book (by: Jun 06 2019)
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][X] return book (by: Jun 06 2019)
+3.[T][ ] buy bread
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+---
+
+## TC-24 - Find with nothing to show or nothing to look for
+
+**Aim:** A search matching no task says so rather than printing an empty block, and `find` with no word is refused like any other command missing its argument. A good search afterwards shows neither disturbed the tally.
+
+**Input**
+```text
+todo read book
+find umbrella
+find
+find book
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally matches that.
+____________________________________________________________
+
+____________________________________________________________
+find needs something to look for. Try: find book
+____________________________________________________________
+
+____________________________________________________________
+Here are the matching tasks in your list:
+1.[T][ ] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
 ```

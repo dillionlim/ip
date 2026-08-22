@@ -68,6 +68,27 @@ public class TaskList {
     }
 
     /**
+     * Returns the positions of the tasks whose description contains the given word.
+     *
+     * <p>Positions count from 0, and are the tasks' places on the whole tally
+     * rather than places among the matches, so a number shown to the user still
+     * names the same task in a later command.
+     *
+     * @param word the text to look for, matched without regard to case.
+     * @return the positions of the matching tasks, in the order they were added.
+     */
+    public List<Integer> findPositions(String word) {
+        String wanted = word.toLowerCase();
+        List<Integer> positions = new ArrayList<>();
+        for (int i = 0; i < tasks.size(); i++) {
+            if (tasks.get(i).getDescription().toLowerCase().contains(wanted)) {
+                positions.add(i);
+            }
+        }
+        return positions;
+    }
+
+    /**
      * Returns the tasks as a plain list, for code that only reads them.
      *
      * <p>The list is a copy, so changing it does not change the tally.

@@ -87,6 +87,17 @@ public class ParserTest {
     }
 
     @Test
+    public void parseSearchWord_givenAWord_returnsIt() throws TallyException {
+        assertEquals("book", Parser.parseSearchWord("book"));
+        assertEquals("read book", Parser.parseSearchWord("read book"));
+    }
+
+    @Test
+    public void parseSearchWord_nothingToLookFor_throws() {
+        assertThrows(TallyException.class, () -> Parser.parseSearchWord(""));
+    }
+
+    @Test
     public void parseDate_isoDate_returnsThatDate() throws TallyException {
         assertEquals(LocalDate.of(2019, 10, 15), Parser.parseDate("2019-10-15"));
     }

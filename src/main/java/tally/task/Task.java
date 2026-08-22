@@ -16,6 +16,15 @@ public class Task {
     }
 
     /**
+     * Returns what the task says has to be done.
+     *
+     * @return the description, without the checkbox or any times.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
      * Returns the mark shown inside the task's checkbox.
      *
      * @return "X" when the task is done, a single space otherwise.
