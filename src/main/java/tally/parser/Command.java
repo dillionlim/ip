@@ -27,6 +27,11 @@ public enum Command {
         this.keyword = keyword;
     }
 
+    /**
+     * Returns the word the user types to invoke this command.
+     *
+     * @return the command word, such as "mark".
+     */
     public String getKeyword() {
         return keyword;
     }
