@@ -33,13 +33,23 @@ Ensure that Java 25 is used when running the application or build tasks. This ma
 After every change to code under `src/main/java/`, and before proposing a commit:
 
 1. **Update `test/ui-test-plan.md` if the change alters console behaviour.** Add a case for a new command or behaviour, update the expected output of every case that shows wording or formatting you changed, and delete cases for behaviour you removed. A change that alters no console output needs no plan change.
-2. **Run the UI tests**, via the `test-ui` skill if your harness supports skills, or directly:
+2. **Run the build**, which compiles, runs the JUnit tests and checks the code style:
+
+   ```bash
+   ./gradlew build
+   ```
+
+   Checkstyle is wired into `check`, so a style violation fails the build. Its rules
+   are the SE-EDU Java coding standard in mechanical form, so passing it is evidence
+   the standard was followed rather than merely intended.
+
+3. **Run the UI tests**, via the `test-ui` skill if your harness supports skills, or directly:
 
    ```bash
    python3 test/run-ui-tests.py
    ```
 
-3. **Show the user the session transcript the runner prints**, so the commands typed and the output returned are visible rather than merely summarised.
+4. **Show the user the session transcript the runner prints**, so the commands typed and the output returned are visible rather than merely summarised.
 
 Rules that make this worth doing:
 
