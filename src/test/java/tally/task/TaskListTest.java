@@ -14,8 +14,7 @@ public class TaskListTest {
     @Test
     public void add_thenGet_keepsTheOrderTheyWereAdded() {
         TaskList tasks = new TaskList();
-        tasks.add(new Todo("first"));
-        tasks.add(new Todo("second"));
+        tasks.add(new Todo("first"), new Todo("second"));
         assertEquals(2, tasks.size());
         assertEquals("[T][ ] first", tasks.get(0).toString());
         assertEquals("[T][ ] second", tasks.get(1).toString());
@@ -24,10 +23,8 @@ public class TaskListTest {
     @Test
     public void remove_middleTask_shiftsTheRestUp() {
         TaskList tasks = new TaskList();
-        tasks.add(new Todo("first"));
         Task middle = new Todo("second");
-        tasks.add(middle);
-        tasks.add(new Todo("third"));
+        tasks.add(new Todo("first"), middle, new Todo("third"));
         tasks.remove(middle);
         assertEquals(2, tasks.size());
         assertEquals("[T][ ] first", tasks.get(0).toString());
@@ -41,8 +38,7 @@ public class TaskListTest {
         Task first = new Todo("same");
         Task second = new Todo("same");
         first.markAsDone();
-        tasks.add(first);
-        tasks.add(second);
+        tasks.add(first, second);
         tasks.remove(first);
         assertEquals(1, tasks.size());
         assertEquals("[T][ ] same", tasks.get(0).toString());
@@ -51,9 +47,7 @@ public class TaskListTest {
     @Test
     public void findPositions_wordInSomeDescriptions_returnsTheirPositions() {
         TaskList tasks = new TaskList();
-        tasks.add(new Todo("read book"));
-        tasks.add(new Todo("buy bread"));
-        tasks.add(new Todo("return book"));
+        tasks.add(new Todo("read book"), new Todo("buy bread"), new Todo("return book"));
         assertEquals(List.of(0, 2), tasks.findPositions("book"));
     }
 
@@ -61,9 +55,7 @@ public class TaskListTest {
     public void findPositions_positionsAreOnTheWholeTally_notAmongTheMatches() {
         // The second match sits at position 2, not at position 1 of the results.
         TaskList tasks = new TaskList();
-        tasks.add(new Todo("buy bread"));
-        tasks.add(new Todo("read book"));
-        tasks.add(new Todo("return book"));
+        tasks.add(new Todo("buy bread"), new Todo("read book"), new Todo("return book"));
         assertEquals(List.of(1, 2), tasks.findPositions("book"));
     }
 
@@ -88,6 +80,23 @@ public class TaskListTest {
         TaskList tasks = new TaskList();
         tasks.add(new Todo("bookshop"));
         assertEquals(List.of(0), tasks.findPositions("book"));
+    }
+
+    @Test
+    public void add_severalAtOnce_keepsTheOrderGiven() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("first"), new Todo("second"), new Todo("third"));
+        assertEquals(3, tasks.size());
+        assertEquals("[T][ ] first", tasks.get(0).toString());
+        assertEquals("[T][ ] third", tasks.get(2).toString());
+    }
+
+    @Test
+    public void add_noTasks_leavesTheTallyAlone() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("only"));
+        tasks.add();
+        assertEquals(1, tasks.size());
     }
 
     @Test

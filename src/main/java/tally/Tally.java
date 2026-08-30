@@ -2,6 +2,7 @@ package tally;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import tally.parser.Command;
@@ -190,13 +191,11 @@ public class Tally {
             ui.show("Nothing on your tally yet.");
             return;
         }
-        String[] lines = new String[tasks.size() + 1];
-        lines[0] = "Here are the tasks in your list:";
+        List<Integer> everything = new ArrayList<>();
         for (int i = 0; i < tasks.size(); i++) {
-            // AI suggested String.format instead of concatenating strings manually.
-            lines[i + 1] = String.format("%d.%s", i + 1, tasks.get(i));
+            everything.add(i);
         }
-        ui.show(lines);
+        ui.show(numbered("Here are the tasks in your list:", everything));
     }
 
     /**
@@ -214,13 +213,25 @@ public class Tally {
             ui.show("Nothing on your tally matches that.");
             return;
         }
-        String[] lines = new String[positions.size() + 1];
-        lines[0] = "Here are the matching tasks in your list:";
-        for (int i = 0; i < positions.size(); i++) {
-            int position = positions.get(i);
-            lines[i + 1] = String.format("%d.%s", position + 1, tasks.get(position));
+        ui.show(numbered("Here are the matching tasks in your list:", positions));
+    }
+
+    /**
+     * Returns a heading followed by one line per task, each numbered by its place on
+     * the tally counting from 1.
+     *
+     * @param heading the line introducing the list.
+     * @param positions the places of the tasks to show, counting from 0.
+     * @return the lines to show, ready to hand to the user interface.
+     */
+    private String[] numbered(String heading, List<Integer> positions) {
+        List<String> lines = new ArrayList<>();
+        lines.add(heading);
+        for (int position : positions) {
+            // AI suggested String.format instead of concatenating strings manually.
+            lines.add(String.format("%d.%s", position + 1, tasks.get(position)));
         }
-        ui.show(lines);
+        return lines.toArray(new String[0]);
     }
 
     /**
