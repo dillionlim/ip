@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -36,12 +35,11 @@ public class StorageTest {
         Path file = folder.resolve("tally.txt");
         Storage storage = new Storage(file);
 
-        List<Task> written = new ArrayList<>();
         Task done = new Todo("read book");
         done.markAsDone();
-        written.add(done);
-        written.add(new Deadline("return book", LocalDate.of(2019, 6, 6)));
-        written.add(new Event("project meeting", "Aug 6th 2pm", "4pm"));
+        List<Task> written = List.of(done,
+                new Deadline("return book", LocalDate.of(2019, 6, 6)),
+                new Event("project meeting", "Aug 6th 2pm", "4pm"));
         storage.save(written);
 
         List<Task> read = storage.load();
