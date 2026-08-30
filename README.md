@@ -7,8 +7,14 @@ Tally is a command-line chatbot that helps you keep a tally of your tasks. Given
 The project builds with Gradle, so no JDK setup beyond Java 25 is needed:
 
 ```bash
-./gradlew run     # start the chatbot
-./gradlew build   # compile, test and package
+./gradlew run     # start the chatbot in a window
+./gradlew build   # compile, test, check the style and package
+```
+
+Tally also still runs in a terminal, which is how its console tests drive it:
+
+```bash
+java -cp build/classes/java/main tally.Tally
 ```
 
 To hand the chatbot to someone else, build the jar and give them that one file:

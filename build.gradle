@@ -18,8 +18,28 @@ repositories {
     mavenCentral()
 }
 
+// JavaFX ships native binaries, so the artifact differs per platform. Working the
+// classifier out here rather than hardcoding one keeps the build working on any
+// machine, which matters because the jar is meant to be handed to other people.
+String osName = System.getProperty('os.name').toLowerCase()
+String osArch = System.getProperty('os.arch').toLowerCase()
+String javaFxClassifier
+if (osName.contains('win')) {
+    javaFxClassifier = 'win'
+} else if (osName.contains('mac')) {
+    javaFxClassifier = osArch.contains('aarch64') ? 'mac-aarch64' : 'mac'
+} else {
+    javaFxClassifier = osArch.contains('aarch64') ? 'linux-aarch64' : 'linux'
+}
+
 dependencies {
     String jUnitVersion = '5.14.4'
+    String javaFxVersion = '25.0.4'
+
+    implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxClassifier}"
+    implementation "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxClassifier}"
+    implementation "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxClassifier}"
+    implementation "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxClassifier}"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
 
@@ -42,7 +62,7 @@ test {
 }
 
 application {
-    mainClass = 'tally.Tally'
+    mainClass = 'tally.Launcher'
 }
 
 jar {

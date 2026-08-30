@@ -29,6 +29,9 @@ public class Tally {
     /** What went wrong while reading the data file, or null if nothing did. */
     private String loadWarning;
 
+    /** Whether the user has said goodbye. */
+    private boolean isExiting;
+
     /**
      * Creates a chatbot working on the given data file, reading back whatever it
      * already holds.
@@ -39,7 +42,18 @@ public class Tally {
      * @param dataFile where the tally is kept.
      */
     public Tally(Path dataFile) {
-        this.ui = new Ui();
+        this(dataFile, true);
+    }
+
+    /**
+     * Creates a chatbot working on the given data file, replying either on the
+     * console or as text for a caller to display.
+     *
+     * @param dataFile where the tally is kept.
+     * @param isConsole whether replies are printed and commands read from standard input.
+     */
+    public Tally(Path dataFile, boolean isConsole) {
+        this.ui = new Ui(isConsole);
         this.storage = new Storage(dataFile);
         try {
             this.tasks = new TaskList(storage.load());
@@ -47,6 +61,51 @@ public class Tally {
             this.tasks = new TaskList();
             this.loadWarning = exception.getMessage();
         }
+    }
+
+    /**
+     * Returns what Tally says in reply to one command, for a caller that shows the
+     * reply itself rather than having it printed.
+     *
+     * @param input the line the user typed.
+     * @return everything Tally says in reply, which is never empty.
+     */
+    public String getResponse(String input) {
+        String line = input.trim();
+        try {
+            isExiting = !isStillTalkingAfter(line);
+            if (isExiting) {
+                ui.showGoodbye();
+            } else {
+                storage.save(tasks.asList());
+            }
+        } catch (TallyException exception) {
+            ui.showError(exception.getMessage());
+        }
+        return ui.takePending();
+    }
+
+    /**
+     * Returns whether the last command asked to end the conversation.
+     *
+     * @return true once the user has said goodbye.
+     */
+    public boolean isExiting() {
+        return isExiting;
+    }
+
+    /**
+     * Returns the greeting shown when the chatbot starts, together with any
+     * complaint about the data file.
+     *
+     * @return the opening message.
+     */
+    public String getGreeting() {
+        ui.showWelcome();
+        if (loadWarning != null) {
+            ui.showError(loadWarning);
+        }
+        return ui.takePending();
     }
 
     /** Greets the user, carries out commands until they leave, then says goodbye. */

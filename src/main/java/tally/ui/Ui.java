@@ -29,10 +29,26 @@ public class Ui {
                            |___/""";
 
     private final Scanner scanner;
+    private final boolean isConsole;
+    private final StringBuilder pending = new StringBuilder();
 
-    /** Creates a Ui that reads the user's commands from standard input. */
+    /** Creates a Ui that reads the user's commands from standard input and prints its replies. */
     public Ui() {
-        this.scanner = new Scanner(System.in);
+        this(true);
+    }
+
+    /**
+     * Creates a Ui that either prints its replies or keeps them to be collected.
+     *
+     * <p>The graphical front end shows Tally's replies itself, so it wants them as
+     * text rather than on standard output. Both kinds record what was said, so the
+     * two front ends cannot drift apart in wording.
+     *
+     * @param isConsole whether replies are printed and commands read from standard input.
+     */
+    public Ui(boolean isConsole) {
+        this.isConsole = isConsole;
+        this.scanner = isConsole ? new Scanner(System.in) : null;
     }
 
     /**
@@ -79,12 +95,33 @@ public class Ui {
      * @param lines the lines of the message, printed in order.
      */
     public void show(String... lines) {
+        for (String line : lines) {
+            pending.append(line).append(System.lineSeparator());
+        }
+        if (!isConsole) {
+            return;
+        }
         System.out.println(RULE);
         for (String line : lines) {
             System.out.println(line);
         }
         System.out.println(RULE);
         System.out.println();
+    }
+
+    /**
+     * Returns everything said since this was last called, and forgets it.
+     *
+     * <p>The rules that fence a message on the console are left out: they separate
+     * one reply from the next in a scrolling terminal, which a chat window already
+     * does by putting each reply in its own bubble.
+     *
+     * @return the lines said, one per line, with no trailing newline.
+     */
+    public String takePending() {
+        String said = pending.toString().stripTrailing();
+        pending.setLength(0);
+        return said;
     }
 
     /** Stops reading the user's input. */
