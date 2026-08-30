@@ -133,8 +133,8 @@ public class ParserTest {
 
     @Test
     public void parseTaskIndex_badNumber_errorNamesTheCommand() {
-        TallyException thrown = assertThrows(TallyException.class,
-                () -> Parser.parseTaskIndex("abc", 3, Command.DELETE));
+        TallyException thrown = assertThrows(
+                TallyException.class, () -> Parser.parseTaskIndex("abc", 3, Command.DELETE));
         assertEquals("delete needs the number of a task. Try: delete 2", thrown.getMessage());
     }
 }

@@ -3,6 +3,7 @@ package tally;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
 import tally.parser.Command;
 import tally.parser.Parser;
 import tally.storage.Storage;
@@ -82,9 +83,9 @@ public class Tally {
      *
      * <p>With nine commands of a few lines each, keeping them together shows the whole
      * conversation at once, so the switch stays. The trade reverses once a command
-     * needs state of its own, or once leaving one unhandled becomes a real risk: a
-     * switch over an enum is not checked for exhaustiveness, so a new constant
-     * compiles perfectly well with nothing to carry it out.
+     * needs state of its own. A switch over an enum is not checked for exhaustiveness,
+     * so a new constant would otherwise compile with nothing to carry it out; the
+     * default clause turns that into a failure that is at least loud.
      *
      * @param line the line the user typed, with surrounding spaces removed.
      * @return whether the conversation should carry on afterwards.
@@ -96,29 +97,30 @@ public class Tally {
 
         // AI suggested switching to a switch statement instead of the if-else chain.
         switch (command) {
-        case BYE -> {
-            return false;
-        }
-        case LIST -> showTasks();
-        case FIND -> showMatchingTasks(Parser.parseSearchWord(arguments));
-        case MARK -> {
-            Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-            task.markAsDone();
-            ui.show("Nice! I've marked this task as done:", task.toString());
-        }
-        case UNMARK -> {
-            Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-            task.markAsNotDone();
-            ui.show("OK, I've marked this task as not done yet:", task.toString());
-        }
-        case DELETE -> {
-            Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-            tasks.remove(task);
-            ui.show("Noted. I've removed this task:", task.toString(), countSentence());
-        }
-        case TODO -> addTask(Parser.parseTodo(arguments));
-        case DEADLINE -> addTask(Parser.parseDeadline(arguments));
-        case EVENT -> addTask(Parser.parseEvent(arguments));
+            case BYE -> {
+                return false;
+            }
+            case LIST -> showTasks();
+            case FIND -> showMatchingTasks(Parser.parseSearchWord(arguments));
+            case MARK -> {
+                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
+                task.markAsDone();
+                ui.show("Nice! I've marked this task as done:", task.toString());
+            }
+            case UNMARK -> {
+                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
+                task.markAsNotDone();
+                ui.show("OK, I've marked this task as not done yet:", task.toString());
+            }
+            case DELETE -> {
+                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
+                tasks.remove(task);
+                ui.show("Noted. I've removed this task:", task.toString(), countSentence());
+            }
+            case TODO -> addTask(Parser.parseTodo(arguments));
+            case DEADLINE -> addTask(Parser.parseDeadline(arguments));
+            case EVENT -> addTask(Parser.parseEvent(arguments));
+            default -> throw new IllegalStateException("No handling for command: " + command);
         }
         return true;
     }
