@@ -29,10 +29,10 @@ public class MainWindow extends AnchorPane {
     private final Image tallyImage =
             new Image(this.getClass().getResourceAsStream("/images/tally.png"));
 
-    /** Keeps the conversation scrolled to the newest message. */
+    /** Scrolls down whenever the conversation grows, so the newest message is in view. */
     @FXML
     public void initialize() {
-        scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
+        dialogContainer.heightProperty().addListener(observed -> scrollPane.setVvalue(1.0));
     }
 
     /**

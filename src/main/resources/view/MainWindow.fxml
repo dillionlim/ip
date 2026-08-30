@@ -10,13 +10,12 @@
             prefHeight="600.0" prefWidth="460.0" xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="tally.gui.MainWindow">
     <children>
-        <ScrollPane fx:id="scrollPane" hbarPolicy="NEVER" hvalue="1.0" prefHeight="557.0"
+        <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" prefHeight="557.0"
                     prefWidth="460.0" vvalue="1.0" AnchorPane.bottomAnchor="42.0"
                     AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
                     AnchorPane.topAnchor="0.0">
             <content>
-                <VBox fx:id="dialogContainer" minHeight="-Infinity" prefHeight="552.0"
-                      prefWidth="444.0" />
+                <VBox fx:id="dialogContainer" />
             </content>
         </ScrollPane>
         <TextField fx:id="userInput" onAction="#handleUserInput" prefHeight="41.0"
