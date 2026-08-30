@@ -1,6 +1,7 @@
 package tally.task;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /** The tasks on the user's tally, and the things that can be done to them. */
@@ -22,12 +23,15 @@ public class TaskList {
     }
 
     /**
-     * Adds a task to the end of the tally.
+     * Adds tasks to the end of the tally, in the order given.
      *
-     * @param task the task to add.
+     * <p>Takes any number of them so that adding one reads no differently from
+     * adding several, which is what the tests and the file loader both want.
+     *
+     * @param added the tasks to add.
      */
-    public void add(Task task) {
-        tasks.add(task);
+    public void add(Task... added) {
+        Collections.addAll(tasks, added);
     }
 
     /**
