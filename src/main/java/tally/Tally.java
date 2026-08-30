@@ -73,6 +73,19 @@ public class Tally {
     /**
      * Carries out one command from the user, and says whether to keep going.
      *
+     * <p>Commands are dispatched by a switch over the Command enum, rather than by
+     * a class per command carrying an execute method. The latter is how
+     * AddressBook-Level3 is built, and how several classmates built theirs, such as
+     * <a href="https://github.com/NUS-CS2103-AY2627-S1/ip/pull/535">this one</a>,
+     * which has an abstract Command with an execute(TaskList, Ui, Storage) method and
+     * a subclass for each command.
+     *
+     * <p>With nine commands of a few lines each, keeping them together shows the whole
+     * conversation at once, so the switch stays. The trade reverses once a command
+     * needs state of its own, or once leaving one unhandled becomes a real risk: a
+     * switch over an enum is not checked for exhaustiveness, so a new constant
+     * compiles perfectly well with nothing to carry it out.
+     *
      * @param line the line the user typed, with surrounding spaces removed.
      * @return whether the conversation should carry on afterwards.
      * @throws TallyException if Tally cannot carry out the command.
