@@ -156,6 +156,10 @@ public class Tally {
         String arguments = Parser.parseArguments(line);
 
         // AI suggested switching to a switch statement instead of the if-else chain.
+        // Arrow labels keep each branch self-contained.
+        // Command.parse has already rejected any word that is not a command, so reaching
+        // default means an enum constant nobody wired up here: a programming error rather
+        // than anything the user typed, hence IllegalStateException over TallyException.
         switch (command) {
             case BYE -> {
                 return false;
@@ -191,11 +195,11 @@ public class Tally {
             ui.show("Nothing on your tally yet.");
             return;
         }
-        List<Integer> everything = new ArrayList<>();
+        List<Integer> allPositions = new ArrayList<>();
         for (int i = 0; i < tasks.size(); i++) {
-            everything.add(i);
+            allPositions.add(i);
         }
-        ui.show(numbered("Here are the tasks in your list:", everything));
+        ui.show(numbered("Here are the tasks in your list:", allPositions));
     }
 
     /**

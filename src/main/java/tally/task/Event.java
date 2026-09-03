@@ -2,20 +2,23 @@ package tally.task;
 
 /** A task that runs from one stated point in time to another. */
 public class Event extends Task {
-    protected String from;
-    protected String to;
+    /** When the event starts, kept as the user typed it rather than parsed. */
+    protected String start;
+
+    /** When the event ends, in the same raw form as {@link #start}. */
+    protected String end;
 
     /**
      * Creates an event that is not done yet.
      *
      * @param description what is happening.
-     * @param from when it starts, kept exactly as the user typed it.
-     * @param to when it ends, kept exactly as the user typed it.
+     * @param start when it starts, kept exactly as the user typed it.
+     * @param end when it ends, kept exactly as the user typed it.
      */
-    public Event(String description, String from, String to) {
+    public Event(String description, String start, String end) {
         super(description);
-        this.from = from;
-        this.to = to;
+        this.start = start;
+        this.end = end;
     }
 
     /**
@@ -25,7 +28,7 @@ public class Event extends Task {
      */
     @Override
     public String toString() {
-        return String.format("[E]%s (from: %s to: %s)", super.toString(), from, to);
+        return String.format("[E]%s (from: %s to: %s)", super.toString(), start, end);
     }
 
     /**
@@ -35,6 +38,6 @@ public class Event extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return "E | " + super.toSaveFormat() + " | " + from + " | " + to;
+        return "E | " + super.toSaveFormat() + " | " + start + " | " + end;
     }
 }

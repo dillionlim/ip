@@ -28,10 +28,10 @@ public class TaskList {
      * <p>Takes any number of them so that adding one reads no differently from
      * adding several, which is what the tests and the file loader both want.
      *
-     * @param added the tasks to add.
+     * @param tasksToAdd the tasks to add.
      */
-    public void add(Task... added) {
-        Collections.addAll(tasks, added);
+    public void add(Task... tasksToAdd) {
+        Collections.addAll(tasks, tasksToAdd);
     }
 
     /**
