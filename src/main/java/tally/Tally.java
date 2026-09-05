@@ -2,8 +2,9 @@ package tally;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import tally.parser.Command;
 import tally.parser.Parser;
@@ -211,10 +212,7 @@ public class Tally {
             ui.show("Nothing on your tally yet.");
             return;
         }
-        List<Integer> allPositions = new ArrayList<>();
-        for (int i = 0; i < tasks.size(); i++) {
-            allPositions.add(i);
-        }
+        List<Integer> allPositions = IntStream.range(0, tasks.size()).boxed().toList();
         ui.show(formatNumberedTasks("Here are the tasks in your list:", allPositions));
     }
 
@@ -245,16 +243,13 @@ public class Tally {
      * @return the lines to show, ready to hand to the user interface.
      */
     private String[] formatNumberedTasks(String heading, List<Integer> positions) {
-        List<String> lines = new ArrayList<>();
-        lines.add(heading);
-        for (int position : positions) {
-            assert position >= 0 && position < tasks.size()
-                    : "positions come from findPositions or from a walk over the whole tally,"
-                    + " and both yield only places that hold a task, unlike: " + position;
-            // AI suggested String.format instead of concatenating strings manually.
-            lines.add(String.format("%d.%s", position + 1, tasks.get(position)));
-        }
-        return lines.toArray(new String[0]);
+        assert positions.stream().allMatch(position -> position >= 0 && position < tasks.size())
+                : "positions come from findPositions or from a walk over the whole tally, and"
+                + " both yield only places that hold a task, unlike one of: " + positions;
+        // AI suggested String.format instead of concatenating strings manually.
+        Stream<String> numbered = positions.stream()
+                .map(position -> String.format("%d.%s", position + 1, tasks.get(position)));
+        return Stream.concat(Stream.of(heading), numbered).toArray(String[]::new);
     }
 
     /**
