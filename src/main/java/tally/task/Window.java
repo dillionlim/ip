@@ -4,6 +4,9 @@ import java.time.LocalDate;
 
 /** A task that may be done on any day within a stated period. */
 public class Window extends Task {
+    /** The letter standing for this kind of task in the data file. */
+    public static final String TYPE = "W";
+
     /** The first day on which the task may be done. */
     protected LocalDate startDate;
 
@@ -44,8 +47,8 @@ public class Window extends Task {
      */
     @Override
     public String toString() {
-        return String.format("[W]%s (window: %s to %s)", super.toString(),
-                showDate(startDate), showDate(endDate));
+        return String.format("[%s]%s (window: %s to %s)", TYPE, super.toString(),
+                formatDate(startDate), formatDate(endDate));
     }
 
     /**
@@ -58,6 +61,6 @@ public class Window extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return "W | " + super.toSaveFormat() + " | " + startDate + " | " + endDate;
+        return TYPE + " | " + super.toSaveFormat() + " | " + startDate + " | " + endDate;
     }
 }

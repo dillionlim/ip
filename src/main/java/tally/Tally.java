@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -48,6 +49,18 @@ public class Tally {
      */
     public Tally(Path dataFile) {
         this(dataFile, true);
+    }
+
+    /**
+     * Creates a chatbot working on the tally's usual data file.
+     *
+     * <p>Where that file lives is Tally's own business, so a front end that wants the
+     * usual one asks for it this way rather than naming the place itself.
+     *
+     * @param isConsole whether replies are printed and commands read from standard input.
+     */
+    public Tally(boolean isConsole) {
+        this(DATA_FILE, isConsole);
     }
 
     /**
@@ -115,10 +128,7 @@ public class Tally {
 
     /** Greets the user, carries out commands until they leave, then says goodbye. */
     public void run() {
-        ui.showWelcome();
-        if (loadWarning != null) {
-            ui.showError(loadWarning);
-        }
+        getGreeting();
 
         boolean isTalking = true;
         while (isTalking && ui.hasNextCommand()) {
@@ -170,7 +180,7 @@ public class Tally {
                 return false;
             }
             case LIST -> showTasks();
-            case FIND -> showMatchingTasks(Parser.parseSearchWord(arguments));
+            case FIND -> showMatchingTasks(Parser.parseSearchText(arguments));
             case FREE -> showFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
             case MARK -> markTask(arguments, command);
             case UNMARK -> unmarkTask(arguments, command);
@@ -191,29 +201,29 @@ public class Tally {
     }
 
     /** Returns the task the user named by its number, counting from 1. */
-    private Task taskNamedIn(String arguments, Command command) throws TallyException {
+    private Task findTaskNamedIn(String arguments, Command command) throws TallyException {
         return tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
     }
 
     /** Marks the named task done, and shows it as it now reads. */
     private void markTask(String arguments, Command command) throws TallyException {
-        Task task = taskNamedIn(arguments, command);
+        Task task = findTaskNamedIn(arguments, command);
         task.markAsDone();
         ui.show("Nice! I've marked this task as done:", task.toString());
     }
 
     /** Marks the named task not done after all, and shows it as it now reads. */
     private void unmarkTask(String arguments, Command command) throws TallyException {
-        Task task = taskNamedIn(arguments, command);
+        Task task = findTaskNamedIn(arguments, command);
         task.markAsNotDone();
         ui.show("OK, I've marked this task as not done yet:", task.toString());
     }
 
     /** Takes the named task off the tally, and says how many are left. */
     private void deleteTask(String arguments, Command command) throws TallyException {
-        Task task = taskNamedIn(arguments, command);
+        Task task = findTaskNamedIn(arguments, command);
         tasks.remove(task);
-        ui.show("Noted. I've removed this task:", task.toString(), countSentence());
+        ui.show("Noted. I've removed this task:", task.toString(), formatCountSentence());
     }
 
     /**
@@ -227,22 +237,47 @@ public class Tally {
      */
     private void showFreeDays(FreeQuery query) {
         int days = query.days();
-        String answer = tasks.findFreeRun(days, query.from())
-                .map(start -> days == 1
-                        ? String.format("The next free day is %s.", Task.showDate(start))
-                        : String.format("The next %d free days in a row start %s.",
-                                days, Task.showDate(start)))
-                .orElseGet(() -> days == 1
-                        ? String.format("Every day in the year from %s has something on it.",
-                                Task.showDate(query.from()))
-                        : String.format("There is no run of %d free days in the year from %s.",
-                                days, Task.showDate(query.from())));
+        Optional<LocalDate> found = tasks.findFreeRun(days, query.earliestDate());
+        String answer = found.isPresent()
+                ? describeRunFound(found.get(), days)
+                : describeNoRun(query.earliestDate(), days);
 
         if (tasks.hasUnreadableDates()) {
             ui.show(answer, "Events whose times are not dates were not counted.");
             return;
         }
         ui.show(answer);
+    }
+
+    /**
+     * Returns the reply naming when the user is next free for as long as they asked.
+     *
+     * @param start the first day of the run found.
+     * @param days how many days in a row were wanted.
+     * @return a sentence naming the day, reading for one day or for several.
+     */
+    private static String describeRunFound(LocalDate start, int days) {
+        if (days == 1) {
+            return String.format("The next free day is %s.", Task.formatDate(start));
+        }
+        return String.format("The next %d free days in a row start %s.", days,
+                Task.formatDate(start));
+    }
+
+    /**
+     * Returns the reply for when no such run of days exists within the year searched.
+     *
+     * @param earliestDate the day the search started from.
+     * @param days how many days in a row were wanted.
+     * @return a sentence saying so, reading for one day or for several.
+     */
+    private static String describeNoRun(LocalDate earliestDate, int days) {
+        if (days == 1) {
+            return String.format("Every day in the year from %s has something on it.",
+                    Task.formatDate(earliestDate));
+        }
+        return String.format("There is no run of %d free days in the year from %s.", days,
+                Task.formatDate(earliestDate));
     }
 
     /** Shows the whole tally, or says so when there is nothing on it. */
@@ -262,10 +297,10 @@ public class Tally {
      * among the matches, so the number beside it still names that task if the user
      * goes on to mark or delete it.
      *
-     * @param word the text to look for.
+     * @param searchText the text to look for.
      */
-    private void showMatchingTasks(String word) {
-        List<Integer> positions = tasks.findPositions(word);
+    private void showMatchingTasks(String searchText) {
+        List<Integer> positions = tasks.findPositions(searchText);
         if (positions.isEmpty()) {
             ui.show("Nothing on your tally matches that.");
             return;
@@ -286,9 +321,9 @@ public class Tally {
                 : "positions come from findPositions or from a walk over the whole tally, and"
                 + " both yield only places that hold a task, unlike one of: " + positions;
         // AI suggested String.format instead of concatenating strings manually.
-        Stream<String> numbered = positions.stream()
+        Stream<String> numberedTasks = positions.stream()
                 .map(position -> String.format("%d.%s", position + 1, tasks.get(position)));
-        return Stream.concat(Stream.of(heading), numbered).toArray(String[]::new);
+        return Stream.concat(Stream.of(heading), numberedTasks).toArray(String[]::new);
     }
 
     /**
@@ -298,7 +333,7 @@ public class Tally {
      */
     private void addTask(Task task) {
         tasks.add(task);
-        ui.show("Got it. I've added this task:", task.toString(), countSentence());
+        ui.show("Got it. I've added this task:", task.toString(), formatCountSentence());
     }
 
     /**
@@ -306,7 +341,7 @@ public class Tally {
      *
      * @return for example "Now you have 3 tasks in the list."
      */
-    private String countSentence() {
+    private String formatCountSentence() {
         // AI identified grammatical error, manual fix.
         return String.format("Now you have %d %s in the list.",
                 tasks.size(), tasks.size() == 1 ? "task" : "tasks");

@@ -5,6 +5,9 @@ import java.util.Optional;
 
 /** A task that runs from one stated point in time to another. */
 public class Event extends Task {
+    /** The letter standing for this kind of task in the data file. */
+    public static final String TYPE = "E";
+
     /** When the event starts, kept as the user typed it rather than parsed. */
     protected String start;
 
@@ -73,7 +76,7 @@ public class Event extends Task {
      */
     @Override
     public String toString() {
-        return String.format("[E]%s (from: %s to: %s)", super.toString(), start, end);
+        return String.format("[%s]%s (from: %s to: %s)", TYPE, super.toString(), start, end);
     }
 
     /**
@@ -83,6 +86,6 @@ public class Event extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return "E | " + super.toSaveFormat() + " | " + start + " | " + end;
+        return TYPE + " | " + super.toSaveFormat() + " | " + start + " | " + end;
     }
 }

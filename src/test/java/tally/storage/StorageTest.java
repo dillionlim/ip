@@ -56,7 +56,7 @@ public class StorageTest {
     }
 
     @Test
-    public void save_keepsThePermissionsTheFileAlreadyHad() throws TallyException, IOException {
+    public void save_fileWithItsOwnPermissions_keepsThem() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | private\n");
         assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class));
@@ -158,7 +158,7 @@ public class StorageTest {
     }
 
     @Test
-    public void save_replacesWhatWasThereBefore() throws TallyException {
+    public void save_calledAgain_replacesWhatWasThereBefore() throws TallyException {
         Path file = folder.resolve("tally.txt");
         Storage storage = new Storage(file);
         storage.save(List.of(new Todo("first"), new Todo("second")));

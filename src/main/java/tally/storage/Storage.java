@@ -37,6 +37,21 @@ import tally.task.Window;
  * format is that a person can read and correct the file by hand.
  */
 public class Storage {
+    /** Where each part of a task sits on its line in the data file. */
+    private static final int TYPE_FIELD = 0;
+    private static final int DONE_FIELD = 1;
+    private static final int DESCRIPTION_FIELD = 2;
+
+    /** What the done field holds for a task that is, and is not, done. */
+    private static final String DONE = "1";
+    private static final String NOT_DONE = "0";
+
+    /** How many parts a line of each kind of task has. */
+    private static final int TODO_FIELDS = 3;
+    private static final int DEADLINE_FIELDS = 4;
+    private static final int EVENT_FIELDS = 5;
+    private static final int WINDOW_FIELDS = 5;
+
     private final Path file;
 
     /**
@@ -86,7 +101,7 @@ public class Storage {
         if (unreadable.isEmpty()) {
             return new LoadResult(tasks, Optional.empty());
         }
-        return new LoadResult(tasks, Optional.of(noteAbout(unreadable)));
+        return new LoadResult(tasks, Optional.of(describeUnreadableLines(unreadable)));
     }
 
     /**
@@ -99,7 +114,7 @@ public class Storage {
      * @param unreadable the line numbers that held nothing recognizable, counting from 1.
      * @return a sentence naming them, and where the file was copied to.
      */
-    private String noteAbout(List<Integer> unreadable) {
+    private String describeUnreadableLines(List<Integer> unreadable) {
         boolean isSingle = unreadable.size() == 1;
         List<String> numbers = unreadable.stream().map(String::valueOf).toList();
         String which = numbers.size() == 1 ? numbers.get(0)
@@ -114,14 +129,14 @@ public class Storage {
      * Returns the window task a data-file line describes, or null if either date is unreadable.
      *
      * @param description what has to be done.
-     * @param startDate the first date field as it appears in the file.
-     * @param endDate the second date field as it appears in the file.
+     * @param startDateText the first date field as it appears in the file.
+     * @param endDateText the second date field as it appears in the file.
      * @return the window task, or null if the line cannot be read.
      */
-    private static Task parseWindow(String description, String startDate, String endDate) {
+    private static Task readWindow(String description, String startDateText, String endDateText) {
         try {
-            LocalDate start = Parser.parseDate(startDate);
-            LocalDate end = Parser.parseDate(endDate);
+            LocalDate start = Parser.parseDate(startDateText);
+            LocalDate end = Parser.parseDate(endDateText);
             // The parser refuses a backwards window, so a file holding one was edited
             // by hand; letting it through would crash the free-day search later.
             return end.isBefore(start) ? null : new Window(description, start, end);
@@ -138,12 +153,12 @@ public class Storage {
      * line: by returning null.
      *
      * @param description what has to be done.
-     * @param dueDate the date field as it appears in the file.
+     * @param dueDateText the date field as it appears in the file.
      * @return the deadline, or null if the date cannot be read.
      */
-    private static Task parseDeadline(String description, String dueDate) {
+    private static Task readDeadline(String description, String dueDateText) {
         try {
-            return new Deadline(description, Parser.parseDate(dueDate));
+            return new Deadline(description, Parser.parseDate(dueDateText));
         } catch (TallyException exception) {
             return null;
         }
@@ -164,15 +179,15 @@ public class Storage {
     private String copyAside() {
         try {
             byte[] damaged = Files.readAllBytes(file);
-            Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
-            for (int attempt = 1; Files.exists(spoiled); attempt++) {
-                if (Arrays.equals(Files.readAllBytes(spoiled), damaged)) {
-                    return " It is already copied to " + spoiled.getFileName() + ".";
+            Path spoiledFile = file.resolveSibling(file.getFileName() + ".broken");
+            for (int attempt = 1; Files.exists(spoiledFile); attempt++) {
+                if (Arrays.equals(Files.readAllBytes(spoiledFile), damaged)) {
+                    return " It is already copied to " + spoiledFile.getFileName() + ".";
                 }
-                spoiled = file.resolveSibling(file.getFileName() + ".broken." + attempt);
+                spoiledFile = file.resolveSibling(file.getFileName() + ".broken." + attempt);
             }
-            Files.copy(file, spoiled);
-            return " I copied it to " + spoiled.getFileName() + " so you can repair it.";
+            Files.copy(file, spoiledFile);
+            return " I copied it to " + spoiledFile.getFileName() + " so you can repair it.";
         } catch (IOException exception) {
             return " I could not copy it aside.";
         }
@@ -202,7 +217,7 @@ public class Storage {
             // put the old permissions on the replacement.
             Path target = Files.exists(file) ? file.toRealPath() : file;
             if (Files.exists(target) && !Files.isWritable(target)) {
-                throw new TallyException(refusal());
+                throw new TallyException(describeSaveFailure());
             }
 
             partial = target.resolveSibling(target.getFileName() + ".part");
@@ -211,12 +226,12 @@ public class Storage {
             Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             deleteQuietly(partial);
-            throw new TallyException(refusal());
+            throw new TallyException(describeSaveFailure());
         }
     }
 
     /** Returns what to tell the user when the tally could not be written. */
-    private String refusal() {
+    private String describeSaveFailure() {
         return "I could not save your tally to " + file.getFileName() + ".";
     }
 
@@ -268,21 +283,25 @@ public class Storage {
      */
     private static Task parseTask(String line) {
         String[] fields = line.split(" \\| ");
-        boolean isWellFormed = fields.length >= 3
-                && (fields[1].equals("0") || fields[1].equals("1"));
+        boolean isWellFormed = fields.length > DESCRIPTION_FIELD
+                && (fields[DONE_FIELD].equals(NOT_DONE) || fields[DONE_FIELD].equals(DONE));
         if (!isWellFormed) {
             return null;
         }
 
-        Task task = switch (fields[0]) {
-            case "T" -> fields.length == 3 ? new Todo(fields[2]) : null;
-            case "D" -> fields.length == 4 ? parseDeadline(fields[2], fields[3]) : null;
-            case "E" -> fields.length == 5 ? new Event(fields[2], fields[3], fields[4]) : null;
-            case "W" -> fields.length == 5 ? parseWindow(fields[2], fields[3], fields[4]) : null;
+        String description = fields[DESCRIPTION_FIELD];
+        Task task = switch (fields[TYPE_FIELD]) {
+            case Todo.TYPE -> fields.length == TODO_FIELDS ? new Todo(description) : null;
+            case Deadline.TYPE -> fields.length == DEADLINE_FIELDS
+                    ? readDeadline(description, fields[3]) : null;
+            case Event.TYPE -> fields.length == EVENT_FIELDS
+                    ? new Event(description, fields[3], fields[4]) : null;
+            case Window.TYPE -> fields.length == WINDOW_FIELDS
+                    ? readWindow(description, fields[3], fields[4]) : null;
             default -> null;
         };
 
-        if (task != null && fields[1].equals("1")) {
+        if (task != null && fields[DONE_FIELD].equals(DONE)) {
             task.markAsDone();
         }
         return task;

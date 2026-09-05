@@ -2,6 +2,9 @@ package tally.task;
 
 /** A task with nothing attached to it but a description: no date, no time. */
 public class Todo extends Task {
+    /** The letter standing for this kind of task in the data file. */
+    public static final String TYPE = "T";
+
     /**
      * Creates a todo that is not done yet.
      *
@@ -18,7 +21,7 @@ public class Todo extends Task {
      */
     @Override
     public String toString() {
-        return "[T]" + super.toString();
+        return String.format("[%s]%s", TYPE, super.toString());
     }
 
     /**
@@ -28,6 +31,6 @@ public class Todo extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return "T | " + super.toSaveFormat();
+        return TYPE + " | " + super.toSaveFormat();
     }
 }

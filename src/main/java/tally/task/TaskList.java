@@ -53,18 +53,18 @@ public class TaskList {
      * rather than running on.
      *
      * @param days how many free days in a row are wanted, at least one.
-     * @param from the first day that may be offered.
+     * @param earliestDate the first day that may be offered.
      * @return the first day of the earliest such run, or empty if there is none.
      */
-    public Optional<LocalDate> findFreeRun(int days, LocalDate from) {
+    public Optional<LocalDate> findFreeRun(int days, LocalDate earliestDate) {
         assert days >= 1 : "Parser.parseFreeQuery refuses a run shorter than a day: " + days;
-        LocalDate horizon = from.plusDays(SEARCH_HORIZON_DAYS);
-        int freeInARow = 0;
-        for (LocalDate day = from; day.isBefore(horizon); day = day.plusDays(1)) {
+        LocalDate horizon = earliestDate.plusDays(SEARCH_HORIZON_DAYS);
+        int freeDaysInARow = 0;
+        for (LocalDate day = earliestDate; day.isBefore(horizon); day = day.plusDays(1)) {
             LocalDate candidate = day;
             boolean isTaken = tasks.stream().anyMatch(task -> task.occupies(candidate));
-            freeInARow = isTaken ? 0 : freeInARow + 1;
-            if (freeInARow == days) {
+            freeDaysInARow = isTaken ? 0 : freeDaysInARow + 1;
+            if (freeDaysInARow == days) {
                 return Optional.of(day.minusDays(days - 1L));
             }
         }
@@ -128,13 +128,13 @@ public class TaskList {
      * rather than places among the matches, so a number shown to the user still
      * names the same task in a later command.
      *
-     * @param word the text to look for, matched without regard to case.
+     * @param searchText the text to look for, matched without regard to case.
      * @return the positions of the matching tasks, in the order they were added.
      */
-    public List<Integer> findPositions(String word) {
-        String lowercaseWord = word.toLowerCase();
+    public List<Integer> findPositions(String searchText) {
+        String lowercaseSearchText = searchText.toLowerCase();
         return IntStream.range(0, tasks.size())
-                .filter(i -> tasks.get(i).getDescription().toLowerCase().contains(lowercaseWord))
+                .filter(i -> tasks.get(i).getDescription().toLowerCase().contains(lowercaseSearchText))
                 .boxed()
                 .toList();
     }

@@ -32,11 +32,6 @@ public class Ui {
     private final boolean isConsole;
     private final StringBuilder pendingResponse = new StringBuilder();
 
-    /** Creates a Ui that reads the user's commands from standard input and prints its replies. */
-    public Ui() {
-        this(true);
-    }
-
     /**
      * Creates a Ui that either prints its replies or keeps them to be collected.
      *
@@ -121,9 +116,9 @@ public class Ui {
      * @return the lines said, one per line, with no trailing newline.
      */
     public String takePendingResponse() {
-        String said = pendingResponse.toString().stripTrailing();
+        String response = pendingResponse.toString().stripTrailing();
         pendingResponse.setLength(0);
-        return said;
+        return response;
     }
 
     /** Stops reading the user's input. */

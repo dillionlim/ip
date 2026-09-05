@@ -1,8 +1,6 @@
 package tally.gui;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -14,9 +12,8 @@ import tally.Tally;
 /** The window Tally runs in. */
 public class Main extends Application {
     /** Where the tally is kept, relative to the folder the app is started from. */
-    private static final Path DATA_FILE = Paths.get("data", "tally.txt");
 
-    private final Tally tally = new Tally(DATA_FILE, false);
+    private final Tally tally = new Tally(false);
 
     /**
      * Builds the window and shows it.
