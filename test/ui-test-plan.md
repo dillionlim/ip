@@ -1665,3 +1665,97 @@ ____________________________________________________________
 ```text
 tally.txt >>> T | 0 | laundry and dry cleaning
 ```
+
+## TC-31 - free reads its markers as whole words, in either order
+
+**Aim:** the markers are matched as complete words rather than as the start of one, so "/forgotten" is not read as "/for" and the date after "/from" no longer swallows the rest of the line and gets complained about as a date. Both markers are optional and carry their own meaning, so either order is accepted, while giving one twice is refused.
+
+**Input**
+```text
+free /from 2026-09-08 /for 3
+free /for 3 /from 2026-09-08
+free /forgotten
+free /forbidden 3
+free /for 3 /for 4
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+The next 3 free days in a row start Sep 08 2026.
+____________________________________________________________
+
+____________________________________________________________
+The next 3 free days in a row start Sep 08 2026.
+____________________________________________________________
+
+____________________________________________________________
+free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+____________________________________________________________
+
+____________________________________________________________
+free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+____________________________________________________________
+
+____________________________________________________________
+free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## TC-32 - A window with two faults is told about the one it can be sure of
+
+**Aim:** a description holding a bar cannot be written back whatever else is wrong with the command, so it is reported before the dates are read. This matches `deadline`, which already refused the bar first, and means the reply does not depend on which fault the parser happened to reach first.
+
+**Input**
+```text
+window notes|draft /between soon /and 2026-09-12
+window notes|draft /between 2026-09-12 /and 2026-09-08
+window notes /between 2026-09-12 /and 2026-09-08
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
+____________________________________________________________
+
+____________________________________________________________
+A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
+____________________________________________________________
+
+____________________________________________________________
+A window cannot end before it starts, and this one ends 2026-09-08 but starts 2026-09-12.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```

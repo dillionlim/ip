@@ -7,7 +7,7 @@ public class Deadline extends Task {
     /** The letter standing for this kind of task in the data file. */
     public static final String TYPE = "D";
 
-    protected LocalDate dueDate;
+    private final LocalDate dueDate;
 
     /**
      * Creates a deadline that is not done yet.
@@ -51,6 +51,6 @@ public class Deadline extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + " | " + super.toSaveFormat() + " | " + dueDate;
+        return TYPE + FIELD_SEPARATOR + super.toSaveFormat() + FIELD_SEPARATOR + dueDate;
     }
 }

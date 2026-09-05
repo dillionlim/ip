@@ -9,10 +9,10 @@ public class Event extends Task {
     public static final String TYPE = "E";
 
     /** When the event starts, kept as the user typed it rather than parsed. */
-    protected String start;
+    private final String start;
 
     /** When the event ends, in the same raw form as {@link #start}. */
-    protected String end;
+    private final String end;
 
     /** The start read as a date, or empty when it was not written as one. */
     private final Optional<LocalDate> startDay;
@@ -54,8 +54,11 @@ public class Event extends Task {
         if (hasUnreadableDates()) {
             return false;
         }
-        LocalDate first = startDay.get().isAfter(endDay.get()) ? endDay.get() : startDay.get();
-        LocalDate last = startDay.get().isAfter(endDay.get()) ? startDay.get() : endDay.get();
+        LocalDate from = startDay.get();
+        LocalDate to = endDay.get();
+        boolean isBackwards = from.isAfter(to);
+        LocalDate first = isBackwards ? to : from;
+        LocalDate last = isBackwards ? from : to;
         return !day.isBefore(first) && !day.isAfter(last);
     }
 
@@ -86,6 +89,6 @@ public class Event extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + " | " + super.toSaveFormat() + " | " + start + " | " + end;
+        return TYPE + FIELD_SEPARATOR + super.toSaveFormat() + FIELD_SEPARATOR + start + FIELD_SEPARATOR + end;
     }
 }

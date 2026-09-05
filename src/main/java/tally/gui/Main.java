@@ -11,7 +11,9 @@ import tally.Tally;
 
 /** The window Tally runs in. */
 public class Main extends Application {
-    /** Where the tally is kept, relative to the folder the app is started from. */
+    /** How small the window may be made before the conversation stops fitting in it. */
+    private static final double MIN_WINDOW_HEIGHT = 420.0;
+    private static final double MIN_WINDOW_WIDTH = 460.0;
 
     private final Tally tally = new Tally(false);
 
@@ -28,8 +30,8 @@ public class Main extends Application {
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.setTitle("Tally");
-            stage.setMinHeight(420.0);
-            stage.setMinWidth(460.0);
+            stage.setMinHeight(MIN_WINDOW_HEIGHT);
+            stage.setMinWidth(MIN_WINDOW_WIDTH);
             loader.<MainWindow>getController().setTally(tally);
             stage.show();
         } catch (IOException exception) {

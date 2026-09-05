@@ -31,6 +31,6 @@ public class Todo extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + " | " + super.toSaveFormat();
+        return TYPE + FIELD_SEPARATOR + super.toSaveFormat();
     }
 }

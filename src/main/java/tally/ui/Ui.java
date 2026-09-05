@@ -52,6 +52,7 @@ public class Ui {
      * @return false once the input has ended.
      */
     public boolean hasNextCommand() {
+        requireConsole();
         return scanner.hasNextLine();
     }
 
@@ -61,6 +62,7 @@ public class Ui {
      * @return the command line.
      */
     public String readCommand() {
+        requireConsole();
         return scanner.nextLine().trim();
     }
 
@@ -92,10 +94,10 @@ public class Ui {
     public void show(String... lines) {
         assert lines.length > 0
                 : "showing nothing would print a pair of rules with no message between them";
-        for (String line : lines) {
-            pendingResponse.append(line).append(System.lineSeparator());
-        }
         if (!isConsole) {
+            for (String line : lines) {
+                pendingResponse.append(line).append(System.lineSeparator());
+            }
             return;
         }
         System.out.println(RULE);
@@ -104,6 +106,21 @@ public class Ui {
         }
         System.out.println(RULE);
         System.out.println();
+    }
+
+    /**
+     * Refuses a call that only makes sense when the user is at a terminal.
+     *
+     * <p>There is no scanner when Tally is answering a window, so a front end that
+     * asked for one would otherwise meet a null with nothing to say for itself.
+     *
+     * @throws IllegalStateException if there is no console to read from.
+     */
+    private void requireConsole() {
+        if (!isConsole) {
+            throw new IllegalStateException("There is no console to read commands from;"
+                    + " a window asks Tally for a reply instead.");
+        }
     }
 
     /**
@@ -123,6 +140,7 @@ public class Ui {
 
     /** Stops reading the user's input. */
     public void close() {
+        requireConsole();
         scanner.close();
     }
 }

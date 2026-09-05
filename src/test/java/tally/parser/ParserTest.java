@@ -59,6 +59,31 @@ public class ParserTest {
     }
 
     @Test
+    public void parseFreeQuery_markersInEitherOrder_areBothRead() throws TallyException {
+        // Optional markers carry their own meaning, so the order they are given in does
+        // not change what was asked for.
+        FreeQuery wanted = new FreeQuery(3, LocalDate.of(2026, 9, 20));
+        assertEquals(wanted, Parser.parseFreeQuery("/for 3 /from 2026-09-20", TODAY));
+        assertEquals(wanted, Parser.parseFreeQuery("/from 2026-09-20 /for 3", TODAY));
+    }
+
+    @Test
+    public void parseFreeQuery_wordMerelyStartingWithAMarker_throws() {
+        // Matching a marker as a prefix let "/forgotten" pass as "/for", and let the date
+        // after "/from" swallow the rest of the line and be complained about as a date.
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/forgotten", TODAY));
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/forbidden 3", TODAY));
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/fromage 2026-09-08", TODAY));
+    }
+
+    @Test
+    public void parseFreeQuery_markerGivenTwice_throws() {
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/for 3 /for 4", TODAY));
+        assertThrows(TallyException.class, () ->
+                Parser.parseFreeQuery("/from 2026-09-08 /from 2026-09-09", TODAY));
+    }
+
+    @Test
     public void parseFreeQuery_countBelowOne_throws() {
         assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/for 0", TODAY));
         assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/for -2", TODAY));
@@ -181,13 +206,13 @@ public class ParserTest {
     }
 
     @Test
-    public void parseSearchWord_givenAWord_returnsIt() throws TallyException {
+    public void parseSearchText_givenSomeText_returnsIt() throws TallyException {
         assertEquals("book", Parser.parseSearchText("book"));
         assertEquals("read book", Parser.parseSearchText("read book"));
     }
 
     @Test
-    public void parseSearchWord_nothingToLookFor_throws() {
+    public void parseSearchText_nothingToLookFor_throws() {
         assertThrows(TallyException.class, () -> Parser.parseSearchText(""));
     }
 

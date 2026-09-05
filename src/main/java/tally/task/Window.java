@@ -8,10 +8,10 @@ public class Window extends Task {
     public static final String TYPE = "W";
 
     /** The first day on which the task may be done. */
-    protected LocalDate startDate;
+    private final LocalDate startDate;
 
     /** The last day on which the task may be done, never before {@link #startDate}. */
-    protected LocalDate endDate;
+    private final LocalDate endDate;
 
     /**
      * Creates a window task that is not done yet.
@@ -22,6 +22,10 @@ public class Window extends Task {
      */
     public Window(String description, LocalDate startDate, LocalDate endDate) {
         super(description);
+        assert !endDate.isBefore(startDate)
+                : "Parser.parseWindow and Storage.readWindow both refuse a window that ends"
+                + " before it starts, so one reaching here came from neither: "
+                + startDate + " to " + endDate;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -61,6 +65,6 @@ public class Window extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + " | " + super.toSaveFormat() + " | " + startDate + " | " + endDate;
+        return TYPE + FIELD_SEPARATOR + super.toSaveFormat() + FIELD_SEPARATOR + startDate + FIELD_SEPARATOR + endDate;
     }
 }

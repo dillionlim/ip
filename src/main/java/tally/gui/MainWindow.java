@@ -14,6 +14,9 @@ import tally.Tally;
 
 /** Drives the main window: takes what is typed, and shows what Tally says back. */
 public class MainWindow extends AnchorPane {
+    /** How long the goodbye stays on screen before the window closes itself. */
+    private static final Duration FAREWELL_PAUSE = Duration.seconds(1.5);
+
     @FXML
     private ScrollPane scrollPane;
     @FXML
@@ -58,17 +61,35 @@ public class MainWindow extends AnchorPane {
         if (input.isBlank()) {
             return;
         }
-        String response = tally.getResponse(input);
+        showConversationTurn(input, tally.getResponse(input));
+        if (tally.isExiting()) {
+            scheduleExit();
+        }
+    }
+
+    /**
+     * Puts one turn of the conversation on screen and readies the box for the next.
+     *
+     * @param input what the user typed.
+     * @param response what Tally said back.
+     */
+    private void showConversationTurn(String input, String response) {
         dialogContainer.getChildren().addAll(
                 DialogBox.getUserDialog(input, userImage),
                 DialogBox.getTallyDialog(response, tallyImage));
         userInput.clear();
-        if (tally.isExiting()) {
-            userInput.setDisable(true);
-            sendButton.setDisable(true);
-            PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
-            pause.setOnFinished(event -> Platform.exit());
-            pause.play();
-        }
+    }
+
+    /**
+     * Stops the user typing again and closes the window once the goodbye has been read.
+     *
+     * <p>Closing at once would take the goodbye off the screen before anyone saw it.
+     */
+    private void scheduleExit() {
+        userInput.setDisable(true);
+        sendButton.setDisable(true);
+        PauseTransition pause = new PauseTransition(FAREWELL_PAUSE);
+        pause.setOnFinished(event -> Platform.exit());
+        pause.play();
     }
 }

@@ -122,7 +122,7 @@ public class TaskList {
     }
 
     /**
-     * Returns the positions of the tasks whose description contains the given word.
+     * Returns the positions of the tasks whose description contains the given text.
      *
      * <p>Positions count from 0, and are the tasks' places on the whole tally
      * rather than places among the matches, so a number shown to the user still

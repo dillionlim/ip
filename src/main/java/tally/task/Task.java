@@ -9,6 +9,15 @@ import java.util.regex.Pattern;
 
 /** A single entry on the user's tally: what has to be done, and whether it is done yet. */
 public class Task {
+    /** How the data file separates one part of a task from the next. */
+    public static final String FIELD_SEPARATOR = " | ";
+
+    /** What the done field of a data-file line holds for a task that is done. */
+    public static final String DONE = "1";
+
+    /** What that same field holds for a task that is not done. */
+    public static final String NOT_DONE = "0";
+
     /**
      * How a date carried by a task is shown to the user.
      *
@@ -18,7 +27,7 @@ public class Task {
      * dates, and they should not drift apart. The locale is fixed so the month name does
      * not depend on the machine the chatbot runs on.
      */
-    protected static final DateTimeFormatter DISPLAY_FORMAT =
+    private static final DateTimeFormatter DISPLAY_FORMAT =
             DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
 
     /**
@@ -29,8 +38,8 @@ public class Task {
      */
     private static final Pattern DATE_FORM = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
-    protected String description;
-    protected boolean isDone;
+    private final String description;
+    private boolean isDone;
 
     /**
      * Creates a task that is not done yet.
@@ -145,6 +154,6 @@ public class Task {
      * @return for example "1 | read book".
      */
     public String toSaveFormat() {
-        return String.format("%d | %s", isDone ? 1 : 0, description);
+        return (isDone ? DONE : NOT_DONE) + FIELD_SEPARATOR + description;
     }
 }

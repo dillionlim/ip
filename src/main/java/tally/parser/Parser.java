@@ -27,6 +27,10 @@ public class Parser {
      */
     private static final String FIELD_SEPARATOR = "|";
 
+    /** The markers the free command takes, each matched as a whole word. */
+    private static final String FOR_MARKER = "/for";
+    private static final String FROM_MARKER = "/from";
+
     /**
      * Returns the command named by the first word of a line.
      *
@@ -136,10 +140,10 @@ public class Parser {
     }
 
     /**
-     * Returns the word a "find" command is searching for.
+     * Returns the text a "find" command is searching for.
      *
      * @param arguments what the user typed after the command word.
-     * @return the word to look for.
+     * @return the text to look for.
      * @throws TallyException if nothing was given to search for.
      */
     public static String parseSearchText(String arguments) throws TallyException {
@@ -165,25 +169,24 @@ public class Parser {
     public static FreeQuery parseFreeQuery(String arguments, LocalDate today) throws TallyException {
         String usage = "free takes an optional /for count and an optional /from date."
                 + " Try: free /for 3 /from 2026-09-08";
-        String rest = arguments.trim();
-
-        LocalDate earliestDate = today;
-        int fromMarkerIndex = rest.indexOf("/from");
-        if (fromMarkerIndex >= 0) {
-            String dateText = rest.substring(fromMarkerIndex + "/from".length()).trim();
-            if (dateText.isEmpty()) {
-                throw new TallyException(usage);
-            }
-            earliestDate = parseDate(dateText);
-            rest = rest.substring(0, fromMarkerIndex).trim();
-        }
+        String trimmed = arguments.trim();
+        String[] tokens = trimmed.isEmpty() ? new String[0] : trimmed.split("\\s+");
 
         int days = 1;
-        if (!rest.isEmpty()) {
-            if (!rest.startsWith("/for")) {
+        LocalDate earliestDate = today;
+        boolean hasCount = false;
+        boolean hasDate = false;
+        for (int i = 0; i < tokens.length; i += 2) {
+            boolean hasValue = i + 1 < tokens.length;
+            if (tokens[i].equals(FOR_MARKER) && hasValue && !hasCount) {
+                days = parseDayCount(tokens[i + 1], usage);
+                hasCount = true;
+            } else if (tokens[i].equals(FROM_MARKER) && hasValue && !hasDate) {
+                earliestDate = parseDate(tokens[i + 1]);
+                hasDate = true;
+            } else {
                 throw new TallyException(usage);
             }
-            days = parseDayCount(rest.substring("/for".length()).trim(), usage);
         }
         return new FreeQuery(days, earliestDate);
     }
@@ -244,8 +247,10 @@ public class Parser {
      */
     private static void rejectSeparator(String text) throws TallyException {
         if (text.contains(FIELD_SEPARATOR)) {
-            throw new TallyException("A task cannot contain \"|\", because that is how the"
-                    + " file Tally keeps your tally in separates one part from the next.");
+            throw new TallyException(String.format(
+                    "A task cannot contain \"%s\", because that is how the file Tally keeps"
+                            + " your tally in separates one part from the next.",
+                    FIELD_SEPARATOR));
         }
     }
 

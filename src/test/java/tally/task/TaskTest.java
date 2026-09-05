@@ -2,6 +2,7 @@ package tally.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,6 +13,14 @@ import org.junit.jupiter.api.Test;
 
 /** Tests how each kind of task shows itself to the user and writes itself to the file. */
 public class TaskTest {
+    @Test
+    public void constructor_windowEndingBeforeItStarts_isRefused() {
+        // The class documents that the end is never before the start. The parser and the
+        // storage reader both enforce it, so one arriving here came from neither.
+        assertThrows(AssertionError.class, () ->
+                new Window("backwards", LocalDate.of(2026, 9, 12), LocalDate.of(2026, 9, 8)));
+    }
+
     @Test
     public void occupies_eventEndsWrittenBackwards_stillNameTheSameDays() {
         Event backwards = new Event("trip", "2026-09-10", "2026-09-08");

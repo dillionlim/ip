@@ -18,11 +18,13 @@ import tally.task.TaskList;
 import tally.ui.Ui;
 
 /**
- * Tally is a command-line chatbot that helps the user keep a tally of their tasks.
+ * Tally is a chatbot that helps the user keep a tally of their tasks, in a window
+ * or in a terminal.
  *
  * <p>This class holds the parts together and does nothing itself: Ui talks to the
  * user, Parser makes sense of what they typed, TaskList holds the tasks, and
- * Storage keeps them on disk between runs.
+ * Storage keeps them on disk between runs. The window calls getResponse for each
+ * line; the terminal calls run, which asks for lines until the user leaves.
  */
 public class Tally {
     /** Where the tally is kept, relative to the project root. */
@@ -30,10 +32,10 @@ public class Tally {
 
     private final Ui ui;
     private final Storage storage;
-    private TaskList tasks;
+    private final TaskList tasks;
 
-    /** What went wrong while reading the data file, or null if nothing did. */
-    private String loadWarning;
+    /** What went wrong while reading the data file, if anything did. */
+    private final Optional<String> loadWarning;
 
     /** Whether the user has said goodbye. */
     private boolean isExiting;
@@ -73,14 +75,18 @@ public class Tally {
     public Tally(Path dataFile, boolean isConsole) {
         this.ui = new Ui(isConsole);
         this.storage = new Storage(dataFile);
+        TaskList loaded;
+        Optional<String> warning;
         try {
-            LoadResult loaded = storage.load();
-            this.tasks = new TaskList(loaded.tasks());
-            this.loadWarning = loaded.note().orElse(null);
+            LoadResult result = storage.load();
+            loaded = new TaskList(result.tasks());
+            warning = result.note();
         } catch (TallyException exception) {
-            this.tasks = new TaskList();
-            this.loadWarning = exception.getMessage();
+            loaded = new TaskList();
+            warning = Optional.of(exception.getMessage());
         }
+        this.tasks = loaded;
+        this.loadWarning = warning;
     }
 
     /**
@@ -93,7 +99,7 @@ public class Tally {
     public String getResponse(String input) {
         String line = input.trim();
         try {
-            isExiting = !isStillTalkingAfter(line);
+            isExiting = !runCommand(line);
             if (isExiting) {
                 ui.showGoodbye();
             }
@@ -120,9 +126,7 @@ public class Tally {
      */
     public String getGreeting() {
         ui.showWelcome();
-        if (loadWarning != null) {
-            ui.showError(loadWarning);
-        }
+        loadWarning.ifPresent(ui::showError);
         return ui.takePendingResponse();
     }
 
@@ -134,7 +138,7 @@ public class Tally {
         while (isTalking && ui.hasNextCommand()) {
             String line = ui.readCommand();
             try {
-                isTalking = isStillTalkingAfter(line);
+                isTalking = runCommand(line);
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -145,52 +149,22 @@ public class Tally {
     }
 
     /**
-     * Carries out one command from the user, and says whether to keep going.
-     *
-     * <p>Commands are dispatched by a switch over the Command enum, rather than by
-     * a class per command carrying an execute method. The latter is how
-     * AddressBook-Level3 is built, and how several classmates built theirs, such as
-     * <a href="https://github.com/NUS-CS2103-AY2627-S1/ip/pull/535">this one</a>,
-     * which has an abstract Command with an execute(TaskList, Ui, Storage) method and
-     * a subclass for each command.
-     *
-     * <p>With nine commands of a few lines each, keeping them together shows the whole
-     * conversation at once, so the switch stays. The trade reverses once a command
-     * needs state of its own. A switch over an enum is not checked for exhaustiveness,
-     * so a new constant would otherwise compile with nothing to carry it out; the
-     * default clause turns that into a failure that is at least loud.
+     * Carries out one command from the user, and says whether the conversation
+     * carries on afterwards.
      *
      * @param line the line the user typed, with surrounding spaces removed.
      * @return whether the conversation should carry on afterwards.
      * @throws TallyException if Tally cannot carry out the command.
      */
-    private boolean isStillTalkingAfter(String line) throws TallyException {
+    private boolean runCommand(String line) throws TallyException {
         Command command = Parser.parseCommand(line);
         assert command != null
                 : "Parser.parseCommand returns a constant or throws, so it never yields null";
-        String arguments = Parser.parseArguments(line);
-
-        // AI suggested switching to a switch statement instead of the if-else chain.
-        // Arrow labels keep each branch self-contained.
-        // Command.parse has already rejected any word that is not a command, so reaching
-        // default means an enum constant nobody wired up here: a programming error rather
-        // than anything the user typed, hence IllegalStateException over TallyException.
-        switch (command) {
-            case BYE -> {
-                return false;
-            }
-            case LIST -> showTasks();
-            case FIND -> showMatchingTasks(Parser.parseSearchText(arguments));
-            case FREE -> showFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
-            case MARK -> markTask(arguments, command);
-            case UNMARK -> unmarkTask(arguments, command);
-            case DELETE -> deleteTask(arguments, command);
-            case TODO -> addTask(Parser.parseTodo(arguments));
-            case DEADLINE -> addTask(Parser.parseDeadline(arguments));
-            case EVENT -> addTask(Parser.parseEvent(arguments));
-            case WINDOW -> addTask(Parser.parseWindow(arguments));
-            default -> throw new IllegalStateException("No handling for command: " + command);
+        if (command == Command.BYE) {
+            return false;
         }
+
+        carryOut(command, Parser.parseArguments(line));
 
         // Saving after a command that only read the tally would rewrite the file for
         // nothing, and every rewrite is a chance to lose what is already there.
@@ -200,28 +174,65 @@ public class Tally {
         return true;
     }
 
-    /** Returns the task the user named by its number, counting from 1. */
-    private Task findTaskNamedIn(String arguments, Command command) throws TallyException {
-        return tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
+    /**
+     * Carries out one command, which by now is not the one that ends the conversation.
+     *
+     * <p>Commands are dispatched by a switch over the Command enum, rather than by
+     * a class per command carrying an execute method. The latter is how
+     * AddressBook-Level3 is built, and how several classmates built theirs, such as
+     * <a href="https://github.com/NUS-CS2103-AY2627-S1/ip/pull/535">this one</a>,
+     * which has an abstract Command with an execute(TaskList, Ui, Storage) method and
+     * a subclass for each command.
+     *
+     * <p>With ten commands of a few lines each, keeping them together shows the whole
+     * conversation at once, so the switch stays. The trade reverses once a command
+     * needs state of its own. A switch over an enum is not checked for exhaustiveness,
+     * so a new constant would otherwise compile with nothing to carry it out; the
+     * default clause turns that into a failure that is at least loud.
+     *
+     * @param command what the user asked for.
+     * @param arguments the rest of the line they typed, with surrounding spaces removed.
+     * @throws TallyException if Tally cannot carry the command out.
+     */
+    private void carryOut(Command command, String arguments) throws TallyException {
+        // AI suggested switching to a switch statement instead of the if-else chain.
+        // Arrow labels keep each branch self-contained.
+        // Command.parse has already rejected any word that is not a command, and the
+        // caller has already dealt with bye, so reaching default means an enum constant
+        // nobody wired up here: a programming error rather than anything the user typed,
+        // hence IllegalStateException over TallyException.
+        switch (command) {
+            case LIST -> showTasks();
+            case FIND -> showMatchingTasks(Parser.parseSearchText(arguments));
+            case FREE -> showFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
+            case MARK -> markTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
+            case UNMARK -> unmarkTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
+            case DELETE -> deleteTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
+            case TODO -> addTask(Parser.parseTodo(arguments));
+            case DEADLINE -> addTask(Parser.parseDeadline(arguments));
+            case EVENT -> addTask(Parser.parseEvent(arguments));
+            case WINDOW -> addTask(Parser.parseWindow(arguments));
+            default -> throw new IllegalStateException("No handling for command: " + command);
+        }
     }
 
-    /** Marks the named task done, and shows it as it now reads. */
-    private void markTask(String arguments, Command command) throws TallyException {
-        Task task = findTaskNamedIn(arguments, command);
+    /** Marks the task at the given place done, and shows it as it now reads. */
+    private void markTask(int position) {
+        Task task = tasks.get(position);
         task.markAsDone();
         ui.show("Nice! I've marked this task as done:", task.toString());
     }
 
-    /** Marks the named task not done after all, and shows it as it now reads. */
-    private void unmarkTask(String arguments, Command command) throws TallyException {
-        Task task = findTaskNamedIn(arguments, command);
+    /** Marks the task at the given place not done after all, and shows it as it now reads. */
+    private void unmarkTask(int position) {
+        Task task = tasks.get(position);
         task.markAsNotDone();
         ui.show("OK, I've marked this task as not done yet:", task.toString());
     }
 
-    /** Takes the named task off the tally, and says how many are left. */
-    private void deleteTask(String arguments, Command command) throws TallyException {
-        Task task = findTaskNamedIn(arguments, command);
+    /** Takes the task at the given place off the tally, and says how many are left. */
+    private void deleteTask(int position) {
+        Task task = tasks.get(position);
         tasks.remove(task);
         ui.show("Noted. I've removed this task:", task.toString(), formatCountSentence());
     }
@@ -291,7 +302,7 @@ public class Tally {
     }
 
     /**
-     * Shows the tasks whose description contains the given word.
+     * Shows the tasks whose description contains the given text.
      *
      * <p>Each is shown against its place on the whole tally rather than its place
      * among the matches, so the number beside it still names that task if the user
