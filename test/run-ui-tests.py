@@ -60,17 +60,35 @@ class Crashed(Exception):
         self.printed = printed
 
 
+def as_text(raw):
+    """Returns output as text, decoding it if it came back as bytes.
+
+    subprocess hands back bytes for a run it had to stop, whatever text= asked
+    for, so anything that reads what a stopped run printed has to allow for it.
+    """
+    if raw is None:
+        return ""
+    return raw if isinstance(raw, str) else raw.decode(errors="replace")
+
+
 def read_fenced_block(lines, index):
-    """Returns the body of the next ``` block at or after index, and the line after it."""
+    """Returns the body of the next ``` block at or after index, and the line after it.
+
+    Raises if the block is never closed, since the rest of the plan would
+    otherwise be read as its contents.
+    """
     while index < len(lines) and not lines[index].startswith("```"):
         index += 1
     if index >= len(lines):
         raise ValueError("expected a fenced code block but reached the end of the plan")
+    opened = index + 1
     index += 1
     body = []
     while index < len(lines) and not lines[index].startswith("```"):
         body.append(lines[index])
         index += 1
+    if index >= len(lines):
+        raise ValueError(f"the block opened on line {opened} of the plan is never closed")
     return "\n".join(body), index + 1
 
 
@@ -92,7 +110,10 @@ def read_into_case(case, lines, index):
         return index + 1
     section = SECTION.match(lines[index])
     if section:
-        case[SECTION_KEY[section.group(1)]], after = read_fenced_block(lines, index + 1)
+        key = SECTION_KEY[section.group(1)]
+        if case[key] is not None:
+            raise ValueError(f"{case['id']} gives more than one {section.group(1)} block")
+        case[key], after = read_fenced_block(lines, index + 1)
         return after
     return index + 1
 
@@ -191,8 +212,11 @@ def invoke(commands, data_file, classpath):
                                 input=stdin_text, capture_output=True, text=True,
                                 timeout=TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired as expired:
-        raise Crashed(f"the program was still running after {TIMEOUT_SECONDS} seconds,"
-                      " so it was stopped", expired.stdout or "") from expired
+        stopped = (f"the program was still running after {TIMEOUT_SECONDS} seconds,"
+                   " so it was stopped")
+        complained = as_text(expired.stderr).strip()
+        raise Crashed(f"{stopped}:\n{complained}" if complained else stopped,
+                      as_text(expired.stdout)) from expired
     noise = result.stderr.strip()
     if result.returncode != 0:
         # Expected output followed by a crash is not a pass. An uncaught exception or a
@@ -343,10 +367,10 @@ def select_cases():
     cases = parse_plan(PLAN.read_text(encoding="utf-8"))
     if not wanted:
         return cases
-    chosen = [case for case in cases if case["id"].upper() in wanted]
-    if not chosen:
-        sys.exit(f"no test case in {PLAN.name} matches {', '.join(sorted(wanted))}")
-    return chosen
+    missing = wanted - {case["id"].upper() for case in cases}
+    if missing:
+        sys.exit(f"no test case in {PLAN.name} is named {', '.join(sorted(missing))}")
+    return [case for case in cases if case["id"].upper() in wanted]
 
 
 def main():
