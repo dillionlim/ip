@@ -2,8 +2,10 @@ package tally.task;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /** A single entry on the user's tally: what has to be done, and whether it is done yet. */
 public class Task {
@@ -18,6 +20,14 @@ public class Task {
      */
     protected static final DateTimeFormatter DISPLAY_FORMAT =
             DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
+
+    /**
+     * The one shape a date may be written in, wherever it comes from.
+     *
+     * <p>LocalDate.parse also reads forms such as "+999999999-12-31", which nobody means
+     * to type and which cannot be worked with afterwards without overflowing.
+     */
+    private static final Pattern DATE_FORM = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
     protected String description;
     protected boolean isDone;
@@ -51,6 +61,23 @@ public class Task {
     }
 
     /**
+     * Returns the date some text names, if it names one at all.
+     *
+     * @param text the text to read.
+     * @return the date, or empty if the text is not a date written as yyyy-mm-dd.
+     */
+    public static Optional<LocalDate> readDate(String text) {
+        if (!DATE_FORM.matcher(text).matches()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(LocalDate.parse(text));
+        } catch (DateTimeParseException exception) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Returns a date as the user should see it.
      *
      * @param date the date to show.
@@ -61,15 +88,19 @@ public class Task {
     }
 
     /**
-     * Returns the days this task takes up, which is none unless it names any.
+     * Returns whether this task takes up a given day, which no task does unless it
+     * names days at all.
      *
-     * <p>Each kind of task answers for itself rather than having a caller ask what
-     * kind it is, so a new kind joins the free-day search by overriding this alone.
+     * <p>Each kind of task answers for itself rather than having a caller ask what kind
+     * it is, so a new kind joins the free-day search by overriding this alone. Asking
+     * about one day at a time also means a task spanning centuries costs nothing to
+     * ask about, where listing its days would not fit in memory.
      *
-     * @return the days taken up, in order, or an empty list for a task naming none.
+     * @param day the day being considered.
+     * @return true when this task takes up that day.
      */
-    public List<LocalDate> occupiedDates() {
-        return List.of();
+    public boolean occupies(LocalDate day) {
+        return false;
     }
 
     /**

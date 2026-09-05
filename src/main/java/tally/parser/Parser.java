@@ -1,12 +1,11 @@
 package tally.parser;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.regex.Pattern;
 
 import tally.TallyException;
 import tally.task.Deadline;
 import tally.task.Event;
+import tally.task.Task;
 import tally.task.Todo;
 import tally.task.Window;
 
@@ -19,22 +18,14 @@ import tally.task.Window;
  */
 public class Parser {
     /**
-     * The shape a date has to be written in.
-     *
-     * <p>LocalDate.parse also reads forms such as "+999999999-12-31", which nobody
-     * means to type and which overflows the date arithmetic done later, so only the
-     * yyyy-mm-dd form the user is told about is accepted.
-     */
-    private static final Pattern DATE_FORM = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
-
-    /**
      * How the data file separates one part of a task from the next.
      *
      * <p>The file has no way to escape it, so text holding it would be written out and
-     * read back as a different number of parts. Refusing it where the user types it is
-     * what keeps a task readable back.
+     * read back as a different number of parts. The whole character is refused rather
+     * than the separator as written, because the file joins parts with a space either
+     * side: a description merely ending in a bar builds the separator on being saved.
      */
-    private static final String FIELD_SEPARATOR = " | ";
+    private static final String FIELD_SEPARATOR = "|";
 
     /**
      * Returns the command named by the first word of a line.
@@ -240,7 +231,7 @@ public class Parser {
      */
     private static void rejectSeparator(String text) throws TallyException {
         if (text.contains(FIELD_SEPARATOR)) {
-            throw new TallyException("A task cannot contain \" | \", because that is how the"
+            throw new TallyException("A task cannot contain \"|\", because that is how the"
                     + " file Tally keeps your tally in separates one part from the next.");
         }
     }
@@ -256,18 +247,9 @@ public class Parser {
      * @throws TallyException if the text is not a date written as yyyy-mm-dd.
      */
     public static LocalDate parseDate(String text) throws TallyException {
-        if (!DATE_FORM.matcher(text).matches()) {
-            throw new TallyException(String.format(
-                    "I could not read \"%s\" as a date."
-                            + " Write it as yyyy-mm-dd, for example 2019-10-15.", text));
-        }
-        try {
-            return LocalDate.parse(text);
-        } catch (DateTimeParseException exception) {
-            throw new TallyException(String.format(
-                    "I could not read \"%s\" as a date."
-                            + " Write it as yyyy-mm-dd, for example 2019-10-15.", text));
-        }
+        return Task.readDate(text).orElseThrow(() -> new TallyException(String.format(
+                "I could not read \"%s\" as a date."
+                        + " Write it as yyyy-mm-dd, for example 2019-10-15.", text)));
     }
 
     /**

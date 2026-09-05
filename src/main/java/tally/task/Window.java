@@ -1,7 +1,6 @@
 package tally.task;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /** A task that may be done on any day within a stated period. */
 public class Window extends Task {
@@ -25,16 +24,17 @@ public class Window extends Task {
     }
 
     /**
-     * Returns every day of this window, both ends included.
+     * Returns whether this window takes up a given day.
      *
-     * <p>A window claims the whole period rather than a single day, because the work
-     * may fall on any day of it and none of them can be promised free.
+     * <p>A window claims every day of its period rather than a single day, because the
+     * work may fall on any of them and none can be promised free.
      *
-     * @return the days from the start to the end, in order.
+     * @param day the day being considered.
+     * @return true when the day falls between the two ends, both included.
      */
     @Override
-    public List<LocalDate> occupiedDates() {
-        return startDate.datesUntil(endDate.plusDays(1)).toList();
+    public boolean occupies(LocalDate day) {
+        return !day.isBefore(startDate) && !day.isAfter(endDate);
     }
 
     /**

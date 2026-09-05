@@ -1608,7 +1608,7 @@ ____________________________________________________________
 
 ## TC-30 - Text the data file could not carry back is refused
 
-**Aim:** the data file separates a task's parts with ` | ` and has no way to escape it, so a description holding it would be written out and read back as a different number of parts. Refusing it where it is typed is what keeps every task readable back. A date outside the yyyy-mm-dd form is refused for the same reason: the wider forms parse, then overflow the date arithmetic done later.
+**Aim:** the data file separates a task's parts with ` | ` and has no way to escape it, so a description holding a bar would be written out and read back as a different number of parts. The whole character is refused, not just the separator as written: the file joins parts with a space either side, so a description merely ending in a bar builds the separator on being saved. Refusing it where it is typed is what keeps every task readable back. A date outside the yyyy-mm-dd form is refused for the same reason: the wider forms parse, then overflow the date arithmetic done later.
 
 **Input**
 ```text
@@ -1634,11 +1634,11 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-A task cannot contain " | ", because that is how the file Tally keeps your tally in separates one part from the next.
+A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
 ____________________________________________________________
 
 ____________________________________________________________
-A task cannot contain " | ", because that is how the file Tally keeps your tally in separates one part from the next.
+A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
 ____________________________________________________________
 
 ____________________________________________________________

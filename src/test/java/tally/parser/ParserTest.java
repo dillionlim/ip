@@ -22,6 +22,10 @@ public class ParserTest {
         // The data file has no way to escape " | ", so a task holding it would be
         // written out and read back as a different number of parts.
         assertThrows(TallyException.class, () -> Parser.parseTodo("laundry | dry cleaning"));
+        // A description merely ending in a bar builds the separator when the file joins
+        // the parts, so the whole character has to go, not just the separator as written.
+        assertThrows(TallyException.class, () -> Parser.parseDeadline("a | /by 2026-10-01"));
+        assertThrows(TallyException.class, () -> Parser.parseTodo("x|y"));
         assertThrows(TallyException.class, () -> Parser.parseDeadline("a | b /by 2026-10-01"));
         assertThrows(TallyException.class, () -> Parser.parseEvent("meet /from Mon | room 3 /to 4pm"));
         assertThrows(TallyException.class, () ->

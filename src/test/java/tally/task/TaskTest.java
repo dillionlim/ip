@@ -11,11 +11,24 @@ import org.junit.jupiter.api.Test;
 /** Tests how each kind of task shows itself to the user and writes itself to the file. */
 public class TaskTest {
     @Test
-    public void occupiedDates_eventEndsWrittenBackwards_stillNameTheSameDays() {
+    public void occupies_eventEndsWrittenBackwards_stillNameTheSameDays() {
         Event backwards = new Event("trip", "2026-09-10", "2026-09-08");
         Event forwards = new Event("trip", "2026-09-08", "2026-09-10");
-        assertEquals(forwards.occupiedDates(), backwards.occupiedDates());
-        assertEquals(3, backwards.occupiedDates().size());
+        for (int day = 7; day <= 11; day++) {
+            LocalDate each = LocalDate.of(2026, 9, day);
+            assertEquals(forwards.occupies(each), backwards.occupies(each), each.toString());
+        }
+        assertTrue(backwards.occupies(LocalDate.of(2026, 9, 9)));
+        assertFalse(backwards.occupies(LocalDate.of(2026, 9, 11)));
+    }
+
+    @Test
+    public void occupies_endsTooExtremeToWorkWith_takesUpNothing() {
+        // Listing the days between these ends would not fit in memory; asking about one
+        // day at a time costs nothing, and an end outside yyyy-mm-dd is not a date here.
+        Event doom = new Event("doom", "+999999999-12-30", "-999999999-01-01");
+        assertFalse(doom.occupies(LocalDate.of(2026, 9, 8)));
+        assertTrue(doom.hasUnreadableDates());
     }
 
     @Test
