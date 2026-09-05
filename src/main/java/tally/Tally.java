@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import tally.parser.Command;
 import tally.parser.FreeQuery;
 import tally.parser.Parser;
+import tally.storage.LoadResult;
 import tally.storage.Storage;
 import tally.task.Task;
 import tally.task.TaskList;
@@ -60,7 +61,9 @@ public class Tally {
         this.ui = new Ui(isConsole);
         this.storage = new Storage(dataFile);
         try {
-            this.tasks = new TaskList(storage.load());
+            LoadResult loaded = storage.load();
+            this.tasks = new TaskList(loaded.tasks());
+            this.loadWarning = loaded.note().orElse(null);
         } catch (TallyException exception) {
             this.tasks = new TaskList();
             this.loadWarning = exception.getMessage();
@@ -80,8 +83,6 @@ public class Tally {
             isExiting = !isStillTalkingAfter(line);
             if (isExiting) {
                 ui.showGoodbye();
-            } else {
-                storage.save(tasks.asList());
             }
         } catch (TallyException exception) {
             ui.showError(exception.getMessage());
@@ -124,7 +125,6 @@ public class Tally {
             String line = ui.readCommand();
             try {
                 isTalking = isStillTalkingAfter(line);
-                storage.save(tasks.asList());
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -180,6 +180,12 @@ public class Tally {
             case EVENT -> addTask(Parser.parseEvent(arguments));
             case WINDOW -> addTask(Parser.parseWindow(arguments));
             default -> throw new IllegalStateException("No handling for command: " + command);
+        }
+
+        // Saving after a command that only read the tally would rewrite the file for
+        // nothing, and every rewrite is a chance to lose what is already there.
+        if (command.changesTally()) {
+            storage.save(tasks.asList());
         }
         return true;
     }
