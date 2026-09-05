@@ -95,6 +95,8 @@ public class Ui {
      * @param lines the lines of the message, printed in order.
      */
     public void show(String... lines) {
+        assert lines.length > 0
+                : "showing nothing would print a pair of rules with no message between them";
         for (String line : lines) {
             pendingResponse.append(line).append(System.lineSeparator());
         }

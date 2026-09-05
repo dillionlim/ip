@@ -131,7 +131,9 @@ def build_program():
 def invoke(commands, data_file, classpath):
     """Returns what one run of the program printed when fed these commands."""
     stdin_text = commands + "\n" if commands else ""
-    result = subprocess.run(["java", "-cp", classpath, MAIN_CLASS, str(data_file)],
+    # -ea so the assertions in the code are checked as the cases run; without it every
+    # assert is skipped and these sessions would prove nothing about them.
+    result = subprocess.run(["java", "-ea", "-cp", classpath, MAIN_CLASS, str(data_file)],
                             input=stdin_text, capture_output=True, text=True,
                             timeout=TIMEOUT_SECONDS)
     if result.stderr.strip():
