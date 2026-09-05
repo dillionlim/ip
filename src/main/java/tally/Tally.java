@@ -80,8 +80,6 @@ public class Tally {
             isExiting = !isStillTalkingAfter(line);
             if (isExiting) {
                 ui.showGoodbye();
-            } else {
-                storage.save(tasks.asList());
             }
         } catch (TallyException exception) {
             ui.showError(exception.getMessage());
@@ -124,7 +122,6 @@ public class Tally {
             String line = ui.readCommand();
             try {
                 isTalking = isStillTalkingAfter(line);
-                storage.save(tasks.asList());
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -180,6 +177,12 @@ public class Tally {
             case EVENT -> addTask(Parser.parseEvent(arguments));
             case WINDOW -> addTask(Parser.parseWindow(arguments));
             default -> throw new IllegalStateException("No handling for command: " + command);
+        }
+
+        // Saving after a command that only read the tally would rewrite the file for
+        // nothing, and every rewrite is a chance to lose what is already there.
+        if (command.changesTally()) {
+            storage.save(tasks.asList());
         }
         return true;
     }

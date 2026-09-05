@@ -27,6 +27,33 @@ public class StorageTest {
     private Path folder;
 
     @Test
+    public void save_writeFails_leavesTheFileAsItWas() throws IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | keep me\n");
+        // A directory where the half-written copy must go makes the write fail, which is
+        // what a full disk would do. The tally already saved has to survive that.
+        Files.createDirectory(folder.resolve("tally.txt.part"));
+
+        Storage storage = new Storage(file);
+        assertThrows(TallyException.class, () -> storage.save(List.of(new Todo("new task"))));
+        assertEquals("T | 0 | keep me", Files.readString(file).strip());
+    }
+
+    @Test
+    public void load_damagedTwice_keepsEveryRescueCopy() throws IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | first attempt\nBAD LINE\n");
+        assertThrows(TallyException.class, () -> new Storage(file).load());
+
+        Files.writeString(file, "T | 0 | second attempt\nWORSE LINE\n");
+        assertThrows(TallyException.class, () -> new Storage(file).load());
+
+        // The second damaged file must not overwrite what the first one rescued.
+        assertTrue(Files.readString(folder.resolve("tally.txt.broken")).contains("first attempt"));
+        assertTrue(Files.readString(folder.resolve("tally.txt.broken.1")).contains("second attempt"));
+    }
+
+    @Test
     public void load_noFileYet_returnsNoTasks() throws TallyException {
         assertTrue(new Storage(folder.resolve("tally.txt")).load().isEmpty());
     }

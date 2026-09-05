@@ -132,8 +132,11 @@ public class Storage {
      */
     private String setAside() {
         Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
+        for (int attempt = 1; Files.exists(spoiled); attempt++) {
+            spoiled = file.resolveSibling(file.getFileName() + ".broken." + attempt);
+        }
         try {
-            Files.move(file, spoiled, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(file, spoiled);
             return " I moved it to " + spoiled.getFileName() + " so you can repair it.";
         } catch (IOException exception) {
             return "";
@@ -155,7 +158,13 @@ public class Storage {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            Files.write(file, tasks.stream().map(Task::toSaveFormat).toList());
+            Path partial = file.resolveSibling(file.getFileName() + ".part");
+            try {
+                Files.write(partial, tasks.stream().map(Task::toSaveFormat).toList());
+                Files.move(partial, file, StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                Files.deleteIfExists(partial);
+            }
         } catch (IOException exception) {
             throw new TallyException("I could not save your tally to " + file.getFileName() + ".");
         }

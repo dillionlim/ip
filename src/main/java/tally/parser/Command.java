@@ -13,22 +13,38 @@ import tally.TallyException;
  * built from the same source, so the two cannot fall out of step.
  */
 public enum Command {
-    TODO("todo"),
-    DEADLINE("deadline"),
-    EVENT("event"),
-    WINDOW("window"),
-    LIST("list"),
-    MARK("mark"),
-    UNMARK("unmark"),
-    DELETE("delete"),
-    FIND("find"),
-    FREE("free"),
-    BYE("bye");
+    TODO("todo", true),
+    DEADLINE("deadline", true),
+    EVENT("event", true),
+    WINDOW("window", true),
+    LIST("list", false),
+    MARK("mark", true),
+    UNMARK("unmark", true),
+    DELETE("delete", true),
+    FIND("find", false),
+    FREE("free", false),
+    BYE("bye", false);
 
     private final String keyword;
 
-    Command(String keyword) {
+    /** Whether carrying this command out can leave the tally different from before. */
+    private final boolean changesTally;
+
+    Command(String keyword, boolean changesTally) {
         this.keyword = keyword;
+        this.changesTally = changesTally;
+    }
+
+    /**
+     * Returns whether this command can change what is on the tally.
+     *
+     * <p>A command that only reads the tally needs no save afterwards, and saving
+     * anyway would rewrite the file for a command that changed nothing.
+     *
+     * @return true for the commands that add, remove or alter a task.
+     */
+    public boolean changesTally() {
+        return changesTally;
     }
 
     /**
