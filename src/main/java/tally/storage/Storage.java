@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import tally.TallyException;
 import tally.task.Deadline;
@@ -52,10 +53,10 @@ public class Storage {
      * @throws TallyException if the file cannot be read, or holds a line that is not
      *     in the expected format.
      */
-    public List<Task> load() throws TallyException {
+    public LoadResult load() throws TallyException {
         List<Task> tasks = new ArrayList<>();
         if (!Files.exists(file)) {
-            return tasks;
+            return new LoadResult(tasks, Optional.empty());
         }
 
         List<String> lines;
@@ -63,9 +64,10 @@ public class Storage {
             lines = Files.readAllLines(file);
         } catch (IOException exception) {
             throw new TallyException("I could not read " + file.getFileName()
-                    + ", so I am starting with an empty tally." + setAside());
+                    + ", so I am starting with an empty tally." + copyAside());
         }
 
+        List<Integer> unreadable = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
             if (line.isEmpty()) {
@@ -73,14 +75,37 @@ public class Storage {
             }
             Task task = parseTask(line);
             if (task == null) {
-                throw new TallyException(String.format(
-                        "Line %d of %s is not in a format I recognize, so I am starting"
-                                + " with an empty tally.%s",
-                        i + 1, file.getFileName(), setAside()));
+                unreadable.add(i + 1);
+            } else {
+                tasks.add(task);
             }
-            tasks.add(task);
         }
-        return tasks;
+
+        if (unreadable.isEmpty()) {
+            return new LoadResult(tasks, Optional.empty());
+        }
+        return new LoadResult(tasks, Optional.of(noteAbout(unreadable)));
+    }
+
+    /**
+     * Returns what to tell the user about the lines that could not be read.
+     *
+     * <p>The file is copied rather than moved, because the tasks that did load stay on
+     * the tally and the next change writes over the original, which would otherwise
+     * take the unreadable lines with it.
+     *
+     * @param unreadable the line numbers that held nothing recognizable, counting from 1.
+     * @return a sentence naming them, and where the file was copied to.
+     */
+    private String noteAbout(List<Integer> unreadable) {
+        boolean isSingle = unreadable.size() == 1;
+        List<String> numbers = unreadable.stream().map(String::valueOf).toList();
+        String which = numbers.size() == 1 ? numbers.get(0)
+                : String.join(", ", numbers.subList(0, numbers.size() - 1))
+                        + " and " + numbers.get(numbers.size() - 1);
+        return String.format("I could not read %s %s of %s, so %s not on your tally.%s",
+                isSingle ? "line" : "lines", which, file.getFileName(),
+                isSingle ? "that task is" : "those tasks are", copyAside());
     }
 
     /**
@@ -130,14 +155,14 @@ public class Storage {
      * @return a sentence saying where the file was put, or an empty string if it
      *     could not be moved, in which case nothing is promised about it.
      */
-    private String setAside() {
+    private String copyAside() {
         Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
         for (int attempt = 1; Files.exists(spoiled); attempt++) {
             spoiled = file.resolveSibling(file.getFileName() + ".broken." + attempt);
         }
         try {
-            Files.move(file, spoiled);
-            return " I moved it to " + spoiled.getFileName() + " so you can repair it.";
+            Files.copy(file, spoiled);
+            return " I copied it to " + spoiled.getFileName() + " so you can repair it.";
         } catch (IOException exception) {
             return "";
         }

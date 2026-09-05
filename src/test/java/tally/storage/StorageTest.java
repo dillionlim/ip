@@ -1,7 +1,6 @@
 package tally.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -40,13 +39,13 @@ public class StorageTest {
     }
 
     @Test
-    public void load_damagedTwice_keepsEveryRescueCopy() throws IOException {
+    public void load_damagedTwice_keepsEveryRescueCopy() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | first attempt\nBAD LINE\n");
-        assertThrows(TallyException.class, () -> new Storage(file).load());
+        assertTrue(new Storage(file).load().note().isPresent());
 
         Files.writeString(file, "T | 0 | second attempt\nWORSE LINE\n");
-        assertThrows(TallyException.class, () -> new Storage(file).load());
+        assertTrue(new Storage(file).load().note().isPresent());
 
         // The second damaged file must not overwrite what the first one rescued.
         assertTrue(Files.readString(folder.resolve("tally.txt.broken")).contains("first attempt"));
@@ -55,7 +54,7 @@ public class StorageTest {
 
     @Test
     public void load_noFileYet_returnsNoTasks() throws TallyException {
-        assertTrue(new Storage(folder.resolve("tally.txt")).load().isEmpty());
+        assertTrue(new Storage(folder.resolve("tally.txt")).load().tasks().isEmpty());
     }
 
     @Test
@@ -71,7 +70,7 @@ public class StorageTest {
                 new Window("submit form", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 12)));
         storage.save(written);
 
-        List<Task> read = storage.load();
+        List<Task> read = storage.load().tasks();
         assertEquals(written.size(), read.size());
         for (int i = 0; i < written.size(); i++) {
             assertEquals(written.get(i).toString(), read.get(i).toString());
@@ -91,49 +90,57 @@ public class StorageTest {
         Storage storage = new Storage(file);
         storage.save(List.of(new Todo("first"), new Todo("second")));
         storage.save(List.of(new Todo("only")));
-        assertEquals(1, storage.load().size());
+        assertEquals(1, storage.load().tasks().size());
     }
 
     @Test
-    public void load_lineNotInTheSavedFormat_throws() throws IOException {
+    public void load_lineNotInTheSavedFormat_isSkippedAndReported() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | read book\nthis line is nonsense\n");
-        assertThrows(TallyException.class, () -> new Storage(file).load());
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(1, loaded.tasks().size());
+        assertEquals("[T][ ] read book", loaded.tasks().get(0).toString());
+        assertTrue(loaded.note().orElseThrow().contains("line 2"));
     }
 
     @Test
-    public void load_dateNotInTheSavedFormat_throws() throws IOException {
+    public void load_unreadableDateOrFieldsOrFlag_isSkippedAndReported() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
-        Files.writeString(file, "D | 0 | return book | last Tuesday\n");
-        assertThrows(TallyException.class, () -> new Storage(file).load());
+        Files.writeString(file, "D | 0 | return book | last Tuesday\n"
+                + "T | 0 | read book | extra field\n"
+                + "T | maybe | read book\n"
+                + "T | 0 | the only good one\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(1, loaded.tasks().size());
+        assertEquals("[T][ ] the only good one", loaded.tasks().get(0).toString());
+        assertTrue(loaded.note().orElseThrow().contains("lines 1, 2 and 3"));
     }
 
     @Test
-    public void load_wrongNumberOfFields_throws() throws IOException {
+    public void load_everyLineReadable_reportsNothing() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
-        Files.writeString(file, "T | 0 | read book | extra field\n");
-        assertThrows(TallyException.class, () -> new Storage(file).load());
+        Files.writeString(file, "T | 0 | read book\nT | 1 | return book\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(2, loaded.tasks().size());
+        assertTrue(loaded.note().isEmpty());
     }
 
     @Test
-    public void load_doneFlagNotZeroOrOne_throws() throws IOException {
-        Path file = folder.resolve("tally.txt");
-        Files.writeString(file, "T | maybe | read book\n");
-        assertThrows(TallyException.class, () -> new Storage(file).load());
-    }
-
-    @Test
-    public void load_damagedFile_movedAsideWithItsContentsKept() throws IOException {
+    public void load_damagedFile_copiedAsideWithItsContentsKept() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
         String original = "T | 0 | precious task\nthis line is nonsense\n";
         Files.writeString(file, original);
 
-        assertThrows(TallyException.class, () -> new Storage(file).load());
+        new Storage(file).load();
 
-        // The damaged file must survive: the next save would otherwise write over it.
+        // Copied, not moved: the tasks that loaded stay on the tally, so the next save
+        // writes over the original and would otherwise take the bad line with it.
         Path spoiled = folder.resolve("tally.txt.broken");
         assertTrue(Files.exists(spoiled));
-        assertFalse(Files.exists(file));
+        assertTrue(Files.exists(file));
         assertEquals(original, Files.readString(spoiled));
     }
 
@@ -141,6 +148,6 @@ public class StorageTest {
     public void load_blankLines_ignored() throws IOException, TallyException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "\nT | 0 | read book\n\n\nT | 1 | return book\n\n");
-        assertEquals(2, new Storage(file).load().size());
+        assertEquals(2, new Storage(file).load().tasks().size());
     }
 }

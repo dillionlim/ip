@@ -957,7 +957,7 @@ ____________________________________________________________
 
 ## TC-18 - A damaged data file is reported, not obeyed
 
-**Aim:** A line that is not in the saved format makes Tally say which line is wrong and start with an empty tally, rather than throwing or silently loading half the file. Level-7's stretch goal. The good first line is deliberately not kept, so the user is never left working on a tally that is quietly incomplete.
+**Aim:** A line that is not in the saved format is skipped and named, while every line that reads is kept. Level-7's stretch goal. One unreadable line costing the user every other task is a worse answer than losing the one line, so long as the reply says which line went and where the original was kept.
 
 **Given the data file**
 ```text
@@ -986,11 +986,13 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-Line 2 of tally.txt is not in a format I recognize, so I am starting with an empty tally. I moved it to tally.txt.broken so you can repair it.
+I could not read line 2 of tally.txt, so that task is not on your tally. I copied it to tally.txt.broken so you can repair it.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Here are the tasks in your list:
+1.[T][X] read book
+2.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1060,7 +1062,7 @@ ____________________________________________________________
 
 ## TC-20 - A damaged file is moved aside, not destroyed
 
-**Aim:** A file that fails to load is renamed before anything can write over it, so its contents survive for the user to repair. Regression test: Tally used to refuse the damaged file and then destroy it anyway, because the first command saved the empty tally straight over it. Typing a command here is the point, since that is what used to do the damage.
+**Aim:** A file holding two unreadable lines is copied before anything can write over it, so the original survives for the user to repair while the tasks that did load stay on the tally. Regression test: Tally used to discard every task in the file, and before that destroyed the file outright when the first command saved over it. Typing a command here is the point, since that is what used to do the damage.
 
 **Given the data file**
 ```text
@@ -1089,13 +1091,13 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-Line 2 of tally.txt is not in a format I recognize, so I am starting with an empty tally. I moved it to tally.txt.broken so you can repair it.
+I could not read lines 2 and 3 of tally.txt, so those tasks are not on your tally. I copied it to tally.txt.broken so you can repair it.
 ____________________________________________________________
 
 ____________________________________________________________
 Got it. I've added this task:
 [T][ ] start again
-Now you have 1 task in the list.
+Now you have 2 tasks in the list.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1105,6 +1107,7 @@ ____________________________________________________________
 
 **Expected files after the run**
 ```text
+tally.txt >>> T | 0 | precious task
 tally.txt >>> T | 0 | start again
 tally.txt.broken >>> T | 0 | precious task
 tally.txt.broken >>> GARBAGE LINE
@@ -1162,7 +1165,7 @@ tally.txt >>> D | 0 | return book | 2019-06-06
 
 ## TC-22 - A data file holding an unreadable date is damage
 
-**Aim:** A deadline in the data file whose date is not yyyy-mm-dd cannot be turned into a task, so it is reported as damage and the file is moved aside, rather than the user being asked about a file they did not type. This is the file-side counterpart of TC-07.
+**Aim:** A deadline in the data file whose date is not yyyy-mm-dd cannot be turned into a task, so that line is skipped and named and the file is copied aside, rather than the user being asked about a file they did not type. Here it is the only line, so the tally is empty afterwards. This is the file-side counterpart of TC-07.
 
 **Given the data file**
 ```text
@@ -1189,7 +1192,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-Line 1 of tally.txt is not in a format I recognize, so I am starting with an empty tally. I moved it to tally.txt.broken so you can repair it.
+I could not read line 1 of tally.txt, so that task is not on your tally. I copied it to tally.txt.broken so you can repair it.
 ____________________________________________________________
 
 ____________________________________________________________

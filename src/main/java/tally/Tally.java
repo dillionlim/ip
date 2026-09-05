@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import tally.parser.Command;
 import tally.parser.FreeQuery;
 import tally.parser.Parser;
+import tally.storage.LoadResult;
 import tally.storage.Storage;
 import tally.task.Task;
 import tally.task.TaskList;
@@ -60,7 +61,9 @@ public class Tally {
         this.ui = new Ui(isConsole);
         this.storage = new Storage(dataFile);
         try {
-            this.tasks = new TaskList(storage.load());
+            LoadResult loaded = storage.load();
+            this.tasks = new TaskList(loaded.tasks());
+            this.loadWarning = loaded.note().orElse(null);
         } catch (TallyException exception) {
             this.tasks = new TaskList();
             this.loadWarning = exception.getMessage();
