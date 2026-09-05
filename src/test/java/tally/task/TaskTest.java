@@ -51,7 +51,7 @@ public class TaskTest {
     }
 
     @Test
-    public void hasUnreadableDates_onlyWhenTheEndsAreNotDates() {
+    public void hasUnreadableDates_datesOrTextEnds_trueOnlyForText() {
         assertFalse(new Event("trip", "2026-09-08", "2026-09-10").hasUnreadableDates());
         assertFalse(new Event("trip", "2026-09-10", "2026-09-08").hasUnreadableDates());
         assertTrue(new Event("standup", "Mon 2pm", "3pm").hasUnreadableDates());
@@ -122,7 +122,7 @@ public class TaskTest {
     }
 
     @Test
-    public void getStatusIcon_reflectsWhetherDone() {
+    public void getStatusIcon_doneAndNotDone_showsCrossOrSpace() {
         Todo todo = new Todo("read book");
         assertEquals(" ", todo.getStatusIcon());
         todo.markAsDone();

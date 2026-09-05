@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,14 +47,15 @@ public class TallyTest {
     @Test
     public void getResponse_everyReply_isNeverEmpty() {
         Tally tally = newTally();
-        for (String command : new String[] {"list", "todo read book", "mark 1", "find book",
-            "delete 1", "blah", "mark 99"}) {
+        List<String> commands = List.of("list", "todo read book", "mark 1", "find book",
+                "delete 1", "blah", "mark 99");
+        for (String command : commands) {
             assertFalse(tally.getResponse(command).isBlank(), "empty reply for: " + command);
         }
     }
 
     @Test
-    public void isExiting_onlyAfterGoodbye() {
+    public void isExiting_beforeAndAfterGoodbye_flipsOnlyOnGoodbye() {
         Tally tally = newTally();
         tally.getResponse("todo read book");
         assertFalse(tally.isExiting());

@@ -37,6 +37,21 @@ import tally.task.Window;
  * format is that a person can read and correct the file by hand.
  */
 public class Storage {
+    /** Where each part of a task sits on its line in the data file. */
+    private static final int TYPE_FIELD = 0;
+    private static final int DONE_FIELD = 1;
+    private static final int DESCRIPTION_FIELD = 2;
+
+    /** What the done field holds for a task that is, and is not, done. */
+    private static final String DONE = "1";
+    private static final String NOT_DONE = "0";
+
+    /** How many parts a line of each kind of task has. */
+    private static final int TODO_FIELDS = 3;
+    private static final int DEADLINE_FIELDS = 4;
+    private static final int EVENT_FIELDS = 5;
+    private static final int WINDOW_FIELDS = 5;
+
     private final Path file;
 
     /**
@@ -268,21 +283,25 @@ public class Storage {
      */
     private static Task parseTask(String line) {
         String[] fields = line.split(" \\| ");
-        boolean isWellFormed = fields.length >= 3
-                && (fields[1].equals("0") || fields[1].equals("1"));
+        boolean isWellFormed = fields.length > DESCRIPTION_FIELD
+                && (fields[DONE_FIELD].equals(NOT_DONE) || fields[DONE_FIELD].equals(DONE));
         if (!isWellFormed) {
             return null;
         }
 
-        Task task = switch (fields[0]) {
-            case "T" -> fields.length == 3 ? new Todo(fields[2]) : null;
-            case "D" -> fields.length == 4 ? readDeadline(fields[2], fields[3]) : null;
-            case "E" -> fields.length == 5 ? new Event(fields[2], fields[3], fields[4]) : null;
-            case "W" -> fields.length == 5 ? readWindow(fields[2], fields[3], fields[4]) : null;
+        String description = fields[DESCRIPTION_FIELD];
+        Task task = switch (fields[TYPE_FIELD]) {
+            case Todo.TYPE -> fields.length == TODO_FIELDS ? new Todo(description) : null;
+            case Deadline.TYPE -> fields.length == DEADLINE_FIELDS
+                    ? readDeadline(description, fields[3]) : null;
+            case Event.TYPE -> fields.length == EVENT_FIELDS
+                    ? new Event(description, fields[3], fields[4]) : null;
+            case Window.TYPE -> fields.length == WINDOW_FIELDS
+                    ? readWindow(description, fields[3], fields[4]) : null;
             default -> null;
         };
 
-        if (task != null && fields[1].equals("1")) {
+        if (task != null && fields[DONE_FIELD].equals(DONE)) {
             task.markAsDone();
         }
         return task;

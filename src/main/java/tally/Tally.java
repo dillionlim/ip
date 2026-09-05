@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -236,22 +237,47 @@ public class Tally {
      */
     private void showFreeDays(FreeQuery query) {
         int days = query.days();
-        String answer = tasks.findFreeRun(days, query.earliestDate())
-                .map(start -> days == 1
-                        ? String.format("The next free day is %s.", Task.formatDate(start))
-                        : String.format("The next %d free days in a row start %s.",
-                                days, Task.formatDate(start)))
-                .orElseGet(() -> days == 1
-                        ? String.format("Every day in the year from %s has something on it.",
-                                Task.formatDate(query.earliestDate()))
-                        : String.format("There is no run of %d free days in the year from %s.",
-                                days, Task.formatDate(query.earliestDate())));
+        Optional<LocalDate> found = tasks.findFreeRun(days, query.earliestDate());
+        String answer = found.isPresent()
+                ? describeRunFound(found.get(), days)
+                : describeNoRun(query.earliestDate(), days);
 
         if (tasks.hasUnreadableDates()) {
             ui.show(answer, "Events whose times are not dates were not counted.");
             return;
         }
         ui.show(answer);
+    }
+
+    /**
+     * Returns the reply naming when the user is next free for as long as they asked.
+     *
+     * @param start the first day of the run found.
+     * @param days how many days in a row were wanted.
+     * @return a sentence naming the day, reading for one day or for several.
+     */
+    private static String describeRunFound(LocalDate start, int days) {
+        if (days == 1) {
+            return String.format("The next free day is %s.", Task.formatDate(start));
+        }
+        return String.format("The next %d free days in a row start %s.", days,
+                Task.formatDate(start));
+    }
+
+    /**
+     * Returns the reply for when no such run of days exists within the year searched.
+     *
+     * @param earliestDate the day the search started from.
+     * @param days how many days in a row were wanted.
+     * @return a sentence saying so, reading for one day or for several.
+     */
+    private static String describeNoRun(LocalDate earliestDate, int days) {
+        if (days == 1) {
+            return String.format("Every day in the year from %s has something on it.",
+                    Task.formatDate(earliestDate));
+        }
+        return String.format("There is no run of %d free days in the year from %s.", days,
+                Task.formatDate(earliestDate));
     }
 
     /** Shows the whole tally, or says so when there is nothing on it. */

@@ -117,7 +117,7 @@ public class TaskListTest {
     }
 
     @Test
-    public void findPositions_matchesPartOfAWord() {
+    public void findPositions_wordInsideALongerWord_stillMatches() {
         TaskList tasks = new TaskList();
         tasks.add(new Todo("bookshop"));
         assertEquals(List.of(0), tasks.findPositions("book"));
@@ -141,7 +141,7 @@ public class TaskListTest {
     }
 
     @Test
-    public void isEmpty_reflectsWhetherAnythingIsHeld() {
+    public void isEmpty_withAndWithoutTasks_reflectsWhatIsHeld() {
         TaskList tasks = new TaskList();
         assertTrue(tasks.isEmpty());
         tasks.add(new Todo("something"));

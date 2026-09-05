@@ -4,6 +4,9 @@ import java.time.LocalDate;
 
 /** A task that has to be finished before a stated date. */
 public class Deadline extends Task {
+    /** The letter standing for this kind of task in the data file. */
+    public static final String TYPE = "D";
+
     protected LocalDate dueDate;
 
     /**
@@ -35,7 +38,7 @@ public class Deadline extends Task {
      */
     @Override
     public String toString() {
-        return String.format("[D]%s (by: %s)", super.toString(), formatDate(dueDate));
+        return String.format("[%s]%s (by: %s)", TYPE, super.toString(), formatDate(dueDate));
     }
 
     /**
@@ -48,6 +51,6 @@ public class Deadline extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return "D | " + super.toSaveFormat() + " | " + dueDate;
+        return TYPE + " | " + super.toSaveFormat() + " | " + dueDate;
     }
 }
