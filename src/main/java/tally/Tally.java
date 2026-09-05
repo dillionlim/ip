@@ -154,6 +154,8 @@ public class Tally {
      */
     private boolean isStillTalkingAfter(String line) throws TallyException {
         Command command = Parser.parseCommand(line);
+        assert command != null
+                : "Parser.parseCommand returns a constant or throws, so it never yields null";
         String arguments = Parser.parseArguments(line);
 
         // AI suggested switching to a switch statement instead of the if-else chain.
@@ -167,27 +169,41 @@ public class Tally {
             }
             case LIST -> showTasks();
             case FIND -> showMatchingTasks(Parser.parseSearchWord(arguments));
-            case MARK -> {
-                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-                task.markAsDone();
-                ui.show("Nice! I've marked this task as done:", task.toString());
-            }
-            case UNMARK -> {
-                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-                task.markAsNotDone();
-                ui.show("OK, I've marked this task as not done yet:", task.toString());
-            }
-            case DELETE -> {
-                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-                tasks.remove(task);
-                ui.show("Noted. I've removed this task:", task.toString(), countSentence());
-            }
+            case MARK -> markTask(arguments, command);
+            case UNMARK -> unmarkTask(arguments, command);
+            case DELETE -> deleteTask(arguments, command);
             case TODO -> addTask(Parser.parseTodo(arguments));
             case DEADLINE -> addTask(Parser.parseDeadline(arguments));
             case EVENT -> addTask(Parser.parseEvent(arguments));
             default -> throw new IllegalStateException("No handling for command: " + command);
         }
         return true;
+    }
+
+    /** Returns the task the user named by its number, counting from 1. */
+    private Task taskNamedIn(String arguments, Command command) throws TallyException {
+        return tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
+    }
+
+    /** Marks the named task done, and shows it as it now reads. */
+    private void markTask(String arguments, Command command) throws TallyException {
+        Task task = taskNamedIn(arguments, command);
+        task.markAsDone();
+        ui.show("Nice! I've marked this task as done:", task.toString());
+    }
+
+    /** Marks the named task not done after all, and shows it as it now reads. */
+    private void unmarkTask(String arguments, Command command) throws TallyException {
+        Task task = taskNamedIn(arguments, command);
+        task.markAsNotDone();
+        ui.show("OK, I've marked this task as not done yet:", task.toString());
+    }
+
+    /** Takes the named task off the tally, and says how many are left. */
+    private void deleteTask(String arguments, Command command) throws TallyException {
+        Task task = taskNamedIn(arguments, command);
+        tasks.remove(task);
+        ui.show("Noted. I've removed this task:", task.toString(), countSentence());
     }
 
     /** Shows the whole tally, or says so when there is nothing on it. */
@@ -227,6 +243,9 @@ public class Tally {
      * @return the lines to show, ready to hand to the user interface.
      */
     private String[] formatNumberedTasks(String heading, List<Integer> positions) {
+        assert positions.stream().allMatch(position -> position >= 0 && position < tasks.size())
+                : "positions come from findPositions or from a walk over the whole tally, and"
+                + " both yield only places that hold a task, unlike one of: " + positions;
         // AI suggested String.format instead of concatenating strings manually.
         Stream<String> numbered = positions.stream()
                 .map(position -> String.format("%d.%s", position + 1, tasks.get(position)));

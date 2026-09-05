@@ -32,6 +32,11 @@ public class TaskList {
      * @param tasksToAdd the tasks to add.
      */
     public void add(Task... tasksToAdd) {
+        for (Task task : tasksToAdd) {
+            assert task != null
+                    : "Storage.load throws rather than yield a null task, and the parser builds"
+                    + " every other one, so a null would surface only later as a failed save";
+        }
         Collections.addAll(tasks, tasksToAdd);
     }
 
@@ -51,6 +56,10 @@ public class TaskList {
      * @return the task there.
      */
     public Task get(int index) {
+        assert index >= 0 && index < tasks.size()
+                : "Parser.parseTaskIndex turns what the user typed into a position only after"
+                + " rejecting out-of-range numbers, so an invalid index here means a caller"
+                + " reached past it: " + index;
         return tasks.get(index);
     }
 
