@@ -33,7 +33,31 @@ jobs:
         shell: bash
         run: |
           ./gradlew shadowJar
+          python3 -c "import zipfile, sys; \
+            manifest = zipfile.ZipFile('build/libs/tally.jar').read('META-INF/MANIFEST.MF').decode(); \
+            sys.exit(0 if 'Main-Class: tally.Launcher' in manifest else 'the manifest does not name tally.Launcher')"
           cd "$(mktemp -d)"
           cp "$GITHUB_WORKSPACE/build/libs/tally.jar" .
           printf 'todo packaged\nlist\nbye\n' | java -cp tally.jar tally.Tally | grep -q 'packaged'
           test -f data/tally.txt
+
+      # Linux only. Windows has no virtual display to open a window on, and the JavaFX
+      # libraries the jar carries are built for Intel macs while the runner is ARM.
+      - name: Check the packaged app opens as a window
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          command -v xvfb-run >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq xvfb)
+          cd "$(mktemp -d)"
+          cp "$GITHUB_WORKSPACE/build/libs/tally.jar" .
+          set +e
+          xvfb-run -a timeout 20 java -jar tally.jar
+          status=$?
+          set -e
+          # 124 is timeout saying the window was still open when the time ran out, which
+          # is the only outcome that means it started. Anything else is JavaFX, the FXML
+          # or the images failing to load, which running the console entry point misses.
+          if [ "$status" -ne 124 ]; then
+            echo "the window exited with status $status instead of staying open"
+            exit 1
+          fi

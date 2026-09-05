@@ -151,13 +151,17 @@ def invoke(commands, data_file, classpath):
                             cwd=data_file.parent,
                             input=stdin_text, capture_output=True, text=True,
                             timeout=TIMEOUT_SECONDS)
-    if result.stderr.strip():
-        print(result.stderr, end="")
+    noise = result.stderr.strip()
     if result.returncode != 0:
         # Expected output followed by a crash is not a pass. An uncaught exception or a
         # failed assertion leaves the words already printed intact, so comparing only
         # what was printed would call this case correct.
-        raise Crashed(f"the program exited with status {result.returncode}")
+        crash = f"the program exited with status {result.returncode}"
+        raise Crashed(f"{crash}:\n{noise}" if noise else crash)
+    if noise:
+        # A passing run says nothing here, so anything on it is a warning or a trace the
+        # program carried on through, which a comparison of stdout alone would not see.
+        raise Crashed(f"the program wrote to standard error:\n{noise}")
     return result.stdout
 
 
@@ -204,7 +208,29 @@ def check_files(case, data_file):
     return None
 
 
-def report_failure(case, expected, actual):
+def announce(case, number, total):
+    """Prints what the case is about and what it is about to type."""
+    print(f"{'-' * 70}\n[{number}/{total}] {case['id']} - {case['title']}")
+    print(f"Aim: {case['aim']}\n")
+    if case["seed"] is not None:
+        print("--- Data file before the run ---")
+        print(case["seed"])
+    print("--- Typed by the user ---")
+    print(case["input"] if case["input"] else "(nothing; input closes immediately)")
+    if case["restart"] is not None:
+        print("--- Then, after restarting Tally ---")
+        print(case["restart"])
+
+
+def report_complaint(case, complaint):
+    """Prints why a case failed, for a failure that is a sentence rather than a diff."""
+    print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
+    print(f"\nAim: {case['aim']}\n\n  {complaint}")
+    print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
+
+
+def report_difference(case, expected, actual):
+    """Prints both outputs and a diff, for a case whose output was not what it should be."""
     print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
     print(f"\nAim: {case['aim']}\n")
     print(f"--- Input ---\n{case['input']}\n")
@@ -217,14 +243,52 @@ def report_failure(case, expected, actual):
     print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
 
 
-def main():
+def show_files_left(data_file):
+    """Prints every file the run left in the workspace, and the lines it holds."""
+    print("--- Files left behind ---")
+    for path in sorted(data_file.parent.iterdir()):
+        print(f"  {path.name}: " + " / ".join(
+            l for l in path.read_text(encoding="utf-8").split("\n") if l))
+
+
+def run_and_check(case, data_file, classpath):
+    """Runs one case and returns a complaint about it, or None if it passed."""
+    try:
+        actual = run_case(case, data_file, classpath)
+    except Crashed as crash:
+        report_complaint(case, crash)
+        return False
+    print("\n--- Printed by Tally ---")
+    print(actual, end="" if actual.endswith("\n") else "\n")
+
+    expected_text = normalise(case["expected"])
+    actual_text = normalise(actual)
+    if expected_text != actual_text:
+        report_difference(case, expected_text, actual_text)
+        return False
+    if case["files"] is not None:
+        complaint = check_files(case, data_file)
+        show_files_left(data_file)
+        if complaint is not None:
+            report_complaint(case, complaint)
+            return False
+    return True
+
+
+def select_cases():
+    """Returns the cases named on the command line, or every case if none were."""
     wanted = {argument.upper() for argument in sys.argv[1:]}
     cases = parse_plan(PLAN.read_text(encoding="utf-8"))
-    if wanted:
-        cases = [case for case in cases if case["id"].upper() in wanted]
-        if not cases:
-            sys.exit(f"no test case in {PLAN.name} matches {', '.join(sorted(wanted))}")
+    if not wanted:
+        return cases
+    chosen = [case for case in cases if case["id"].upper() in wanted]
+    if not chosen:
+        sys.exit(f"no test case in {PLAN.name} matches {', '.join(sorted(wanted))}")
+    return chosen
 
+
+def main():
+    cases = select_cases()
     classpath = build_program()
 
     workspace = Path(tempfile.mkdtemp(prefix="tally-ui-tests-"))
@@ -232,42 +296,9 @@ def main():
     data_file = workspace / "tally.txt"
 
     for number, case in enumerate(cases, start=1):
-        print(f"{'-' * 70}\n[{number}/{len(cases)}] {case['id']} - {case['title']}")
-        print(f"Aim: {case['aim']}\n")
-        if case["seed"] is not None:
-            print("--- Data file before the run ---")
-            print(case["seed"])
-        print("--- Typed by the user ---")
-        print(case["input"] if case["input"] else "(nothing; input closes immediately)")
-        if case["restart"] is not None:
-            print("--- Then, after restarting Tally ---")
-            print(case["restart"])
-        try:
-            actual = run_case(case, data_file, classpath)
-        except Crashed as crash:
-            print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
-            print(f"\nAim: {case['aim']}\n\n  {crash}")
-            print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
+        announce(case, number, len(cases))
+        if not run_and_check(case, data_file, classpath):
             return 1
-        print("\n--- Printed by Tally ---")
-        print(actual, end="" if actual.endswith("\n") else "\n")
-
-        expected_text = normalise(case["expected"])
-        actual_text = normalise(actual)
-        if expected_text != actual_text:
-            report_failure(case, expected_text, actual_text)
-            return 1
-        if case["files"] is not None:
-            complaint = check_files(case, data_file)
-            print("--- Files left behind ---")
-            for path in sorted(data_file.parent.iterdir()):
-                print(f"  {path.name}: " + " / ".join(
-                    l for l in path.read_text(encoding="utf-8").split("\n") if l))
-            if complaint is not None:
-                print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
-                print(f"\nAim: {case['aim']}\n\n  {complaint}")
-                print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
-                return 1
         print(f"PASS: {case['id']}\n")
 
     print(f"{'-' * 70}\nAll {len(cases)} test case(s) passed.")
