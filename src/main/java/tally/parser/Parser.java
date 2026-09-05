@@ -83,6 +83,35 @@ public class Parser {
     }
 
     /**
+     * Returns the three parts of a command written with two markers, in marker order.
+     *
+     * <p>Splitting on the first marker before looking for the second is what makes the
+     * order matter: a line writing them the other way round leaves no second marker
+     * behind to find, and is refused rather than quietly recorded back to front.
+     *
+     * @param arguments everything the user typed after the command word.
+     * @param firstMarker the marker introducing the second part, such as " /from ".
+     * @param secondMarker the marker introducing the third part, such as " /to ".
+     * @param usage what to tell the user when a part or a marker is missing.
+     * @return the description and the two values the markers introduce, trimmed.
+     * @throws TallyException if either marker is missing or any of the three is blank.
+     */
+    private static String[] splitOnTwoMarkers(String arguments, String firstMarker,
+            String secondMarker, String usage) throws TallyException {
+        String[] descriptionAndRest = arguments.split(firstMarker, 2);
+        if (descriptionAndRest.length < 2) {
+            throw new TallyException(usage);
+        }
+        String[] secondAndThird = descriptionAndRest[1].split(secondMarker, 2);
+        if (secondAndThird.length < 2 || descriptionAndRest[0].isBlank()
+                || secondAndThird[0].isBlank() || secondAndThird[1].isBlank()) {
+            throw new TallyException(usage);
+        }
+        return new String[] {descriptionAndRest[0].trim(), secondAndThird[0].trim(),
+                secondAndThird[1].trim()};
+    }
+
+    /**
      * Returns the event described by an "event" command's arguments.
      *
      * <p>The arguments are split on /from first, and on /to within what follows.
@@ -99,19 +128,11 @@ public class Parser {
         // AI found the bug, manually fixed.
         String usage = "An event needs a description, a /from time and a /to time,"
                 + " in that order. Try: event project meeting /from Mon 2pm /to 4pm";
-        String[] descriptionAndRest = arguments.split(" /from ", 2);
-        if (descriptionAndRest.length < 2) {
-            throw new TallyException(usage);
+        String[] parts = splitOnTwoMarkers(arguments, " /from ", " /to ", usage);
+        for (String part : parts) {
+            rejectSeparator(part);
         }
-        String[] fromAndTo = descriptionAndRest[1].split(" /to ", 2);
-        if (fromAndTo.length < 2 || descriptionAndRest[0].isBlank()
-                || fromAndTo[0].isBlank() || fromAndTo[1].isBlank()) {
-            throw new TallyException(usage);
-        }
-        rejectSeparator(descriptionAndRest[0]);
-        rejectSeparator(fromAndTo[0]);
-        rejectSeparator(fromAndTo[1]);
-        return new Event(descriptionAndRest[0].trim(), fromAndTo[0].trim(), fromAndTo[1].trim());
+        return new Event(parts[0], parts[1], parts[2]);
     }
 
     /**
@@ -202,25 +223,17 @@ public class Parser {
     public static Window parseWindow(String arguments) throws TallyException {
         String usage = "A window needs a description, a /between date and an /and date,"
                 + " in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12";
-        String[] descriptionAndRest = arguments.split(" /between ", 2);
-        if (descriptionAndRest.length < 2) {
-            throw new TallyException(usage);
-        }
-        String[] startAndEnd = descriptionAndRest[1].split(" /and ", 2);
-        if (startAndEnd.length < 2 || descriptionAndRest[0].isBlank()
-                || startAndEnd[0].isBlank() || startAndEnd[1].isBlank()) {
-            throw new TallyException(usage);
-        }
+        String[] parts = splitOnTwoMarkers(arguments, " /between ", " /and ", usage);
+        rejectSeparator(parts[0]);
 
-        LocalDate startDate = parseDate(startAndEnd[0].trim());
-        LocalDate endDate = parseDate(startAndEnd[1].trim());
+        LocalDate startDate = parseDate(parts[1]);
+        LocalDate endDate = parseDate(parts[2]);
         if (endDate.isBefore(startDate)) {
             throw new TallyException(String.format(
                     "A window cannot end before it starts, and this one ends %s"
                             + " but starts %s.", endDate, startDate));
         }
-        rejectSeparator(descriptionAndRest[0]);
-        return new Window(descriptionAndRest[0].trim(), startDate, endDate);
+        return new Window(parts[0], startDate, endDate);
     }
 
     /**

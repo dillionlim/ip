@@ -32,11 +32,6 @@ public class Ui {
     private final boolean isConsole;
     private final StringBuilder pendingResponse = new StringBuilder();
 
-    /** Creates a Ui that reads the user's commands from standard input and prints its replies. */
-    public Ui() {
-        this(true);
-    }
-
     /**
      * Creates a Ui that either prints its replies or keeps them to be collected.
      *

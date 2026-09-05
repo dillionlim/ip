@@ -118,7 +118,7 @@ public class Storage {
      * @param endDateText the second date field as it appears in the file.
      * @return the window task, or null if the line cannot be read.
      */
-    private static Task parseWindow(String description, String startDateText, String endDateText) {
+    private static Task readWindow(String description, String startDateText, String endDateText) {
         try {
             LocalDate start = Parser.parseDate(startDateText);
             LocalDate end = Parser.parseDate(endDateText);
@@ -141,7 +141,7 @@ public class Storage {
      * @param dueDateText the date field as it appears in the file.
      * @return the deadline, or null if the date cannot be read.
      */
-    private static Task parseDeadline(String description, String dueDateText) {
+    private static Task readDeadline(String description, String dueDateText) {
         try {
             return new Deadline(description, Parser.parseDate(dueDateText));
         } catch (TallyException exception) {
@@ -276,9 +276,9 @@ public class Storage {
 
         Task task = switch (fields[0]) {
             case "T" -> fields.length == 3 ? new Todo(fields[2]) : null;
-            case "D" -> fields.length == 4 ? parseDeadline(fields[2], fields[3]) : null;
+            case "D" -> fields.length == 4 ? readDeadline(fields[2], fields[3]) : null;
             case "E" -> fields.length == 5 ? new Event(fields[2], fields[3], fields[4]) : null;
-            case "W" -> fields.length == 5 ? parseWindow(fields[2], fields[3], fields[4]) : null;
+            case "W" -> fields.length == 5 ? readWindow(fields[2], fields[3], fields[4]) : null;
             default -> null;
         };
 

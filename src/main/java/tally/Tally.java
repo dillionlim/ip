@@ -51,6 +51,18 @@ public class Tally {
     }
 
     /**
+     * Creates a chatbot working on the tally's usual data file.
+     *
+     * <p>Where that file lives is Tally's own business, so a front end that wants the
+     * usual one asks for it this way rather than naming the place itself.
+     *
+     * @param isConsole whether replies are printed and commands read from standard input.
+     */
+    public Tally(boolean isConsole) {
+        this(DATA_FILE, isConsole);
+    }
+
+    /**
      * Creates a chatbot working on the given data file, replying either on the
      * console or as text for a caller to display.
      *
@@ -115,10 +127,7 @@ public class Tally {
 
     /** Greets the user, carries out commands until they leave, then says goodbye. */
     public void run() {
-        ui.showWelcome();
-        if (loadWarning != null) {
-            ui.showError(loadWarning);
-        }
+        getGreeting();
 
         boolean isTalking = true;
         while (isTalking && ui.hasNextCommand()) {
