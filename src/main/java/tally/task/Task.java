@@ -7,8 +7,14 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-/** A single entry on the user's tally: what has to be done, and whether it is done yet. */
-public class Task {
+/**
+ * A single entry on the user's tally: what has to be done, and whether it is done yet.
+ *
+ * <p>Abstract because the part of a data-file line written here is only the part every
+ * kind shares. A task of no particular kind could not be written as a line the reader
+ * would take back, so there is no such thing to make.
+ */
+public abstract class Task {
     /** How the data file separates one part of a task from the next. */
     public static final String FIELD_SEPARATOR = " | ";
 
@@ -25,10 +31,11 @@ public class Task {
      * differs from the yyyy-mm-dd form accepted from the user and kept in the data file.
      * It lives here rather than in one subclass because both Deadline and Window show
      * dates, and they should not drift apart. The locale is fixed so the month name does
-     * not depend on the machine the chatbot runs on.
+     * not depend on the machine the chatbot runs on. The year is uuuu rather than yyyy,
+     * since yyyy counts within an era and would print year zero as the year one.
      */
     private static final DateTimeFormatter DISPLAY_FORMAT =
-            DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
+            DateTimeFormatter.ofPattern("MMM dd uuuu", Locale.ENGLISH);
 
     /**
      * The one shape a date may be written in, wherever it comes from.

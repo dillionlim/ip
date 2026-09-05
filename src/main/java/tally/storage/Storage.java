@@ -58,6 +58,15 @@ public class Storage {
     private final Path file;
 
     /**
+     * Whether the file was there but could not be read when it was last loaded.
+     *
+     * <p>Tally starts with an empty tally when that happens, and saving that over a file
+     * whose contents nobody has seen would destroy them. Refusing to write is the only
+     * safe answer until the user moves the file or repairs it.
+     */
+    private boolean isUnreadable;
+
+    /**
      * Creates storage backed by the given file. The file need not exist yet.
      *
      * @param file where the tally is kept.
@@ -112,8 +121,10 @@ public class Storage {
         try {
             return Files.readAllLines(file);
         } catch (IOException exception) {
+            isUnreadable = true;
             throw new TallyException("I could not read " + file.getFileName()
-                    + ", so I am starting with an empty tally." + copyAside());
+                    + ", so I am starting with an empty tally." + copyAside()
+                    + " I will not write over it until it can be read.");
         }
     }
 
@@ -124,7 +135,8 @@ public class Storage {
      * the tally and the next change writes over the original, which would otherwise
      * take the unreadable lines with it.
      *
-     * @param unreadableLines the line lineNumbers that held nothing recognizable, counting from 1.
+     * @param unreadableLines the numbers of the lines that held nothing recognizable,
+     *     counting from 1.
      * @return a sentence naming them, and where the file was copied to.
      */
     private String describeUnreadableLines(List<Integer> unreadableLines) {
@@ -220,7 +232,10 @@ public class Storage {
         Path partial = null;
         try {
             Path target = resolveSaveTarget();
-            partial = target.resolveSibling(target.getFileName() + ".part");
+            // A name of its own, so that a file already sitting at a fixed one is not
+            // overwritten, and two Tallys saving at once do not write the same place.
+            partial = Files.createTempFile(target.getParent(), target.getFileName().toString(),
+                    ".part");
             writeReplacement(tasks, target, partial);
             Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
@@ -243,6 +258,11 @@ public class Storage {
      * @throws TallyException if the file is one the user has protected.
      */
     private Path resolveSaveTarget() throws IOException, TallyException {
+        if (isUnreadable) {
+            throw new TallyException("I could not read " + file.getFileName()
+                    + " when I started, so I will not write over what is in it."
+                    + " Move it aside or repair it, then start Tally again.");
+        }
         Path parent = file.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
@@ -326,7 +346,9 @@ public class Storage {
     private static Task readTask(String line) {
         String[] fields = line.split(Pattern.quote(Task.FIELD_SEPARATOR));
         boolean hasValidCommonFields = fields.length > DESCRIPTION_INDEX
-                && (fields[DONE_INDEX].equals(Task.NOT_DONE) || fields[DONE_INDEX].equals(Task.DONE));
+                && (fields[DONE_INDEX].equals(Task.NOT_DONE) || fields[DONE_INDEX].equals(Task.DONE))
+                && !fields[DESCRIPTION_INDEX].isBlank()
+                && Arrays.stream(fields).noneMatch(String::isBlank);
         if (!hasValidCommonFields) {
             return null;
         }

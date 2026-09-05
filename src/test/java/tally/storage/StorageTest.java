@@ -14,6 +14,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -93,22 +94,30 @@ public class StorageTest {
 
         // Reading does not rewrite the file, so an unrepaired one would otherwise be
         // copied again on every start, without limit.
-        assertEquals(1, (int) Files.list(folder).filter(each ->
-                each.getFileName().toString().contains(".broken")).count());
+        try (Stream<Path> kept = Files.list(folder)) {
+            assertEquals(1, (int) kept.filter(each ->
+                    each.getFileName().toString().contains(".broken")).count());
+        }
         assertTrue(second.contains("already copied"));
     }
 
     @Test
     public void save_writeFails_leavesTheFileAsItWas() throws IOException {
-        Path file = folder.resolve("tally.txt");
+        Path lockedFolder = Files.createDirectory(folder.resolve("locked"));
+        Path file = lockedFolder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | keep me\n");
-        // A directory where the half-written copy must go makes the write fail, which is
-        // what a full disk would do. The tally already saved has to survive that.
-        Files.createDirectory(folder.resolve("tally.txt.part"));
+        // A folder that will take no new file is what a full disk looks like from here:
+        // the replacement cannot be written, and what is already saved has to survive.
+        assumeTrue(lockedFolder.toFile().setWritable(false), "no read-only bit here");
+        assumeTrue(!Files.isWritable(lockedFolder), "the bit does not bind for this user");
 
-        Storage storage = new Storage(file);
-        assertThrows(TallyException.class, () -> storage.save(List.of(new Todo("new task"))));
-        assertEquals("T | 0 | keep me", Files.readString(file).strip());
+        try {
+            Storage storage = new Storage(file);
+            assertThrows(TallyException.class, () -> storage.save(List.of(new Todo("new task"))));
+            assertEquals("T | 0 | keep me", Files.readString(file).strip());
+        } finally {
+            lockedFolder.toFile().setWritable(true);
+        }
     }
 
     @Test

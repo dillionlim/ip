@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -81,6 +82,19 @@ public class TaskList {
     }
 
     /**
+     * Puts the given tasks on the tally in place of whatever it holds.
+     *
+     * <p>This is how the tally is brought back into step with the data file after a save
+     * that failed, so that what the user is shown is what a restart would give them.
+     *
+     * @param replacement the tasks to hold instead, in the order they should be listed.
+     */
+    public void replaceAll(List<Task> replacement) {
+        tasks.clear();
+        tasks.addAll(replacement);
+    }
+
+    /**
      * Removes a task from the tally.
      *
      * @param task the task to remove, which must be one this tally holds.
@@ -132,9 +146,9 @@ public class TaskList {
      * @return the positions of the matching tasks, in the order they were added.
      */
     public List<Integer> findPositions(String searchText) {
-        String lowercaseSearchText = searchText.toLowerCase();
+        String lowercaseSearchText = searchText.toLowerCase(Locale.ROOT);
         return IntStream.range(0, tasks.size())
-                .filter(i -> tasks.get(i).getDescription().toLowerCase().contains(lowercaseSearchText))
+                .filter(i -> tasks.get(i).getDescription().toLowerCase(Locale.ROOT).contains(lowercaseSearchText))
                 .boxed()
                 .toList();
     }
@@ -142,7 +156,9 @@ public class TaskList {
     /**
      * Returns the tasks as a plain list, for code that only reads them.
      *
-     * <p>The list is a copy, so changing it does not change the tally.
+     * <p>The list is a copy, so adding or removing through it does not change the tally.
+     * The tasks in it are the same objects the tally holds, though, so marking one done
+     * through this list marks it done on the tally as well.
      *
      * @return the tasks, in the order they were added.
      */

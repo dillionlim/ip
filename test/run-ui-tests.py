@@ -19,8 +19,11 @@ prompt in the CS2103T Week 2 project instructions. The plan format, the parser
 and the reporting were the AI's design.
 """
 
+import atexit
 import difflib
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,7 +31,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PLAN = ROOT / "test" / "ui-test-plan.md"
-GRADLEW = ROOT / "gradlew"
+# Windows cannot run the shell script, and the other two cannot run the batch file.
+GRADLEW = ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
 MAIN_CLASS = "tally.Tally"
 TIMEOUT_SECONDS = 20
 
@@ -39,6 +43,10 @@ SECTION = re.compile(r"^\*\*(Given the data file|Input|Then restart and type"
 SECTION_KEY = {"Given the data file": "seed", "Input": "input",
                "Then restart and type": "restart", "Expected output": "expected",
                "Expected files after the run": "files"}
+
+
+class Crashed(Exception):
+    """Raised when the program exits with a nonzero status, however it printed."""
 
 
 def read_fenced_block(lines, index):
@@ -138,6 +146,11 @@ def invoke(commands, data_file, classpath):
                             timeout=TIMEOUT_SECONDS)
     if result.stderr.strip():
         print(result.stderr, end="")
+    if result.returncode != 0:
+        # Expected output followed by a crash is not a pass. An uncaught exception or a
+        # failed assertion leaves the words already printed intact, so comparing only
+        # what was printed would call this case correct.
+        raise Crashed(f"the program exited with status {result.returncode}")
     return result.stdout
 
 
@@ -208,6 +221,7 @@ def main():
     classpath = build_program()
 
     workspace = Path(tempfile.mkdtemp(prefix="tally-ui-tests-"))
+    atexit.register(shutil.rmtree, workspace, ignore_errors=True)
     data_file = workspace / "tally.txt"
 
     for number, case in enumerate(cases, start=1):
@@ -221,7 +235,13 @@ def main():
         if case["restart"] is not None:
             print("--- Then, after restarting Tally ---")
             print(case["restart"])
-        actual = run_case(case, data_file, classpath)
+        try:
+            actual = run_case(case, data_file, classpath)
+        except Crashed as crash:
+            print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
+            print(f"\nAim: {case['aim']}\n\n  {crash}")
+            print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
+            return 1
         print("\n--- Printed by Tally ---")
         print(actual, end="" if actual.endswith("\n") else "\n")
 

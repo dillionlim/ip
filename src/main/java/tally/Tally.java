@@ -169,9 +169,37 @@ public class Tally {
         // Saving after a command that only read the tally would rewrite the file for
         // nothing, and every rewrite is a chance to lose what is already there.
         if (command.changesTally()) {
-            storage.save(tasks.asList());
+            saveOrPutBack();
         }
         return true;
+    }
+
+    /**
+     * Writes the tally, and puts it back as it was if it cannot be written.
+     *
+     * <p>A command changes the tally before it can be saved, so a save that fails would
+     * otherwise leave the user looking at a change that a restart would take away, having
+     * been told it worked. Reading the file back is what says which of the two is real.
+     *
+     * @throws TallyException naming what went wrong, and whether the change was kept.
+     */
+    private void saveOrPutBack() throws TallyException {
+        try {
+            storage.save(tasks.asList());
+            return;
+        } catch (TallyException failure) {
+            // The message is worked out first: throwing from inside the inner try would
+            // be caught by its own catch, and report the wrong one of the two.
+            String outcome;
+            try {
+                tasks.replaceAll(storage.load().tasks());
+                outcome = " I have put your tally back the way the file has it.";
+            } catch (TallyException unreadable) {
+                outcome = " Your tally is as you left it here,"
+                        + " but a restart will not show it.";
+            }
+            throw new TallyException(failure.getMessage() + outcome);
+        }
     }
 
     /**

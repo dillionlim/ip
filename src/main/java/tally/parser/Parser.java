@@ -31,6 +31,11 @@ public class Parser {
     private static final String FOR_MARKER = "/for";
     private static final String FROM_MARKER = "/from";
 
+    /** Prevents anyone making one: every method here is static. */
+    private Parser() {
+    }
+
+
     /**
      * Returns the command named by the first word of a line.
      *
@@ -255,10 +260,11 @@ public class Parser {
     }
 
     /**
-     * Returns the date named by the text the user typed after /by.
+     * Returns the date some text names, wherever in a command it was written.
      *
-     * <p>Dates are read in the yyyy-mm-dd form that LocalDate understands without a
-     * formatter, and shown back in a different form, as Level-8 requires.
+     * <p>Dates are read in the yyyy-mm-dd form alone, and shown back in a different
+     * form, as Level-8 requires. Reading them in one place holds every command that
+     * takes a date, and the data file too, to the same one form.
      *
      * @param text what the user typed as the date.
      * @return the date it names.

@@ -76,7 +76,7 @@ public enum Command {
      *
      * @return the words separated by commas, such as "todo, deadline, event".
      */
-    public static String listKeywords() {
+    static String listKeywords() {
         return Arrays.stream(values())
                 .map(command -> command.keyword)
                 .collect(Collectors.joining(", "));

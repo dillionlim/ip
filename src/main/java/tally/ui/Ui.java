@@ -86,10 +86,13 @@ public class Ui {
     }
 
     /**
-     * Prints one of Tally's messages, fenced between horizontal rules and followed
-     * by a blank line that separates it from the user's next command.
+     * Says one of Tally's messages.
      *
-     * @param lines the lines of the message, printed in order.
+     * <p>On the console it is printed, fenced between horizontal rules and followed by
+     * a blank line separating it from the user's next command. For a window nothing is
+     * printed; the words are gathered for the caller to collect and show instead.
+     *
+     * @param lines the lines of the message, in order.
      */
     public void show(String... lines) {
         assert lines.length > 0

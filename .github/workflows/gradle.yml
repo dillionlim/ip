@@ -25,3 +25,15 @@ jobs:
 
       - name: Build and check with Gradle
         run: ./gradlew check
+
+      - name: Run the console transcript suite
+        run: python3 test/run-ui-tests.py
+
+      - name: Check the packaged jar runs on its own
+        shell: bash
+        run: |
+          ./gradlew shadowJar
+          cd "$(mktemp -d)"
+          cp "$GITHUB_WORKSPACE/build/libs/tally.jar" .
+          printf 'todo packaged\nlist\nbye\n' | java -cp tally.jar tally.Tally | grep -q 'packaged'
+          test -f data/tally.txt
