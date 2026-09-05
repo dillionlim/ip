@@ -7,13 +7,17 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import tally.Tally;
 
-/** Drives the main window: takes what is typed, and shows what Tally says back. */
-public class MainWindow extends AnchorPane {
+/**
+ * Drives the main window: takes what is typed, and shows what Tally says back.
+ *
+ * <p>This is the window's controller rather than the window itself. MainWindow.fxml
+ * names its own root, which the loader builds and hands to Main.
+ */
+public class MainWindow {
     /** How long the goodbye stays on screen before the window closes itself. */
     private static final Duration FAREWELL_PAUSE = Duration.seconds(1.5);
 
@@ -46,7 +50,7 @@ public class MainWindow extends AnchorPane {
     public void setTally(Tally tally) {
         this.tally = tally;
         dialogContainer.getChildren().add(
-                DialogBox.getTallyDialog(tally.getGreeting(), tallyImage));
+                DialogBox.createTallyDialog(tally.getGreeting(), tallyImage));
     }
 
     /**
@@ -75,8 +79,8 @@ public class MainWindow extends AnchorPane {
      */
     private void showConversationTurn(String input, String response) {
         dialogContainer.getChildren().addAll(
-                DialogBox.getUserDialog(input, userImage),
-                DialogBox.getTallyDialog(response, tallyImage));
+                DialogBox.createUserDialog(input, userImage),
+                DialogBox.createTallyDialog(response, tallyImage));
         userInput.clear();
     }
 

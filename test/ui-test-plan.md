@@ -49,6 +49,11 @@ other. That is how the saved tally is checked.
 Every case gets a data file of its own, deleted before the case runs, so no case
 can inherit tasks another one saved.
 
+The program is started in that file's folder and given the bare file name, which
+is the way the README tells a user to point Tally at a file. A path written that
+way names no folder of its own, and saving to one used to crash, so running every
+case this way keeps that from coming back.
+
 ## Coverage
 
 These cases cover Level-0 through Level-9, and the `A-Classes`, `A-Inheritance`,

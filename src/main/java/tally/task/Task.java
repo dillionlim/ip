@@ -25,6 +25,15 @@ public abstract class Task {
     public static final String NOT_DONE = "0";
 
     /**
+     * The last day a date may name, being the last one the written form can express.
+     *
+     * <p>Dates are written as yyyy-mm-dd wherever they appear, so a later day would be
+     * shown with five digits of year, which the user could read but could not type back
+     * in, leaving them an answer they cannot act on.
+     */
+    public static final LocalDate LAST_DATE = LocalDate.of(9999, 12, 31);
+
+    /**
      * How a date carried by a task is shown to the user.
      *
      * <p>Level-8 asks that dates be read in one format and printed in another, so this
@@ -153,14 +162,25 @@ public abstract class Task {
     }
 
     /**
-     * Returns the part of this task's data-file line that every task shares.
+     * Returns the line the data file records this task as.
+     *
+     * <p>Left to the subclasses rather than assembled here, because only they know
+     * their type letter and the times they carry. Inheriting a half-written line would
+     * let a new kind of task be saved as one the reader then refuses to take back.
+     *
+     * @return for example "D | 1 | return book | 2019-06-06".
+     */
+    public abstract String toSaveFormat();
+
+    /**
+     * Returns the parts of a data-file line that every task shares.
      *
      * <p>Subclasses prefix their type letter and append whatever times they carry,
      * mirroring the way toString is built up.
      *
      * @return for example "1 | read book".
      */
-    public String toSaveFormat() {
+    protected final String toSharedSaveFields() {
         return (isDone ? DONE : NOT_DONE) + FIELD_SEPARATOR + description;
     }
 }

@@ -51,6 +51,6 @@ public class Deadline extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + FIELD_SEPARATOR + super.toSaveFormat() + FIELD_SEPARATOR + dueDate;
+        return TYPE + FIELD_SEPARATOR + toSharedSaveFields() + FIELD_SEPARATOR + dueDate;
     }
 }

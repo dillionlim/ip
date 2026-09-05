@@ -12,9 +12,9 @@
         <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
     </padding>
     <children>
-        <Label fx:id="dialog" maxWidth="300.0" minHeight="-Infinity" wrapText="true"
+        <Label fx:id="dialogText" maxWidth="300.0" minHeight="-Infinity" wrapText="true"
                style="-fx-font-family: monospace;" />
-        <ImageView fx:id="displayPicture" fitHeight="44.0" fitWidth="44.0" pickOnBounds="true"
+        <ImageView fx:id="speakerPicture" fitHeight="44.0" fitWidth="44.0" pickOnBounds="true"
                    preserveRatio="true" />
     </children>
 </fx:root>

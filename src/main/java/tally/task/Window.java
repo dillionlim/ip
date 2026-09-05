@@ -65,6 +65,6 @@ public class Window extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + FIELD_SEPARATOR + super.toSaveFormat() + FIELD_SEPARATOR + startDate + FIELD_SEPARATOR + endDate;
+        return TYPE + FIELD_SEPARATOR + toSharedSaveFields() + FIELD_SEPARATOR + startDate + FIELD_SEPARATOR + endDate;
     }
 }

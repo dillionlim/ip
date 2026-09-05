@@ -33,7 +33,7 @@ public class TaskList {
      * Adds tasks to the end of the tally, in the order given.
      *
      * <p>Takes any number of them so that adding one reads no differently from
-     * adding several, which is what the tests and the file loader both want.
+     * adding several.
      *
      * @param tasksToAdd the tasks to add.
      */
@@ -51,7 +51,8 @@ public class TaskList {
      *
      * <p>A day is free when no task on the tally takes it up. The search runs a year
      * ahead and no further, so that a tally with something on every day answers
-     * rather than running on.
+     * rather than running on. It also stops at the last day a date can be written as,
+     * since a day beyond that could be shown but not typed back in.
      *
      * @param days how many free days in a row are wanted, at least one.
      * @param earliestDate the first day that may be offered.
@@ -59,9 +60,12 @@ public class TaskList {
      */
     public Optional<LocalDate> findFreeRun(int days, LocalDate earliestDate) {
         assert days >= 1 : "Parser.parseFreeQuery refuses a run shorter than a day: " + days;
-        LocalDate horizon = earliestDate.plusDays(SEARCH_HORIZON_DAYS);
+        LocalDate lastDay = earliestDate.plusDays(SEARCH_HORIZON_DAYS - 1L);
+        if (lastDay.isAfter(Task.LAST_DATE)) {
+            lastDay = Task.LAST_DATE;
+        }
         int freeDaysInARow = 0;
-        for (LocalDate day = earliestDate; day.isBefore(horizon); day = day.plusDays(1)) {
+        for (LocalDate day = earliestDate; !day.isAfter(lastDay); day = day.plusDays(1)) {
             LocalDate candidate = day;
             boolean isTaken = tasks.stream().anyMatch(task -> task.occupies(candidate));
             freeDaysInARow = isTaken ? 0 : freeDaysInARow + 1;

@@ -17,9 +17,9 @@ import javafx.scene.layout.HBox;
 /** One turn of the conversation: a picture of whoever spoke, and what they said. */
 public class DialogBox extends HBox {
     @FXML
-    private Label dialog;
+    private Label dialogText;
     @FXML
-    private ImageView displayPicture;
+    private ImageView speakerPicture;
 
     private DialogBox(String text, Image picture) {
         try {
@@ -30,8 +30,8 @@ public class DialogBox extends HBox {
         } catch (IOException exception) {
             throw new IllegalStateException("A dialog box could not be built.", exception);
         }
-        dialog.setText(text);
-        displayPicture.setImage(picture);
+        dialogText.setText(text);
+        speakerPicture.setImage(picture);
     }
 
     /**
@@ -41,7 +41,7 @@ public class DialogBox extends HBox {
      * @param picture the user's picture.
      * @return the box to add to the conversation.
      */
-    public static DialogBox getUserDialog(String text, Image picture) {
+    public static DialogBox createUserDialog(String text, Image picture) {
         return new DialogBox(text, picture);
     }
 
@@ -55,7 +55,7 @@ public class DialogBox extends HBox {
      * @param picture Tally's picture.
      * @return the box to add to the conversation.
      */
-    public static DialogBox getTallyDialog(String text, Image picture) {
+    public static DialogBox createTallyDialog(String text, Image picture) {
         DialogBox box = new DialogBox(text, picture);
         box.flip();
         return box;

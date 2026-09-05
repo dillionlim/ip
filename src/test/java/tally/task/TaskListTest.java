@@ -21,6 +21,17 @@ public class TaskListTest {
     }
 
     @Test
+    public void findFreeRun_searchingFromTheLastWritableDate_offersNoDayBeyondIt() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Window("busy", Task.LAST_DATE, Task.LAST_DATE));
+        // Only one day is left within the form a date can be written in, and it is taken.
+        // Searching on would name a day the user could read but could not type back in.
+        assertEquals(Optional.empty(), tasks.findFreeRun(1, Task.LAST_DATE));
+        assertEquals(Optional.empty(), new TaskList().findFreeRun(2, Task.LAST_DATE));
+        assertEquals(Optional.of(Task.LAST_DATE), new TaskList().findFreeRun(1, Task.LAST_DATE));
+    }
+
+    @Test
     public void findFreeRun_deadlineAndWindow_skipsEveryDayTheyTakeUp() {
         TaskList tasks = new TaskList();
         tasks.add(new Deadline("report", LocalDate.of(2026, 9, 10)),

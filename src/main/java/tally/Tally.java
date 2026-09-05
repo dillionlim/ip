@@ -21,10 +21,11 @@ import tally.ui.Ui;
  * Tally is a chatbot that helps the user keep a tally of their tasks, in a window
  * or in a terminal.
  *
- * <p>This class holds the parts together and does nothing itself: Ui talks to the
- * user, Parser makes sense of what they typed, TaskList holds the tasks, and
- * Storage keeps them on disk between runs. The window calls getResponse for each
- * line; the terminal calls run, which asks for lines until the user leaves.
+ * <p>This class carries out the commands and leaves everything else to the parts it
+ * holds together: Ui talks to the user, Parser makes sense of what they typed,
+ * TaskList holds the tasks, and Storage keeps them on disk between runs. The window
+ * calls getResponse for each line; the terminal calls run, which asks for lines
+ * until the user leaves.
  */
 public class Tally {
     /** Where the tally is kept, relative to the project root. */
@@ -33,6 +34,9 @@ public class Tally {
     private final Ui ui;
     private final Storage storage;
     private final TaskList tasks;
+
+    /** Whether replies are printed as they are made rather than handed back. */
+    private final boolean isConsole;
 
     /** What went wrong while reading the data file, if anything did. */
     private final Optional<String> loadWarning;
@@ -73,6 +77,7 @@ public class Tally {
      * @param isConsole whether replies are printed and commands read from standard input.
      */
     public Tally(Path dataFile, boolean isConsole) {
+        this.isConsole = isConsole;
         this.ui = new Ui(isConsole);
         this.storage = new Storage(dataFile);
         TaskList loaded;
@@ -93,10 +98,14 @@ public class Tally {
      * Returns what Tally says in reply to one command, for a caller that shows the
      * reply itself rather than having it printed.
      *
+     * <p>Only a Tally answering a window has a reply to hand back. A console one
+     * prints as it goes, so there is nothing left to collect afterwards.
+     *
      * @param input the line the user typed.
      * @return everything Tally says in reply, which is never empty.
      */
     public String getResponse(String input) {
+        assert !isConsole : "a console Tally prints its replies, leaving nothing to return";
         String line = input.trim();
         try {
             isExiting = !runCommand(line);
@@ -122,23 +131,31 @@ public class Tally {
      * Returns the greeting shown when the chatbot starts, together with any
      * complaint about the data file.
      *
+     * <p>Only a Tally answering a window has a greeting to hand back. A console one
+     * prints its own, which is why run greets the user rather than calling this.
+     *
      * @return the opening message.
      */
     public String getGreeting() {
+        assert !isConsole : "a console Tally prints its greeting, leaving nothing to return";
+        greet();
+        return ui.takePendingResponse();
+    }
+
+    /** Says hello, and reports anything that was wrong with the data file. */
+    private void greet() {
         ui.showWelcome();
         loadWarning.ifPresent(ui::showError);
-        return ui.takePendingResponse();
     }
 
     /** Greets the user, carries out commands until they leave, then says goodbye. */
     public void run() {
-        getGreeting();
+        greet();
 
-        boolean isTalking = true;
-        while (isTalking && ui.hasNextCommand()) {
+        while (!isExiting && ui.hasNextCommand()) {
             String line = ui.readCommand();
             try {
-                isTalking = runCommand(line);
+                isExiting = !runCommand(line);
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -164,13 +181,16 @@ public class Tally {
             return false;
         }
 
-        carryOut(command, Parser.parseArguments(line));
+        String[] reply = carryOut(command, Parser.parseArguments(line));
 
         // Saving after a command that only read the tally would rewrite the file for
         // nothing, and every rewrite is a chance to lose what is already there.
         if (command.changesTally()) {
             saveOrPutBack();
         }
+        // The reply waits until the tally is safely written, so that a save that fails
+        // is not announced as a success and taken back in the same breath.
+        ui.show(reply);
         return true;
     }
 
@@ -192,8 +212,10 @@ public class Tally {
             // be caught by its own catch, and report the wrong one of the two.
             String outcome;
             try {
-                tasks.replaceAll(storage.load().tasks());
-                outcome = " I have put your tally back the way the file has it.";
+                LoadResult saved = storage.load();
+                tasks.replaceAll(saved.tasks());
+                outcome = " I have put your tally back the way the file has it."
+                        + saved.note().map(damage -> " " + damage).orElse("");
             } catch (TallyException unreadable) {
                 outcome = " Your tally is as you left it here,"
                         + " but a restart will not show it.";
@@ -218,21 +240,25 @@ public class Tally {
      * so a new constant would otherwise compile with nothing to carry it out; the
      * default clause turns that into a failure that is at least loud.
      *
+     * <p>The reply is returned rather than shown, so that the caller can hold it back
+     * until the change it describes has been written.
+     *
      * @param command what the user asked for.
      * @param arguments the rest of the line they typed, with surrounding spaces removed.
+     * @return the lines to tell the user, in order.
      * @throws TallyException if Tally cannot carry the command out.
      */
-    private void carryOut(Command command, String arguments) throws TallyException {
+    private String[] carryOut(Command command, String arguments) throws TallyException {
         // AI suggested switching to a switch statement instead of the if-else chain.
         // Arrow labels keep each branch self-contained.
         // Command.parse has already rejected any word that is not a command, and the
         // caller has already dealt with bye, so reaching default means an enum constant
         // nobody wired up here: a programming error rather than anything the user typed,
         // hence IllegalStateException over TallyException.
-        switch (command) {
-            case LIST -> showTasks();
-            case FIND -> showMatchingTasks(Parser.parseSearchText(arguments));
-            case FREE -> showFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
+        return switch (command) {
+            case LIST -> describeTally();
+            case FIND -> describeMatchingTasks(Parser.parseSearchText(arguments));
+            case FREE -> describeFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
             case MARK -> markTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
             case UNMARK -> unmarkTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
             case DELETE -> deleteTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
@@ -241,40 +267,42 @@ public class Tally {
             case EVENT -> addTask(Parser.parseEvent(arguments));
             case WINDOW -> addTask(Parser.parseWindow(arguments));
             default -> throw new IllegalStateException("No handling for command: " + command);
-        }
+        };
     }
 
-    /** Marks the task at the given place done, and shows it as it now reads. */
-    private void markTask(int position) {
+    /** Marks the task at the given place done, and returns it as it now reads. */
+    private String[] markTask(int position) {
         Task task = tasks.get(position);
         task.markAsDone();
-        ui.show("Nice! I've marked this task as done:", task.toString());
+        return new String[] {"Nice! I've marked this task as done:", task.toString()};
     }
 
-    /** Marks the task at the given place not done after all, and shows it as it now reads. */
-    private void unmarkTask(int position) {
+    /** Marks the task at the given place not done after all, and returns it as it now reads. */
+    private String[] unmarkTask(int position) {
         Task task = tasks.get(position);
         task.markAsNotDone();
-        ui.show("OK, I've marked this task as not done yet:", task.toString());
+        return new String[] {"OK, I've marked this task as not done yet:", task.toString()};
     }
 
     /** Takes the task at the given place off the tally, and says how many are left. */
-    private void deleteTask(int position) {
+    private String[] deleteTask(int position) {
         Task task = tasks.get(position);
         tasks.remove(task);
-        ui.show("Noted. I've removed this task:", task.toString(), formatCountSentence());
+        return new String[] {"Noted. I've removed this task:", task.toString(),
+            formatCountSentence()};
     }
 
     /**
-     * Shows when the user is next free for as long as they asked, or says there is no
-     * such stretch.
+     * Returns when the user is next free for as long as they asked, or says there is
+     * no such stretch.
      *
      * <p>The reply says so when the tally holds a task whose days could not be read,
      * because the answer is then drawn from less than everything on it.
      *
      * @param query the run of days wanted, and the day to start looking from.
+     * @return the lines to tell the user.
      */
-    private void showFreeDays(FreeQuery query) {
+    private String[] describeFreeDays(FreeQuery query) {
         int days = query.days();
         Optional<LocalDate> found = tasks.findFreeRun(days, query.earliestDate());
         String answer = found.isPresent()
@@ -282,10 +310,9 @@ public class Tally {
                 : describeNoRun(query.earliestDate(), days);
 
         if (tasks.hasUnreadableDates()) {
-            ui.show(answer, "Events whose times are not dates were not counted.");
-            return;
+            return new String[] {answer, "Events whose times are not dates were not counted."};
         }
-        ui.show(answer);
+        return new String[] {answer};
     }
 
     /**
@@ -319,32 +346,31 @@ public class Tally {
                 Task.formatDate(earliestDate));
     }
 
-    /** Shows the whole tally, or says so when there is nothing on it. */
-    private void showTasks() {
+    /** Returns the whole tally, or says so when there is nothing on it. */
+    private String[] describeTally() {
         if (tasks.isEmpty()) {
-            ui.show("Nothing on your tally yet.");
-            return;
+            return new String[] {"Nothing on your tally yet."};
         }
         List<Integer> allPositions = IntStream.range(0, tasks.size()).boxed().toList();
-        ui.show(formatNumberedTasks("Here are the tasks in your list:", allPositions));
+        return formatNumberedTasks("Here are the tasks in your list:", allPositions);
     }
 
     /**
-     * Shows the tasks whose description contains the given text.
+     * Returns the tasks whose description contains the given text.
      *
      * <p>Each is shown against its place on the whole tally rather than its place
      * among the matches, so the number beside it still names that task if the user
      * goes on to mark or delete it.
      *
      * @param searchText the text to look for.
+     * @return the lines to tell the user.
      */
-    private void showMatchingTasks(String searchText) {
+    private String[] describeMatchingTasks(String searchText) {
         List<Integer> positions = tasks.findPositions(searchText);
         if (positions.isEmpty()) {
-            ui.show("Nothing on your tally matches that.");
-            return;
+            return new String[] {"Nothing on your tally matches that."};
         }
-        ui.show(formatNumberedTasks("Here are the matching tasks in your list:", positions));
+        return formatNumberedTasks("Here are the matching tasks in your list:", positions);
     }
 
     /**
@@ -366,13 +392,15 @@ public class Tally {
     }
 
     /**
-     * Adds a task to the tally and tells the user what was recorded.
+     * Adds a task to the tally and says what was recorded.
      *
      * @param task the task to add.
+     * @return the lines to tell the user.
      */
-    private void addTask(Task task) {
+    private String[] addTask(Task task) {
         tasks.add(task);
-        ui.show("Got it. I've added this task:", task.toString(), formatCountSentence());
+        return new String[] {"Got it. I've added this task:", task.toString(),
+            formatCountSentence()};
     }
 
     /**

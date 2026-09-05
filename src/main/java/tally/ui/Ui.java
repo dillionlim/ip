@@ -36,8 +36,9 @@ public class Ui {
      * Creates a Ui that either prints its replies or keeps them to be collected.
      *
      * <p>The graphical front end shows Tally's replies itself, so it wants them as
-     * text rather than on standard output. Both kinds record what was said, so the
-     * two front ends cannot drift apart in wording.
+     * text rather than on standard output, while the console prints them as they are
+     * made. Both go through this one class, so the two front ends cannot drift apart
+     * in wording.
      *
      * @param isConsole whether replies are printed and commands read from standard input.
      */

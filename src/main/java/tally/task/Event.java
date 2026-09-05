@@ -89,6 +89,6 @@ public class Event extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return TYPE + FIELD_SEPARATOR + super.toSaveFormat() + FIELD_SEPARATOR + start + FIELD_SEPARATOR + end;
+        return TYPE + FIELD_SEPARATOR + toSharedSaveFields() + FIELD_SEPARATOR + start + FIELD_SEPARATOR + end;
     }
 }

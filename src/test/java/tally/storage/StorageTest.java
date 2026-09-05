@@ -85,6 +85,51 @@ public class StorageTest {
     }
 
     @Test
+    public void save_danglingSymbolicLink_writesThroughItRatherThanReplacingIt()
+            throws TallyException, IOException {
+        // The link points at a file that is not there yet, which is what separates this
+        // from the case above: there is nothing for toRealPath to resolve the link to.
+        Path real = folder.resolve("actual.txt");
+        Path link = folder.resolve("tally.txt");
+        try {
+            Files.createSymbolicLink(link, real);
+        } catch (IOException | UnsupportedOperationException exception) {
+            assumeTrue(false, "this file system does not allow symbolic links");
+        }
+
+        new Storage(link).save(List.of(new Todo("alpha")));
+        assertTrue(Files.isSymbolicLink(link), "the link was replaced by a regular file");
+        assertEquals(List.of("T | 0 | alpha"), Files.readAllLines(real));
+    }
+
+    @Test
+    public void save_damageThatCouldNotBeCopiedAside_isRefused() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\nBAD LINE\n");
+        // A rescue copy of some earlier damage, which cannot be read to tell the two
+        // apart, so this damage cannot be copied aside anywhere.
+        Path occupied = folder.resolve("tally.txt.broken");
+        Files.writeString(occupied, "older damage\n");
+        assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class),
+                "this file system does not carry POSIX permissions");
+        Files.setPosixFilePermissions(occupied, PosixFilePermissions.fromString("---------"));
+        assumeTrue(!Files.isReadable(occupied), "these tests are running as a user nothing stops");
+
+        Storage storage = new Storage(file);
+        LoadResult loaded = storage.load();
+        assertEquals(1, loaded.tasks().size());
+        assertTrue(loaded.note().orElseThrow().contains("could not copy it aside"));
+
+        // Saving the one task that loaded would drop the damaged line for good.
+        List<Task> readable = loaded.tasks();
+        TallyException refused = assertThrows(
+                TallyException.class, () -> storage.save(readable));
+        assertTrue(refused.getMessage().contains("will not write over it"),
+                refused.getMessage());
+        assertTrue(Files.readString(file).contains("BAD LINE"), "the damaged line was lost");
+    }
+
+    @Test
     public void load_theSameDamageTwice_isCopiedAsideOnce() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | good\nBAD LINE\n");

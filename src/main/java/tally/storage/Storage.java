@@ -13,7 +13,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import tally.TallyException;
-import tally.parser.Parser;
 import tally.task.Deadline;
 import tally.task.Event;
 import tally.task.Task;
@@ -55,16 +54,21 @@ public class Storage {
     private static final int EVENT_FIELD_COUNT = 5;
     private static final int WINDOW_FIELD_COUNT = 5;
 
+    /** How many symbolic links may be followed before the chain is called a loop. */
+    private static final int MAX_LINKS_FOLLOWED = 8;
+
     private final Path file;
 
     /**
-     * Whether the file was there but could not be read when it was last loaded.
+     * Why the tally must not be written, if it must not.
      *
-     * <p>Tally starts with an empty tally when that happens, and saving that over a file
-     * whose contents nobody has seen would destroy them. Refusing to write is the only
-     * safe answer until the user moves the file or repairs it.
+     * <p>Two things put the file beyond writing. It could not be read at all, so Tally
+     * started empty and saving would destroy contents nobody has seen. Or some of its
+     * lines could not be read and no copy of them could be kept, so saving would drop
+     * those lines for good. Either way the user is told what to do about it rather than
+     * being quietly written over.
      */
-    private boolean isUnreadable;
+    private Optional<String> saveRefusal = Optional.empty();
 
     /**
      * Creates storage backed by the given file. The file need not exist yet.
@@ -85,7 +89,10 @@ public class Storage {
      */
     public LoadResult load() throws TallyException {
         List<Task> tasks = new ArrayList<>();
-        if (!Files.exists(file)) {
+        // notExists rather than !exists: exists answers false both for a file that is
+        // not there and for one it could not find out about, and reading the second as
+        // the first would let a later save write over a file nobody has seen.
+        if (Files.notExists(file)) {
             return new LoadResult(tasks, Optional.empty());
         }
 
@@ -121,11 +128,88 @@ public class Storage {
         try {
             return Files.readAllLines(file);
         } catch (IOException exception) {
-            isUnreadable = true;
+            refuseToSave("I could not read " + file.getFileName()
+                    + " when I started, so I will not write over what is in it."
+                    + " Move it aside or repair it, then start Tally again.");
             throw new TallyException("I could not read " + file.getFileName()
                     + ", so I am starting with an empty tally." + copyAside()
                     + " I will not write over it until it can be read.");
         }
+    }
+
+    /**
+     * Returns the task a line of the data file stands for.
+     *
+     * <p>Reading is a factory rather than a method on Task, because which subclass
+     * to build is only known once the type letter has been read.
+     *
+     * @param line one line of the data file, with surrounding spaces removed.
+     * @return the task described, or null if the line is not in the expected format.
+     */
+    private static Task readTask(String line) {
+        String[] fields = line.split(Pattern.quote(Task.FIELD_SEPARATOR));
+        boolean hasValidCommonFields = fields.length > DESCRIPTION_INDEX
+                && (fields[DONE_INDEX].equals(Task.NOT_DONE) || fields[DONE_INDEX].equals(Task.DONE))
+                && Arrays.stream(fields).noneMatch(String::isBlank);
+        if (!hasValidCommonFields) {
+            return null;
+        }
+
+        String description = fields[DESCRIPTION_INDEX];
+        Task task = switch (fields[TYPE_INDEX]) {
+            case Todo.TYPE -> fields.length == TODO_FIELD_COUNT ? new Todo(description) : null;
+            case Deadline.TYPE -> fields.length == DEADLINE_FIELD_COUNT
+                    ? readDeadline(description, fields[FIRST_DETAIL_INDEX]) : null;
+            case Event.TYPE -> fields.length == EVENT_FIELD_COUNT
+                    ? new Event(description, fields[FIRST_DETAIL_INDEX], fields[SECOND_DETAIL_INDEX]) : null;
+            case Window.TYPE -> fields.length == WINDOW_FIELD_COUNT
+                    ? readWindow(description, fields[FIRST_DETAIL_INDEX], fields[SECOND_DETAIL_INDEX]) : null;
+            default -> null;
+        };
+
+        if (task != null && fields[DONE_INDEX].equals(Task.DONE)) {
+            task.markAsDone();
+        }
+        return task;
+    }
+
+    /**
+     * Returns the deadline a data-file line describes.
+     *
+     * <p>A date the file cannot offer as yyyy-mm-dd is damage rather than something
+     * to ask the user about, so this reports it the same way as any other malformed
+     * line: by returning null.
+     *
+     * @param description what has to be done.
+     * @param dueDateText the date field as it appears in the file.
+     * @return the deadline, or null if the date cannot be read.
+     */
+    private static Task readDeadline(String description, String dueDateText) {
+        return Task.readDate(dueDateText)
+                .<Task>map(dueDate -> new Deadline(description, dueDate))
+                .orElse(null);
+    }
+
+    /**
+     * Returns the window task a data-file line describes, or null if either date cannot be read.
+     *
+     * @param description what has to be done.
+     * @param startDateText the first date field as it appears in the file.
+     * @param endDateText the second date field as it appears in the file.
+     * @return the window task, or null if the line cannot be read.
+     */
+    private static Task readWindow(String description, String startDateText, String endDateText) {
+        Optional<LocalDate> start = Task.readDate(startDateText);
+        Optional<LocalDate> end = Task.readDate(endDateText);
+        if (start.isEmpty() || end.isEmpty()) {
+            return null;
+        }
+        // The parser refuses a backwards window, so a file holding one was edited
+        // by hand; letting it through would crash the free-day search later.
+        if (end.get().isBefore(start.get())) {
+            return null;
+        }
+        return new Window(description, start.get(), end.get());
     }
 
     /**
@@ -151,45 +235,6 @@ public class Storage {
     }
 
     /**
-     * Returns the window task a data-file line describes, or null if either date cannot be read.
-     *
-     * @param description what has to be done.
-     * @param startDateText the first date field as it appears in the file.
-     * @param endDateText the second date field as it appears in the file.
-     * @return the window task, or null if the line cannot be read.
-     */
-    private static Task readWindow(String description, String startDateText, String endDateText) {
-        try {
-            LocalDate start = Parser.parseDate(startDateText);
-            LocalDate end = Parser.parseDate(endDateText);
-            // The parser refuses a backwards window, so a file holding one was edited
-            // by hand; letting it through would crash the free-day search later.
-            return end.isBefore(start) ? null : new Window(description, start, end);
-        } catch (TallyException exception) {
-            return null;
-        }
-    }
-
-    /**
-     * Returns the deadline a data-file line describes.
-     *
-     * <p>A date the file cannot offer as yyyy-mm-dd is damage rather than something
-     * to ask the user about, so this reports it the same way as any other malformed
-     * line: by returning null.
-     *
-     * @param description what has to be done.
-     * @param dueDateText the date field as it appears in the file.
-     * @return the deadline, or null if the date cannot be read.
-     */
-    private static Task readDeadline(String description, String dueDateText) {
-        try {
-            return new Deadline(description, Parser.parseDate(dueDateText));
-        } catch (TallyException exception) {
-            return null;
-        }
-    }
-
-    /**
      * Keeps a copy of an unusable file, so that a later save cannot write over it.
      *
      * <p>The file is copied rather than moved, because the tasks that did load stay on
@@ -199,8 +244,12 @@ public class Storage {
      * <p>The same damage is copied once. An unrepaired file is read again on every start,
      * and a fresh copy each time would fill the folder without adding anything.
      *
+     * <p>Failing to make the copy is what stops the save rather than merely being
+     * mentioned: the damaged lines then exist nowhere else, and the first save would be
+     * the last time anyone could have read them.
+     *
      * @return a sentence saying where the copy was put, that one is already kept, or
-     *     that none could be made.
+     *     that none could be made and so nothing will be written.
      */
     private String copyAside() {
         try {
@@ -215,7 +264,25 @@ public class Storage {
             Files.copy(file, backupFile);
             return " I copied it to " + backupFile.getFileName() + " so you can repair it.";
         } catch (IOException exception) {
-            return " I could not copy it aside.";
+            refuseToSave("I could not keep a copy of what I failed to read in "
+                    + file.getFileName() + ", so I will not write over it."
+                    + " Move it aside or repair it, then start Tally again.");
+            return " I could not copy it aside, so I will not write over it either.";
+        }
+    }
+
+    /**
+     * Records why the tally must not be written, keeping the first reason found.
+     *
+     * <p>The first is kept because the later ones follow from it: a file that could not
+     * be read is also one whose damage could not be copied, and the reading is what the
+     * user has to put right.
+     *
+     * @param reason what to tell the user when they next change the tally.
+     */
+    private void refuseToSave(String reason) {
+        if (saveRefusal.isEmpty()) {
+            saveRefusal = Optional.of(reason);
         }
     }
 
@@ -234,7 +301,9 @@ public class Storage {
             Path target = resolveSaveTarget();
             // A name of its own, so that a file already sitting at a fixed one is not
             // overwritten, and two Tallys saving at once do not write the same place.
-            partial = Files.createTempFile(target.getParent(), target.getFileName().toString(),
+            // It goes in the target's own folder, because the rename that puts it in
+            // place is only atomic within one folder.
+            partial = Files.createTempFile(folderOf(target), target.getFileName().toString(),
                     ".part");
             writeReplacement(tasks, target, partial);
             Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
@@ -254,24 +323,57 @@ public class Storage {
      * straight through.
      *
      * @return the file to replace.
-     * @throws IOException if the folder cannot be made.
-     * @throws TallyException if the file is one the user has protected.
+     * @throws IOException if the folder cannot be made, or a link cannot be followed.
+     * @throws TallyException if the file is one the user has protected, or one this
+     *     storage has already refused to write over.
      */
     private Path resolveSaveTarget() throws IOException, TallyException {
-        if (isUnreadable) {
-            throw new TallyException("I could not read " + file.getFileName()
-                    + " when I started, so I will not write over what is in it."
-                    + " Move it aside or repair it, then start Tally again.");
+        if (saveRefusal.isPresent()) {
+            throw new TallyException(saveRefusal.get());
         }
-        Path parent = file.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-        Path target = Files.exists(file) ? file.toRealPath() : file;
-        if (Files.exists(target) && !Files.isWritable(target)) {
+        Path target = followLinks(file);
+        Files.createDirectories(folderOf(target));
+        if (!Files.notExists(target) && !Files.isWritable(target)) {
             throw new TallyException(describeSaveFailure());
         }
         return target;
+    }
+
+    /**
+     * Returns the folder a file sits in.
+     *
+     * <p>Taken from the absolute form of the path, because a path written as a bare
+     * name, such as "tally.txt", has no parent of its own even though it plainly sits
+     * somewhere.
+     *
+     * @param path the file whose folder is wanted.
+     * @return the folder holding it.
+     */
+    private static Path folderOf(Path path) {
+        return path.toAbsolutePath().getParent();
+    }
+
+    /**
+     * Returns the file a path finally names, following symbolic links.
+     *
+     * <p>toRealPath covers a link pointing at a file that is there, but a link pointing
+     * at one that is not resolves to nothing at all, and the save would then replace the
+     * link itself with an ordinary file instead of writing through it.
+     *
+     * @param start the path to resolve.
+     * @return what the last link in the chain names, which need not exist yet.
+     * @throws IOException if a link cannot be read, or the chain does not end.
+     */
+    private static Path followLinks(Path start) throws IOException {
+        Path here = start;
+        for (int followed = 0; Files.isSymbolicLink(here); followed++) {
+            if (followed == MAX_LINKS_FOLLOWED) {
+                throw new IOException("Too many symbolic links to follow from " + start);
+            }
+            Path pointee = Files.readSymbolicLink(here);
+            here = pointee.isAbsolute() ? pointee : here.resolveSibling(pointee);
+        }
+        return here;
     }
 
     /**
@@ -332,42 +434,5 @@ public class Storage {
         } catch (IOException exception) {
             // The failing save is the more useful complaint; this would hide it.
         }
-    }
-
-    /**
-     * Returns the task a line of the data file stands for.
-     *
-     * <p>Reading is a factory rather than a method on Task, because which subclass
-     * to build is only known once the type letter has been read.
-     *
-     * @param line one line of the data file, with surrounding spaces removed.
-     * @return the task described, or null if the line is not in the expected format.
-     */
-    private static Task readTask(String line) {
-        String[] fields = line.split(Pattern.quote(Task.FIELD_SEPARATOR));
-        boolean hasValidCommonFields = fields.length > DESCRIPTION_INDEX
-                && (fields[DONE_INDEX].equals(Task.NOT_DONE) || fields[DONE_INDEX].equals(Task.DONE))
-                && !fields[DESCRIPTION_INDEX].isBlank()
-                && Arrays.stream(fields).noneMatch(String::isBlank);
-        if (!hasValidCommonFields) {
-            return null;
-        }
-
-        String description = fields[DESCRIPTION_INDEX];
-        Task task = switch (fields[TYPE_INDEX]) {
-            case Todo.TYPE -> fields.length == TODO_FIELD_COUNT ? new Todo(description) : null;
-            case Deadline.TYPE -> fields.length == DEADLINE_FIELD_COUNT
-                    ? readDeadline(description, fields[FIRST_DETAIL_INDEX]) : null;
-            case Event.TYPE -> fields.length == EVENT_FIELD_COUNT
-                    ? new Event(description, fields[FIRST_DETAIL_INDEX], fields[SECOND_DETAIL_INDEX]) : null;
-            case Window.TYPE -> fields.length == WINDOW_FIELD_COUNT
-                    ? readWindow(description, fields[FIRST_DETAIL_INDEX], fields[SECOND_DETAIL_INDEX]) : null;
-            default -> null;
-        };
-
-        if (task != null && fields[DONE_INDEX].equals(Task.DONE)) {
-            task.markAsDone();
-        }
-        return task;
     }
 }

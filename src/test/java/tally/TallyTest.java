@@ -3,8 +3,13 @@ package tally;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -61,6 +66,25 @@ public class TallyTest {
         assertFalse(tally.isExiting());
         assertTrue(tally.getResponse("bye").contains("Bye."));
         assertTrue(tally.isExiting());
+    }
+
+    @Test
+    public void getResponse_saveFails_doesNotAnnounceTheChangeFirst() throws IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\n");
+        assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class),
+                "this file system does not carry POSIX permissions");
+        Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("r--------"));
+        assumeTrue(!Files.isWritable(file), "these tests are running as a user nothing stops");
+
+        Tally tally = new Tally(file, false);
+        String reply = tally.getResponse("todo write essay");
+
+        // Saying "Got it" and then taking it back leaves the user unsure which happened.
+        assertFalse(reply.contains("Got it."), "a failed save was announced as a success: " + reply);
+        assertTrue(reply.contains("could not save"), reply);
+        assertFalse(tally.getResponse("list").contains("write essay"),
+                "the tally kept a change that never reached the file");
     }
 
     @Test

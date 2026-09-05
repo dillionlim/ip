@@ -137,11 +137,18 @@ def build_program():
 
 
 def invoke(commands, data_file, classpath):
-    """Returns what one run of the program printed when fed these commands."""
+    """Returns what one run of the program printed when fed these commands.
+
+    The program is started in the data file's own folder and given the bare file
+    name, which is how the README tells a user to point it at a file.  A path
+    written that way has no parent directory of its own, and saving to one used
+    to crash; running every case this way keeps that from coming back.
+    """
     stdin_text = commands + "\n" if commands else ""
     # -ea so the assertions in the code are checked as the cases run; without it every
     # assert is skipped and these sessions would prove nothing about them.
-    result = subprocess.run(["java", "-ea", "-cp", classpath, MAIN_CLASS, str(data_file)],
+    result = subprocess.run(["java", "-ea", "-cp", classpath, MAIN_CLASS, data_file.name],
+                            cwd=data_file.parent,
                             input=stdin_text, capture_output=True, text=True,
                             timeout=TIMEOUT_SECONDS)
     if result.stderr.strip():

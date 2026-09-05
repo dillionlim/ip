@@ -1,6 +1,6 @@
 # Tally
 
-Tally is a command-line chatbot that helps you keep a tally of your tasks. Given below are instructions on how to set it up.
+Tally is a chatbot that helps you keep a tally of your tasks, in a window or in a terminal. Given below are instructions on how to set it up.
 
 ## Building and running
 
