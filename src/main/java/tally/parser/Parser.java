@@ -114,6 +114,66 @@ public class Parser {
     }
 
     /**
+     * Returns what a free command asked for: a run of days, and where to start looking.
+     *
+     * <p>Both parts are optional. "free" asks for the next single free day from today,
+     * "/for 3" asks for three in a row, and "/from 2026-09-08" moves the search off
+     * today, which is what lets the answer be checked against a fixed expectation.
+     *
+     * @param arguments everything the user typed after the command word.
+     * @param today the day to search from when no /from date is given.
+     * @return the run wanted and the day to start from.
+     * @throws TallyException if a marker is malformed, the count is not a positive
+     *     number, or the date cannot be read.
+     */
+    public static FreeQuery parseFreeQuery(String arguments, LocalDate today) throws TallyException {
+        String usage = "free takes an optional /for count and an optional /from date."
+                + " Try: free /for 3 /from 2026-09-08";
+        String rest = arguments.trim();
+
+        LocalDate from = today;
+        int fromMarker = rest.indexOf("/from");
+        if (fromMarker >= 0) {
+            String dateText = rest.substring(fromMarker + "/from".length()).trim();
+            if (dateText.isEmpty()) {
+                throw new TallyException(usage);
+            }
+            from = parseDate(dateText);
+            rest = rest.substring(0, fromMarker).trim();
+        }
+
+        int days = 1;
+        if (!rest.isEmpty()) {
+            if (!rest.startsWith("/for")) {
+                throw new TallyException(usage);
+            }
+            days = parseDayCount(rest.substring("/for".length()).trim(), usage);
+        }
+        return new FreeQuery(days, from);
+    }
+
+    /**
+     * Returns the number of days a /for marker named.
+     *
+     * @param text what followed the marker.
+     * @param usage what to tell the user when it makes no sense.
+     * @return the count, always at least one.
+     * @throws TallyException if the text is not a number, or names fewer than one day.
+     */
+    private static int parseDayCount(String text, String usage) throws TallyException {
+        int days;
+        try {
+            days = Integer.parseInt(text);
+        } catch (NumberFormatException exception) {
+            throw new TallyException(usage);
+        }
+        if (days < 1) {
+            throw new TallyException("A free stretch has to be at least one day long.");
+        }
+        return days;
+    }
+
+    /**
      * Returns the window task described by "submit form /between 2026-09-08 /and 2026-09-12".
      *
      * <p>Both ends are read as dates rather than kept as text, so that a period running

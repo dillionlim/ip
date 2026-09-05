@@ -401,7 +401,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-I don't know that one. I understand: todo, deadline, event, window, list, mark, unmark, delete, find, bye.
+I don't know that one. I understand: todo, deadline, event, window, list, mark, unmark, delete, find, free, bye.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1490,6 +1490,112 @@ ____________________________________________________________
 
 ____________________________________________________________
 Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## TC-28 - The next free day, and the next run of free days
+
+**Aim:** `free` reports the earliest day nothing takes up, and `/for` the earliest run of that many in a row. A deadline takes up its own day and a window every day of its period, so the run has to clear both. `/from` fixes the day the search starts, which is what makes the answer checkable.
+
+**Input**
+```text
+deadline report /by 2026-09-10
+window certificate /between 2026-09-12 /and 2026-09-14
+free /from 2026-09-09
+free /for 3 /from 2026-09-09
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[D][ ] report (by: Sep 10 2026)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[W][ ] certificate (window: Sep 12 2026 to Sep 14 2026)
+Now you have 2 tasks in the list.
+____________________________________________________________
+
+____________________________________________________________
+The next free day is Sep 09 2026.
+____________________________________________________________
+
+____________________________________________________________
+The next 3 free days in a row start Sep 15 2026.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## TC-29 - A free search says when it saw less than the whole tally
+
+**Aim:** an event whose ends are text names no day, so it cannot be counted; the reply says so rather than implying the day is certainly free. A run shorter than a day, a count that is not a number and an unreadable date are each refused.
+
+**Input**
+```text
+event standup /from Mon 2pm /to 3pm
+free /from 2026-09-09
+free /for 0
+free /for abc
+free /from nope
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[E][ ] standup (from: Mon 2pm to: 3pm)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+The next free day is Sep 09 2026.
+Events whose times are not dates were not counted.
+____________________________________________________________
+
+____________________________________________________________
+A free stretch has to be at least one day long.
+____________________________________________________________
+
+____________________________________________________________
+free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+____________________________________________________________
+
+____________________________________________________________
+I could not read "nope" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________

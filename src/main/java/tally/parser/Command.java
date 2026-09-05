@@ -22,6 +22,7 @@ public enum Command {
     UNMARK("unmark"),
     DELETE("delete"),
     FIND("find"),
+    FREE("free"),
     BYE("bye");
 
     private final String keyword;

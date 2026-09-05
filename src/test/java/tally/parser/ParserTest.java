@@ -15,6 +15,40 @@ import tally.task.Window;
 
 /** Tests that Parser makes sense of good commands and refuses the rest. */
 public class ParserTest {
+    private static final LocalDate TODAY = LocalDate.of(2026, 9, 9);
+
+    @Test
+    public void parseFreeQuery_noMarkers_isOneDayFromToday() throws TallyException {
+        assertEquals(new FreeQuery(1, TODAY), Parser.parseFreeQuery("", TODAY));
+    }
+
+    @Test
+    public void parseFreeQuery_bothMarkers_areRead() throws TallyException {
+        assertEquals(new FreeQuery(3, LocalDate.of(2026, 9, 20)),
+                Parser.parseFreeQuery("/for 3 /from 2026-09-20", TODAY));
+    }
+
+    @Test
+    public void parseFreeQuery_eitherMarkerAlone_isRead() throws TallyException {
+        assertEquals(new FreeQuery(3, TODAY), Parser.parseFreeQuery("/for 3", TODAY));
+        assertEquals(new FreeQuery(1, LocalDate.of(2026, 9, 20)),
+                Parser.parseFreeQuery("/from 2026-09-20", TODAY));
+    }
+
+    @Test
+    public void parseFreeQuery_countBelowOne_throws() {
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/for 0", TODAY));
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/for -2", TODAY));
+    }
+
+    @Test
+    public void parseFreeQuery_malformedMarkerOrDate_throws() {
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("3", TODAY));
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/for abc", TODAY));
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/from nope", TODAY));
+        assertThrows(TallyException.class, () -> Parser.parseFreeQuery("/from", TODAY));
+    }
+
     @Test
     public void parseWindow_descriptionAndBothDates_returnsWindow() throws TallyException {
         Window window = Parser.parseWindow("submit form /between 2026-09-08 /and 2026-09-12");

@@ -2,11 +2,13 @@ package tally;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import tally.parser.Command;
+import tally.parser.FreeQuery;
 import tally.parser.Parser;
 import tally.storage.Storage;
 import tally.task.Task;
@@ -169,6 +171,7 @@ public class Tally {
             }
             case LIST -> showTasks();
             case FIND -> showMatchingTasks(Parser.parseSearchWord(arguments));
+            case FREE -> showFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
             case MARK -> markTask(arguments, command);
             case UNMARK -> unmarkTask(arguments, command);
             case DELETE -> deleteTask(arguments, command);
@@ -205,6 +208,35 @@ public class Tally {
         Task task = taskNamedIn(arguments, command);
         tasks.remove(task);
         ui.show("Noted. I've removed this task:", task.toString(), countSentence());
+    }
+
+    /**
+     * Shows when the user is next free for as long as they asked, or says there is no
+     * such stretch.
+     *
+     * <p>The reply says so when the tally holds a task whose days could not be read,
+     * because the answer is then drawn from less than everything on it.
+     *
+     * @param query the run of days wanted, and the day to start looking from.
+     */
+    private void showFreeDays(FreeQuery query) {
+        int days = query.days();
+        String answer = tasks.findFreeRun(days, query.from())
+                .map(start -> days == 1
+                        ? String.format("The next free day is %s.", Task.showDate(start))
+                        : String.format("The next %d free days in a row start %s.",
+                                days, Task.showDate(start)))
+                .orElseGet(() -> days == 1
+                        ? String.format("Every day in the year from %s has something on it.",
+                                Task.showDate(query.from()))
+                        : String.format("There is no run of %d free days in the year from %s.",
+                                days, Task.showDate(query.from())));
+
+        if (tasks.hasUnreadableDates()) {
+            ui.show(answer, "Events whose times are not dates were not counted.");
+            return;
+        }
+        ui.show(answer);
     }
 
     /** Shows the whole tally, or says so when there is nothing on it. */
