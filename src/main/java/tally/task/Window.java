@@ -45,7 +45,7 @@ public class Window extends Task {
     @Override
     public String toString() {
         return String.format("[W]%s (window: %s to %s)", super.toString(),
-                showDate(startDate), showDate(endDate));
+                formatDate(startDate), formatDate(endDate));
     }
 
     /**

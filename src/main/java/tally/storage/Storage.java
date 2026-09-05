@@ -86,7 +86,7 @@ public class Storage {
         if (unreadable.isEmpty()) {
             return new LoadResult(tasks, Optional.empty());
         }
-        return new LoadResult(tasks, Optional.of(noteAbout(unreadable)));
+        return new LoadResult(tasks, Optional.of(describeUnreadableLines(unreadable)));
     }
 
     /**
@@ -99,7 +99,7 @@ public class Storage {
      * @param unreadable the line numbers that held nothing recognizable, counting from 1.
      * @return a sentence naming them, and where the file was copied to.
      */
-    private String noteAbout(List<Integer> unreadable) {
+    private String describeUnreadableLines(List<Integer> unreadable) {
         boolean isSingle = unreadable.size() == 1;
         List<String> numbers = unreadable.stream().map(String::valueOf).toList();
         String which = numbers.size() == 1 ? numbers.get(0)
@@ -114,14 +114,14 @@ public class Storage {
      * Returns the window task a data-file line describes, or null if either date is unreadable.
      *
      * @param description what has to be done.
-     * @param startDate the first date field as it appears in the file.
-     * @param endDate the second date field as it appears in the file.
+     * @param startDateText the first date field as it appears in the file.
+     * @param endDateText the second date field as it appears in the file.
      * @return the window task, or null if the line cannot be read.
      */
-    private static Task parseWindow(String description, String startDate, String endDate) {
+    private static Task parseWindow(String description, String startDateText, String endDateText) {
         try {
-            LocalDate start = Parser.parseDate(startDate);
-            LocalDate end = Parser.parseDate(endDate);
+            LocalDate start = Parser.parseDate(startDateText);
+            LocalDate end = Parser.parseDate(endDateText);
             // The parser refuses a backwards window, so a file holding one was edited
             // by hand; letting it through would crash the free-day search later.
             return end.isBefore(start) ? null : new Window(description, start, end);
@@ -138,12 +138,12 @@ public class Storage {
      * line: by returning null.
      *
      * @param description what has to be done.
-     * @param dueDate the date field as it appears in the file.
+     * @param dueDateText the date field as it appears in the file.
      * @return the deadline, or null if the date cannot be read.
      */
-    private static Task parseDeadline(String description, String dueDate) {
+    private static Task parseDeadline(String description, String dueDateText) {
         try {
-            return new Deadline(description, Parser.parseDate(dueDate));
+            return new Deadline(description, Parser.parseDate(dueDateText));
         } catch (TallyException exception) {
             return null;
         }
@@ -164,15 +164,15 @@ public class Storage {
     private String copyAside() {
         try {
             byte[] damaged = Files.readAllBytes(file);
-            Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
-            for (int attempt = 1; Files.exists(spoiled); attempt++) {
-                if (Arrays.equals(Files.readAllBytes(spoiled), damaged)) {
-                    return " It is already copied to " + spoiled.getFileName() + ".";
+            Path spoiledFile = file.resolveSibling(file.getFileName() + ".broken");
+            for (int attempt = 1; Files.exists(spoiledFile); attempt++) {
+                if (Arrays.equals(Files.readAllBytes(spoiledFile), damaged)) {
+                    return " It is already copied to " + spoiledFile.getFileName() + ".";
                 }
-                spoiled = file.resolveSibling(file.getFileName() + ".broken." + attempt);
+                spoiledFile = file.resolveSibling(file.getFileName() + ".broken." + attempt);
             }
-            Files.copy(file, spoiled);
-            return " I copied it to " + spoiled.getFileName() + " so you can repair it.";
+            Files.copy(file, spoiledFile);
+            return " I copied it to " + spoiledFile.getFileName() + " so you can repair it.";
         } catch (IOException exception) {
             return " I could not copy it aside.";
         }
@@ -202,7 +202,7 @@ public class Storage {
             // put the old permissions on the replacement.
             Path target = Files.exists(file) ? file.toRealPath() : file;
             if (Files.exists(target) && !Files.isWritable(target)) {
-                throw new TallyException(refusal());
+                throw new TallyException(describeSaveFailure());
             }
 
             partial = target.resolveSibling(target.getFileName() + ".part");
@@ -211,12 +211,12 @@ public class Storage {
             Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             deleteQuietly(partial);
-            throw new TallyException(refusal());
+            throw new TallyException(describeSaveFailure());
         }
     }
 
     /** Returns what to tell the user when the tally could not be written. */
-    private String refusal() {
+    private String describeSaveFailure() {
         return "I could not save your tally to " + file.getFileName() + ".";
     }
 

@@ -121,7 +121,7 @@ public class Parser {
      * @return the word to look for.
      * @throws TallyException if nothing was given to search for.
      */
-    public static String parseSearchWord(String arguments) throws TallyException {
+    public static String parseSearchText(String arguments) throws TallyException {
         if (arguments.isEmpty()) {
             throw new TallyException("find needs something to look for. Try: find book");
         }
@@ -146,15 +146,15 @@ public class Parser {
                 + " Try: free /for 3 /from 2026-09-08";
         String rest = arguments.trim();
 
-        LocalDate from = today;
-        int fromMarker = rest.indexOf("/from");
-        if (fromMarker >= 0) {
-            String dateText = rest.substring(fromMarker + "/from".length()).trim();
+        LocalDate earliestDate = today;
+        int fromMarkerIndex = rest.indexOf("/from");
+        if (fromMarkerIndex >= 0) {
+            String dateText = rest.substring(fromMarkerIndex + "/from".length()).trim();
             if (dateText.isEmpty()) {
                 throw new TallyException(usage);
             }
-            from = parseDate(dateText);
-            rest = rest.substring(0, fromMarker).trim();
+            earliestDate = parseDate(dateText);
+            rest = rest.substring(0, fromMarkerIndex).trim();
         }
 
         int days = 1;
@@ -164,7 +164,7 @@ public class Parser {
             }
             days = parseDayCount(rest.substring("/for".length()).trim(), usage);
         }
-        return new FreeQuery(days, from);
+        return new FreeQuery(days, earliestDate);
     }
 
     /**

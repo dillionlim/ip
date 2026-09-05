@@ -83,7 +83,7 @@ public class Task {
      * @param date the date to show.
      * @return for example "Sep 08 2026".
      */
-    public static String showDate(LocalDate date) {
+    public static String formatDate(LocalDate date) {
         return date.format(DISPLAY_FORMAT);
     }
 

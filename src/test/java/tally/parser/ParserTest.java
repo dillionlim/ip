@@ -182,13 +182,13 @@ public class ParserTest {
 
     @Test
     public void parseSearchWord_givenAWord_returnsIt() throws TallyException {
-        assertEquals("book", Parser.parseSearchWord("book"));
-        assertEquals("read book", Parser.parseSearchWord("read book"));
+        assertEquals("book", Parser.parseSearchText("book"));
+        assertEquals("read book", Parser.parseSearchText("read book"));
     }
 
     @Test
     public void parseSearchWord_nothingToLookFor_throws() {
-        assertThrows(TallyException.class, () -> Parser.parseSearchWord(""));
+        assertThrows(TallyException.class, () -> Parser.parseSearchText(""));
     }
 
     @Test

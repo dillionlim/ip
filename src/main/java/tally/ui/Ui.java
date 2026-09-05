@@ -121,9 +121,9 @@ public class Ui {
      * @return the lines said, one per line, with no trailing newline.
      */
     public String takePendingResponse() {
-        String said = pendingResponse.toString().stripTrailing();
+        String response = pendingResponse.toString().stripTrailing();
         pendingResponse.setLength(0);
-        return said;
+        return response;
     }
 
     /** Stops reading the user's input. */
