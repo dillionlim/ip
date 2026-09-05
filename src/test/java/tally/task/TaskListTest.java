@@ -161,10 +161,10 @@ public class TaskListTest {
 
     @Test
     public void constructor_givenList_doesNotShareItWithTheCaller() {
-        List<Task> given = new ArrayList<>();
-        given.add(new Todo("first"));
-        TaskList tasks = new TaskList(given);
-        given.add(new Todo("added behind the tally's back"));
+        List<Task> givenTasks = new ArrayList<>();
+        givenTasks.add(new Todo("first"));
+        TaskList tasks = new TaskList(givenTasks);
+        givenTasks.add(new Todo("added behind the tally's back"));
         assertEquals(1, tasks.size());
     }
 

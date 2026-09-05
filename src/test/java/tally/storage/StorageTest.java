@@ -62,11 +62,11 @@ public class StorageTest {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | private\n");
         assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class));
-        Set<PosixFilePermission> onlyMine = PosixFilePermissions.fromString("rw-------");
-        Files.setPosixFilePermissions(file, onlyMine);
+        Set<PosixFilePermission> ownerOnlyPermissions = PosixFilePermissions.fromString("rw-------");
+        Files.setPosixFilePermissions(file, ownerOnlyPermissions);
 
         new Storage(file).save(List.of(new Todo("another")));
-        assertEquals(onlyMine, Files.getPosixFilePermissions(file));
+        assertEquals(ownerOnlyPermissions, Files.getPosixFilePermissions(file));
     }
 
     @Test
@@ -122,9 +122,9 @@ public class StorageTest {
         assertTrue(loaded.note().orElseThrow().contains("could not copy it aside"));
 
         // Saving the one task that loaded would drop the damaged line for good.
-        List<Task> readable = loaded.tasks();
+        List<Task> readableTasks = loaded.tasks();
         TallyException refused = assertThrows(
-                TallyException.class, () -> storage.save(readable));
+                TallyException.class, () -> storage.save(readableTasks));
         assertTrue(refused.getMessage().contains("will not write over it"),
                 refused.getMessage());
         assertTrue(Files.readString(file).contains("BAD LINE"), "the damaged line was lost");
@@ -165,8 +165,8 @@ public class StorageTest {
 
         // Reading does not rewrite the file, so an unrepaired one would otherwise be
         // copied again on every start, without limit.
-        try (Stream<Path> kept = Files.list(folder)) {
-            assertEquals(1, (int) kept.filter(each ->
+        try (Stream<Path> keptFiles = Files.list(folder)) {
+            assertEquals(1, (int) keptFiles.filter(each ->
                     each.getFileName().toString().contains(".broken")).count());
         }
         assertTrue(second.contains("already copied"));
@@ -217,16 +217,16 @@ public class StorageTest {
 
         Task done = new Todo("read book");
         done.markAsDone();
-        List<Task> written = List.of(done,
+        List<Task> savedTasks = List.of(done,
                 new Deadline("return book", LocalDate.of(2019, 6, 6)),
                 new Event("project meeting", "Aug 6th 2pm", "4pm"),
                 new Window("submit form", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 12)));
-        storage.save(written);
+        storage.save(savedTasks);
 
-        List<Task> read = storage.load().tasks();
-        assertEquals(written.size(), read.size());
-        for (int i = 0; i < written.size(); i++) {
-            assertEquals(written.get(i).toString(), read.get(i).toString());
+        List<Task> loadedTasks = storage.load().tasks();
+        assertEquals(savedTasks.size(), loadedTasks.size());
+        for (int i = 0; i < savedTasks.size(); i++) {
+            assertEquals(savedTasks.get(i).toString(), loadedTasks.get(i).toString());
         }
     }
 

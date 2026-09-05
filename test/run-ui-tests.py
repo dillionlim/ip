@@ -35,6 +35,8 @@ PLAN = ROOT / "test" / "ui-test-plan.md"
 GRADLEW = ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
 MAIN_CLASS = "tally.Tally"
 TIMEOUT_SECONDS = 20
+# How wide the rules separating one case from the next are drawn.
+BANNER_WIDTH = 70
 
 HEADING = re.compile(r"^##\s+(TC-\d+)\s*[-–—:]\s*(.+?)\s*$")
 AIM = re.compile(r"^\*\*Aim:?\*\*:?\s*(.*)$")
@@ -46,7 +48,16 @@ SECTION_KEY = {"Given the data file": "seed", "Input": "input",
 
 
 class Crashed(Exception):
-    """Raised when the program exits with a nonzero status, however it printed."""
+    """Raised when a run cannot count as a pass, whatever it printed.
+
+    Either it exited with a nonzero status, or it wrote to standard error
+    while exiting cleanly.  Both mean something went wrong that comparing
+    standard output would not show.
+    """
+
+    def __init__(self, reason, printed=""):
+        super().__init__(reason)
+        self.printed = printed
 
 
 def read_fenced_block(lines, index):
@@ -63,37 +74,51 @@ def read_fenced_block(lines, index):
     return "\n".join(body), index + 1
 
 
-def parse_plan(text):
-    """Returns the test cases described in the plan, in the order they appear."""
-    cases = []
-    current = None
-    lines = text.splitlines()
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        heading = HEADING.match(line)
-        if heading:
-            current = {"id": heading.group(1), "title": heading.group(2),
-                       "aim": "", "seed": None, "input": None,
-                       "restart": None, "expected": None, "files": None}
-            cases.append(current)
-            index += 1
-            continue
-        if current is not None:
-            aim = AIM.match(line)
-            if aim:
-                current["aim"] = aim.group(1).strip()
-                index += 1
-                continue
-            section = SECTION.match(line)
-            if section:
-                key = SECTION_KEY[section.group(1)]
-                current[key], index = read_fenced_block(lines, index + 1)
-                continue
-        index += 1
+def new_case(heading):
+    """Returns an empty case named by a matched heading line."""
+    return {"id": heading.group(1), "title": heading.group(2),
+            "aim": "", "seed": None, "input": None,
+            "restart": None, "expected": None, "files": None}
+
+
+def read_into_case(case, lines, index):
+    """Reads whatever the line at index starts into the case, and returns the next index.
+
+    Returns index + 1 when the line starts nothing, so the caller moves on.
+    """
+    aim = AIM.match(lines[index])
+    if aim:
+        case["aim"] = aim.group(1).strip()
+        return index + 1
+    section = SECTION.match(lines[index])
+    if section:
+        case[SECTION_KEY[section.group(1)]], after = read_fenced_block(lines, index + 1)
+        return after
+    return index + 1
+
+
+def check_complete(cases):
+    """Raises if any case is missing a block that every case must have."""
     for case in cases:
         if case["input"] is None or case["expected"] is None:
             raise ValueError(f"{case['id']} is missing an Input or Expected output block")
+
+
+def parse_plan(text):
+    """Returns the test cases described in the plan, in the order they appear."""
+    cases = []
+    lines = text.splitlines()
+    index = 0
+    while index < len(lines):
+        heading = HEADING.match(lines[index])
+        if heading:
+            cases.append(new_case(heading))
+            index += 1
+        elif cases:
+            index = read_into_case(cases[-1], lines, index)
+        else:
+            index += 1
+    check_complete(cases)
     return cases
 
 
@@ -140,9 +165,9 @@ def invoke(commands, data_file, classpath):
     """Returns what one run of the program printed when fed these commands.
 
     The program is started in the data file's own folder and given the bare file
-    name, which is how the README tells a user to point it at a file.  A path
-    written that way has no parent directory of its own, and saving to one used
-    to crash; running every case this way keeps that from coming back.
+    name, which is the shape a user naturally types for a file beside them.  A
+    path written that way names no parent directory of its own, and saving to
+    one used to crash; running every case this way keeps that from coming back.
     """
     stdin_text = commands + "\n" if commands else ""
     # -ea so the assertions in the code are checked as the cases run; without it every
@@ -157,11 +182,11 @@ def invoke(commands, data_file, classpath):
         # failed assertion leaves the words already printed intact, so comparing only
         # what was printed would call this case correct.
         crash = f"the program exited with status {result.returncode}"
-        raise Crashed(f"{crash}:\n{noise}" if noise else crash)
+        raise Crashed(f"{crash}:\n{noise}" if noise else crash, result.stdout)
     if noise:
         # A passing run says nothing here, so anything on it is a warning or a trace the
         # program carried on through, which a comparison of stdout alone would not see.
-        raise Crashed(f"the program wrote to standard error:\n{noise}")
+        raise Crashed(f"the program wrote to standard error:\n{noise}", result.stdout)
     return result.stdout
 
 
@@ -190,6 +215,10 @@ def check_files(case, data_file):
     Each line of the block names a file and one line it should hold, written as
     "name >>> line". Checking the files as well as the console catches a change
     that prints the right thing and then damages what is on disk.
+
+    The block has to name every file the run leaves behind, so that a half
+    written file nobody cleaned up is a failure rather than something the check
+    passes over in silence.
     """
     wanted = {}
     for entry in case["files"].split("\n"):
@@ -197,11 +226,19 @@ def check_files(case, data_file):
             continue
         name, _, content = entry.partition(" >>> ")
         wanted.setdefault(name.strip(), []).append(content)
+
+    left = sorted(path.name for path in data_file.parent.iterdir())
+    unexpected = [name for name in left if name not in wanted]
+    if unexpected:
+        return "the run left files the case does not account for: " + ", ".join(unexpected)
+
     for name, lines in wanted.items():
         path = data_file.parent / name
         if not path.exists():
             return f"{name} does not exist after the run"
-        actual = [l for l in path.read_text(encoding="utf-8").split("\n") if l != ""]
+        # splitlines rather than dropping every blank line, so that a stray blank
+        # in the middle of the file is a difference like any other.
+        actual = path.read_text(encoding="utf-8").splitlines()
         if actual != lines:
             return (f"{name} holds:\n    " + "\n    ".join(actual)
                     + "\n  but should hold:\n    " + "\n    ".join(lines))
@@ -210,7 +247,7 @@ def check_files(case, data_file):
 
 def announce(case, number, total):
     """Prints what the case is about and what it is about to type."""
-    print(f"{'-' * 70}\n[{number}/{total}] {case['id']} - {case['title']}")
+    print(f"{'-' * BANNER_WIDTH}\n[{number}/{total}] {case['id']} - {case['title']}")
     print(f"Aim: {case['aim']}\n")
     if case["seed"] is not None:
         print("--- Data file before the run ---")
@@ -224,14 +261,14 @@ def announce(case, number, total):
 
 def report_complaint(case, complaint):
     """Prints why a case failed, for a failure that is a sentence rather than a diff."""
-    print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
+    print(f"\n{'=' * BANNER_WIDTH}\nFAILED: {case['id']} - {case['title']}\n{'=' * BANNER_WIDTH}")
     print(f"\nAim: {case['aim']}\n\n  {complaint}")
     print(f"\nStopping: {case['id']} failed, so the remaining cases were not run.")
 
 
 def report_difference(case, expected, actual):
     """Prints both outputs and a diff, for a case whose output was not what it should be."""
-    print(f"\n{'=' * 70}\nFAILED: {case['id']} - {case['title']}\n{'=' * 70}")
+    print(f"\n{'=' * BANNER_WIDTH}\nFAILED: {case['id']} - {case['title']}\n{'=' * BANNER_WIDTH}")
     print(f"\nAim: {case['aim']}\n")
     print(f"--- Input ---\n{case['input']}\n")
     print(f"--- Expected output ---\n{expected}\n")
@@ -252,10 +289,13 @@ def show_files_left(data_file):
 
 
 def run_and_check(case, data_file, classpath):
-    """Runs one case and returns a complaint about it, or None if it passed."""
+    """Runs one case, reports it if it failed, and returns whether it passed."""
     try:
         actual = run_case(case, data_file, classpath)
     except Crashed as crash:
+        if crash.printed.strip():
+            print("\n--- Printed before it stopped ---")
+            print(crash.printed, end="" if crash.printed.endswith("\n") else "\n")
         report_complaint(case, crash)
         return False
     print("\n--- Printed by Tally ---")
@@ -301,7 +341,7 @@ def main():
             return 1
         print(f"PASS: {case['id']}\n")
 
-    print(f"{'-' * 70}\nAll {len(cases)} test case(s) passed.")
+    print(f"{'-' * BANNER_WIDTH}\nAll {len(cases)} test case(s) passed.")
     return 0
 
 

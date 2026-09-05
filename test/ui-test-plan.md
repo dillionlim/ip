@@ -37,6 +37,11 @@ each line reads `filename >>> one line that file should hold`. That checks what
 was left on disk, not just what was printed. Console output alone would miss a
 change that says the right thing and then destroys the data.
 
+The block has to name every file the run leaves behind, and every line of each
+one. A file nobody accounted for fails the case, so a half-written file left
+uncleaned is caught rather than passed over; and blank lines count, so one that
+appears in the middle of a data file is a difference like any other.
+
 A case may add an optional `**Given the data file**` block before the input, to
 write that content into the data file before the run. That is how a damaged file
 is tested.
@@ -1211,6 +1216,7 @@ ____________________________________________________________
 
 **Expected files after the run**
 ```text
+tally.txt >>> D | 0 | return book | last Tuesday
 tally.txt.broken >>> D | 0 | return book | last Tuesday
 ```
 
