@@ -1,6 +1,8 @@
 package tally.task;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 /** A single entry on the user's tally: what has to be done, and whether it is done yet. */
@@ -46,6 +48,41 @@ public class Task {
      */
     public String getStatusIcon() {
         return isDone ? "X" : " ";
+    }
+
+    /**
+     * Returns a date as the user should see it.
+     *
+     * @param date the date to show.
+     * @return for example "Sep 08 2026".
+     */
+    public static String showDate(LocalDate date) {
+        return date.format(DISPLAY_FORMAT);
+    }
+
+    /**
+     * Returns the days this task takes up, which is none unless it names any.
+     *
+     * <p>Each kind of task answers for itself rather than having a caller ask what
+     * kind it is, so a new kind joins the free-day search by overriding this alone.
+     *
+     * @return the days taken up, in order, or an empty list for a task naming none.
+     */
+    public List<LocalDate> occupiedDates() {
+        return List.of();
+    }
+
+    /**
+     * Returns whether this task names days that could not be read as dates.
+     *
+     * <p>A task naming no days at all is not unreadable; this asks only about days
+     * meant to be there, so that a search over days can say when its answer is
+     * built on less than the whole tally.
+     *
+     * @return true when this task means to name days but they could not be read.
+     */
+    public boolean hasUnreadableDates() {
+        return false;
     }
 
     /** Records that this task has been done. */

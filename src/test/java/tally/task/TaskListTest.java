@@ -4,13 +4,54 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 /** Tests that a TaskList holds tasks in order and keeps its own copy of them. */
 public class TaskListTest {
+    private static final LocalDate SEP_9 = LocalDate.of(2026, 9, 9);
+
+    @Test
+    public void findFreeRun_emptyTally_offersTheDayAskedFrom() {
+        assertEquals(Optional.of(SEP_9), new TaskList().findFreeRun(1, SEP_9));
+    }
+
+    @Test
+    public void findFreeRun_deadlineAndWindow_skipsEveryDayTheyTakeUp() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Deadline("report", LocalDate.of(2026, 9, 10)),
+                new Window("certificate", LocalDate.of(2026, 9, 12), LocalDate.of(2026, 9, 14)));
+        // Sep 9 free, 10 taken, 11 free, 12-14 taken, so three in a row start on the 15th.
+        assertEquals(Optional.of(SEP_9), tasks.findFreeRun(1, SEP_9));
+        assertEquals(Optional.of(LocalDate.of(2026, 9, 15)), tasks.findFreeRun(3, SEP_9));
+    }
+
+    @Test
+    public void findFreeRun_eventWrittenAsDates_takesUpThoseDays() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Event("trip", "2026-09-09", "2026-09-11"));
+        assertEquals(Optional.of(LocalDate.of(2026, 9, 12)), tasks.findFreeRun(1, SEP_9));
+    }
+
+    @Test
+    public void findFreeRun_eventWrittenAsText_takesUpNothingAndIsReported() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Event("standup", "Mon 2pm", "3pm"));
+        assertEquals(Optional.of(SEP_9), tasks.findFreeRun(1, SEP_9));
+        assertTrue(tasks.hasUnreadableDates());
+    }
+
+    @Test
+    public void findFreeRun_everyDayTakenForAYear_findsNothing() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Window("busy", SEP_9, SEP_9.plusYears(2)));
+        assertEquals(Optional.empty(), tasks.findFreeRun(1, SEP_9));
+    }
+
     @Test
     public void add_thenGet_keepsTheOrderTheyWereAdded() {
         TaskList tasks = new TaskList();

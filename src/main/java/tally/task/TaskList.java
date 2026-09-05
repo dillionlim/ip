@@ -1,12 +1,19 @@
 package tally.task;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /** The tasks on the user's tally, and the things that can be done to them. */
 public class TaskList {
+    /** How far ahead a free-day search looks before giving up, in days. */
+    private static final int SEARCH_HORIZON_DAYS = 366;
+
     private final List<Task> tasks;
 
     /** Creates an empty tally. */
@@ -38,6 +45,41 @@ public class TaskList {
                     + " every other one, so a null would surface only later as a failed save";
         }
         Collections.addAll(tasks, tasksToAdd);
+    }
+
+    /**
+     * Returns the first day of the earliest run of free days of the length asked for.
+     *
+     * <p>A day is free when no task on the tally takes it up. The search runs a year
+     * ahead and no further, so that a tally with something on every day answers
+     * rather than running on.
+     *
+     * @param days how many free days in a row are wanted, at least one.
+     * @param from the first day that may be offered.
+     * @return the first day of the earliest such run, or empty if there is none.
+     */
+    public Optional<LocalDate> findFreeRun(int days, LocalDate from) {
+        assert days >= 1 : "Parser.parseFreeQuery refuses a run shorter than a day: " + days;
+        Set<LocalDate> takenDays = tasks.stream()
+                .flatMap(task -> task.occupiedDates().stream())
+                .collect(Collectors.toSet());
+        int freeInARow = 0;
+        for (LocalDate day = from; day.isBefore(from.plusDays(SEARCH_HORIZON_DAYS)); day = day.plusDays(1)) {
+            freeInARow = takenDays.contains(day) ? 0 : freeInARow + 1;
+            if (freeInARow == days) {
+                return Optional.of(day.minusDays(days - 1L));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns whether any task names days that could not be read as dates.
+     *
+     * @return true when the free-day search saw less than the whole tally.
+     */
+    public boolean hasUnreadableDates() {
+        return tasks.stream().anyMatch(Task::hasUnreadableDates);
     }
 
     /**

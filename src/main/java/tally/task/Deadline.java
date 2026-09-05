@@ -1,6 +1,7 @@
 package tally.task;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /** A task that has to be finished before a stated date. */
 public class Deadline extends Task {
@@ -18,13 +19,23 @@ public class Deadline extends Task {
     }
 
     /**
+     * Returns the single day this deadline takes up, the day it is due.
+     *
+     * @return a list holding just the due date.
+     */
+    @Override
+    public List<LocalDate> occupiedDates() {
+        return List.of(dueDate);
+    }
+
+    /**
      * Returns this deadline as the user sees it, tagged with its type and due date.
      *
      * @return for example "[D][ ] return book (by: Oct 15 2019)".
      */
     @Override
     public String toString() {
-        return String.format("[D]%s (by: %s)", super.toString(), dueDate.format(DISPLAY_FORMAT));
+        return String.format("[D]%s (by: %s)", super.toString(), showDate(dueDate));
     }
 
     /**
