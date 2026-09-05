@@ -108,8 +108,8 @@ public class Tally {
         assert !isConsole : "a console Tally prints its replies, leaving nothing to return";
         String line = input.trim();
         try {
-            isExiting = !runCommand(line);
-            if (isExiting) {
+            if (!runCommand(line)) {
+                isExiting = true;
                 ui.showGoodbye();
             }
         } catch (TallyException exception) {
@@ -119,7 +119,10 @@ public class Tally {
     }
 
     /**
-     * Returns whether the last command asked to end the conversation.
+     * Returns whether the user has said goodbye.
+     *
+     * <p>Once true it stays true, so a front end that keeps taking input after the
+     * goodbye cannot be told the conversation is running again.
      *
      * @return true once the user has said goodbye.
      */
@@ -155,7 +158,9 @@ public class Tally {
         while (!isExiting && ui.hasNextCommand()) {
             String line = ui.readCommand();
             try {
-                isExiting = !runCommand(line);
+                if (!runCommand(line)) {
+                    isExiting = true;
+                }
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -235,9 +240,10 @@ public class Tally {
      * the whole conversation at once; the trade reverses once a command needs state of
      * its own.
      *
-     * <p>A switch over an enum is not checked for exhaustiveness, so a new constant
-     * would otherwise compile with nothing to carry it out. The default clause turns
-     * that into a failure that is at least loud.
+     * <p>Every constant has a branch and there is no default clause, which is what
+     * makes the compiler refuse a new command nobody has wired up here. A default
+     * clause would answer for it instead, and the omission would only show as a
+     * failure once someone typed the new command.
      *
      * <p>The reply is returned rather than shown, so that the caller can hold it back
      * until the change it describes has been written.
@@ -250,8 +256,6 @@ public class Tally {
     private String[] carryOut(Command command, String arguments) throws TallyException {
         // AI suggested switching to a switch statement instead of the if-else chain.
         // Arrow labels keep each branch self-contained.
-        // IllegalStateException rather than TallyException at the default, since only a
-        // constant nobody wired up reaches it, which the user did nothing to cause.
         return switch (command) {
             case LIST -> describeTally();
             case FIND -> describeMatchingTasks(Parser.parseSearchText(arguments));
@@ -263,7 +267,9 @@ public class Tally {
             case DEADLINE -> addTask(Parser.parseDeadline(arguments));
             case EVENT -> addTask(Parser.parseEvent(arguments));
             case WINDOW -> addTask(Parser.parseWindow(arguments));
-            default -> throw new IllegalStateException("No handling for command: " + command);
+            // The caller deals with bye and never passes it on, so reaching it here is a
+            // programming error rather than anything the user typed.
+            case BYE -> throw new IllegalStateException("bye is not carried out here");
         };
     }
 

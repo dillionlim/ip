@@ -69,6 +69,16 @@ public class TallyTest {
     }
 
     @Test
+    public void isExiting_commandAfterGoodbye_staysTrue() {
+        Tally tally = newTally();
+        assertTrue(tally.getResponse("bye").contains("Bye."));
+        assertTrue(tally.isExiting());
+        // A front end that keeps taking input must not be told the conversation resumed.
+        tally.getResponse("list");
+        assertTrue(tally.isExiting(), "the goodbye was forgotten by the next command");
+    }
+
+    @Test
     public void getResponse_freeFromTheLastWritableDate_namesOnlyTheDaysItSearched() {
         // Only one day can be written down at all from there, so a reply naming a year
         // would be describing days the search never looked at and could not offer.
