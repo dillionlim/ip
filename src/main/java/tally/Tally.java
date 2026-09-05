@@ -153,6 +153,8 @@ public class Tally {
      */
     private boolean isStillTalkingAfter(String line) throws TallyException {
         Command command = Parser.parseCommand(line);
+        assert command != null
+                : "Parser.parseCommand returns a constant or throws, so it never yields null";
         String arguments = Parser.parseArguments(line);
 
         // AI suggested switching to a switch statement instead of the if-else chain.
@@ -232,6 +234,9 @@ public class Tally {
         List<String> lines = new ArrayList<>();
         lines.add(heading);
         for (int position : positions) {
+            assert position >= 0 && position < tasks.size()
+                    : "positions come from findPositions or from a walk over the whole tally,"
+                    + " and both yield only places that hold a task, unlike: " + position;
             // AI suggested String.format instead of concatenating strings manually.
             lines.add(String.format("%d.%s", position + 1, tasks.get(position)));
         }

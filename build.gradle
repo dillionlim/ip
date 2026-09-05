@@ -57,6 +57,10 @@ test {
 
 application {
     mainClass = 'tally.Launcher'
+
+    // Assertions are off unless asked for, which would leave every assert in the code
+    // inert. The JUnit tests already run with them on, and this does the same for the app.
+    applicationDefaultJvmArgs = ['-ea']
 }
 
 jar {
