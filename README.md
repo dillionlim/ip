@@ -52,3 +52,33 @@ Prerequisites: JDK 25, update Intellij to the most recent version.
    ```
 
 **Warning:** Keep the `src\main\java` folder as the root folder for Java files (i.e., don't rename those folders or move Java files to another folder outside of this folder path), as this is the default location some tools (e.g., Gradle) expect to find Java files.
+
+## Acknowledgements
+
+### Use of AI tools
+
+Claude (Anthropic), through Claude Code, was used sparingly throughout
+this project. The use is in comments beside the individual pieces of code it shaped.
+
+**Increments done with AI assistance,** using the prompts the course supplies for
+them:
+
+- `A-Assertions`: documenting the assumptions that hold between the parts
+- `A-CodeQuality`: reviewing against the code quality guidelines and fixing the
+  highest-priority issue found
+
+**Written by Claude to my requirements,** and marked as such in the files
+themselves:
+
+- `test/run-ui-tests.py` — the console test runner
+- `.claude/skills/test-ui/SKILL.md` — the skill that drives it
+
+**Individual suggestions,** each marked with a comment where it was taken:
+
+| Where | What |
+| --- | --- |
+| `Tally.java` | switch over the command enum in place of an if-else chain |
+| `Tally.java` | `String.format` in place of manual string concatenation |
+| `Tally.java` | a grammatical error identified, fixed by hand |
+| `Parser.java` | a bug in event parsing found, fixed by hand |
+| `TallyException.java` | the missing `serialVersionUID` identified and fixed |
