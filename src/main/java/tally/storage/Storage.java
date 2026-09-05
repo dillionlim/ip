@@ -6,13 +6,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import tally.TallyException;
+import tally.parser.Parser;
 import tally.task.Deadline;
 import tally.task.Event;
 import tally.task.Task;
@@ -120,8 +120,12 @@ public class Storage {
      */
     private static Task parseWindow(String description, String startDate, String endDate) {
         try {
-            return new Window(description, LocalDate.parse(startDate), LocalDate.parse(endDate));
-        } catch (DateTimeParseException exception) {
+            LocalDate start = Parser.parseDate(startDate);
+            LocalDate end = Parser.parseDate(endDate);
+            // The parser refuses a backwards window, so a file holding one was edited
+            // by hand; letting it through would crash the free-day search later.
+            return end.isBefore(start) ? null : new Window(description, start, end);
+        } catch (TallyException exception) {
             return null;
         }
     }
@@ -139,8 +143,8 @@ public class Storage {
      */
     private static Task parseDeadline(String description, String dueDate) {
         try {
-            return new Deadline(description, LocalDate.parse(dueDate));
-        } catch (DateTimeParseException exception) {
+            return new Deadline(description, Parser.parseDate(dueDate));
+        } catch (TallyException exception) {
             return null;
         }
     }

@@ -31,6 +31,18 @@ public class StorageTest {
     private Path folder;
 
     @Test
+    public void load_backwardsWindow_isSkipped() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // The parser refuses one, so a file holding it was edited by hand. Letting it
+        // through used to crash the free-day search.
+        Files.writeString(file, "W | 0 | submit form | 2026-09-12 | 2026-09-08\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertTrue(loaded.tasks().isEmpty());
+        assertTrue(loaded.note().orElseThrow().contains("line 1"));
+    }
+
+    @Test
     public void save_fileTheUserProtected_isRefusedRatherThanReplaced() throws IOException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | protected\n");

@@ -1,13 +1,62 @@
 package tally.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
 /** Tests how each kind of task shows itself to the user and writes itself to the file. */
 public class TaskTest {
+    @Test
+    public void occupies_eventEndsWrittenBackwards_stillNameTheSameDays() {
+        Event backwards = new Event("trip", "2026-09-10", "2026-09-08");
+        Event forwards = new Event("trip", "2026-09-08", "2026-09-10");
+        for (int day = 7; day <= 11; day++) {
+            LocalDate each = LocalDate.of(2026, 9, day);
+            assertEquals(forwards.occupies(each), backwards.occupies(each), each.toString());
+        }
+        assertTrue(backwards.occupies(LocalDate.of(2026, 9, 9)));
+        assertFalse(backwards.occupies(LocalDate.of(2026, 9, 11)));
+    }
+
+    @Test
+    public void occupies_endsThousandsOfYearsApart_costsNothingToAsk() {
+        // Both ends are ordinary dates, so the date form does not refuse them: listing
+        // the 3.65 million days between them is what used to exhaust the heap. Asking
+        // about one day has to stay cheap, which only holds if nothing is built.
+        Event doom = new Event("doom", "0001-01-01", "9999-12-31");
+        assertFalse(doom.hasUnreadableDates());
+
+        // Asking a thousand times is the point: each answer has to cost nothing. Building
+        // the three and a half million days between these ends even once takes a third of
+        // a second, so a thousand answers could not be given inside this bound.
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            for (int time = 0; time < 1000; time++) {
+                assertTrue(doom.occupies(LocalDate.of(2026, 9, 8)));
+                assertFalse(doom.occupies(LocalDate.of(10000, 1, 1)));
+            }
+        });
+    }
+
+    @Test
+    public void occupies_endsOutsideTheWrittenDateForm_takeUpNothing() {
+        Event odd = new Event("odd", "+999999999-12-30", "-999999999-01-01");
+        assertFalse(odd.occupies(LocalDate.of(2026, 9, 8)));
+        assertTrue(odd.hasUnreadableDates());
+    }
+
+    @Test
+    public void hasUnreadableDates_onlyWhenTheEndsAreNotDates() {
+        assertFalse(new Event("trip", "2026-09-08", "2026-09-10").hasUnreadableDates());
+        assertFalse(new Event("trip", "2026-09-10", "2026-09-08").hasUnreadableDates());
+        assertTrue(new Event("standup", "Mon 2pm", "3pm").hasUnreadableDates());
+    }
+
     @Test
     public void toString_window_showsBothEndsInTheDisplayFormat() {
         Window window = new Window("submit form",

@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /** The tasks on the user's tally, and the things that can be done to them. */
@@ -60,12 +58,12 @@ public class TaskList {
      */
     public Optional<LocalDate> findFreeRun(int days, LocalDate from) {
         assert days >= 1 : "Parser.parseFreeQuery refuses a run shorter than a day: " + days;
-        Set<LocalDate> takenDays = tasks.stream()
-                .flatMap(task -> task.occupiedDates().stream())
-                .collect(Collectors.toSet());
+        LocalDate horizon = from.plusDays(SEARCH_HORIZON_DAYS);
         int freeInARow = 0;
-        for (LocalDate day = from; day.isBefore(from.plusDays(SEARCH_HORIZON_DAYS)); day = day.plusDays(1)) {
-            freeInARow = takenDays.contains(day) ? 0 : freeInARow + 1;
+        for (LocalDate day = from; day.isBefore(horizon); day = day.plusDays(1)) {
+            LocalDate candidate = day;
+            boolean isTaken = tasks.stream().anyMatch(task -> task.occupies(candidate));
+            freeInARow = isTaken ? 0 : freeInARow + 1;
             if (freeInARow == days) {
                 return Optional.of(day.minusDays(days - 1L));
             }

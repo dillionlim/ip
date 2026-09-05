@@ -1,8 +1,7 @@
 package tally.task;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.List;
+import java.util.Optional;
 
 /** A task that runs from one stated point in time to another. */
 public class Event extends Task {
@@ -11,6 +10,12 @@ public class Event extends Task {
 
     /** When the event ends, in the same raw form as {@link #start}. */
     protected String end;
+
+    /** The start read as a date, or empty when it was not written as one. */
+    private final Optional<LocalDate> startDay;
+
+    /** The end read as a date, or empty when it was not written as one. */
+    private final Optional<LocalDate> endDay;
 
     /**
      * Creates an event that is not done yet.
@@ -23,41 +28,42 @@ public class Event extends Task {
         super(description);
         this.start = start;
         this.end = end;
+        // Read once here rather than each time a day is asked about, since the free-day
+        // search asks every task about every day of a year.
+        this.startDay = readDate(start);
+        this.endDay = readDate(end);
     }
 
     /**
-     * Returns the days this event takes up, which is none unless its ends are dates.
+     * Returns whether this event takes up a given day, which none of them are unless
+     * its ends were written as dates.
      *
-     * <p>An event keeps its ends as the user typed them, so "Mon 2pm" names no day
-     * this can work out. Ends written as yyyy-mm-dd are read here, which lets an
-     * event join the free-day search without changing what is stored for it or
-     * making an older data file unreadable.
+     * <p>An event keeps its ends as the user typed them, so "Mon 2pm" names no day this
+     * can work out. Ends written as yyyy-mm-dd are read here, which lets an event join
+     * the free-day search without changing what is stored for it. A pair written the
+     * other way round still names the same stretch of days.
      *
-     * @return the days from the start to the end, or an empty list if either end
-     *     is not a date.
+     * @param day the day being considered.
+     * @return true when the day falls within the two ends, both included.
      */
     @Override
-    public List<LocalDate> occupiedDates() {
-        try {
-            LocalDate startDate = LocalDate.parse(start);
-            LocalDate endDate = LocalDate.parse(end);
-            if (endDate.isBefore(startDate)) {
-                return List.of();
-            }
-            return startDate.datesUntil(endDate.plusDays(1)).toList();
-        } catch (DateTimeParseException exception) {
-            return List.of();
+    public boolean occupies(LocalDate day) {
+        if (hasUnreadableDates()) {
+            return false;
         }
+        LocalDate first = startDay.get().isAfter(endDay.get()) ? endDay.get() : startDay.get();
+        LocalDate last = startDay.get().isAfter(endDay.get()) ? startDay.get() : endDay.get();
+        return !day.isBefore(first) && !day.isAfter(last);
     }
 
     /**
      * Returns whether this event's ends were written as something other than dates.
      *
-     * @return true when the ends are text such as "Mon 2pm" rather than dates.
+     * @return true when either end is text such as "Mon 2pm" rather than a date.
      */
     @Override
     public boolean hasUnreadableDates() {
-        return occupiedDates().isEmpty();
+        return startDay.isEmpty() || endDay.isEmpty();
     }
 
     /**
