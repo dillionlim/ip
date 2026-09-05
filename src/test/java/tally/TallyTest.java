@@ -69,6 +69,14 @@ public class TallyTest {
     }
 
     @Test
+    public void getResponse_freeFromTheLastWritableDate_namesOnlyTheDaysItSearched() {
+        // Only one day can be written down at all from there, so a reply naming a year
+        // would be describing days the search never looked at and could not offer.
+        String reply = newTally().getResponse("free /for 2 /from 9999-12-31");
+        assertTrue(reply.contains("from Dec 31 9999 to Dec 31 9999"), reply);
+    }
+
+    @Test
     public void getResponse_saveFails_doesNotAnnounceTheChangeFirst() throws IOException {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | read book\n");

@@ -1,6 +1,7 @@
 package tally.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -127,6 +128,31 @@ public class StorageTest {
         assertTrue(refused.getMessage().contains("will not write over it"),
                 refused.getMessage());
         assertTrue(Files.readString(file).contains("BAD LINE"), "the damaged line was lost");
+    }
+
+    @Test
+    public void load_backupNameHoldsALinkToTheFile_keepsARealCopyElsewhere()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | good\nBAD LINE\n");
+        Path decoy = folder.resolve("tally.txt.broken");
+        try {
+            Files.createSymbolicLink(decoy, file);
+        } catch (IOException | UnsupportedOperationException exception) {
+            assumeTrue(false, "this file system does not allow symbolic links");
+        }
+
+        Storage storage = new Storage(file);
+        LoadResult loaded = storage.load();
+        // A link back to the data file holds the same bytes, so it looked like a copy
+        // while keeping nothing: the save below wrote through it and took the damage.
+        assertTrue(loaded.note().orElseThrow().contains("tally.txt.broken.1"),
+                loaded.note().orElseThrow());
+
+        storage.save(loaded.tasks());
+        assertTrue(Files.readString(folder.resolve("tally.txt.broken.1")).contains("BAD LINE"),
+                "the damaged line was kept nowhere");
+        assertFalse(Files.readString(file).contains("BAD LINE"));
     }
 
     @Test

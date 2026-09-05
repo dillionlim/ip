@@ -3,7 +3,15 @@ package tally.task;
 import java.time.LocalDate;
 import java.util.Optional;
 
-/** A task that runs from one stated point in time to another. */
+/**
+ * A task that runs from one stated point in time to another.
+ *
+ * <p>Its two ends are kept as the user typed them, where a deadline insists on a date.
+ * The requirements ask that dates be handled but do not say every time must be one, and
+ * an event is as often written "Mon 2pm" as a date, so insisting would refuse input the
+ * user has every reason to expect to work. The cost is that such an event names no days
+ * and so cannot be counted by the free-day search, which says so when it happens.
+ */
 public class Event extends Task {
     /** The letter standing for this kind of task in the data file. */
     public static final String TYPE = "E";

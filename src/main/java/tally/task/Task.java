@@ -31,7 +31,7 @@ public abstract class Task {
      * shown with five digits of year, which the user could read but could not type back
      * in, leaving them an answer they cannot act on.
      */
-    public static final LocalDate LAST_DATE = LocalDate.of(9999, 12, 31);
+    static final LocalDate LAST_DATE = LocalDate.of(9999, 12, 31);
 
     /**
      * How a date carried by a task is shown to the user.
@@ -62,7 +62,7 @@ public abstract class Task {
      *
      * @param description what the user wants to be reminded to do.
      */
-    public Task(String description) {
+    protected Task(String description) {
         this.description = description;
         this.isDone = false;
     }

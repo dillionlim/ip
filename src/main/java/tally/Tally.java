@@ -198,8 +198,9 @@ public class Tally {
      * Writes the tally, and puts it back as it was if it cannot be written.
      *
      * <p>A command changes the tally before it can be saved, so a save that fails would
-     * otherwise leave the user looking at a change that a restart would take away, having
-     * been told it worked. Reading the file back is what says which of the two is real.
+     * otherwise leave the user looking at a change a restart would take away. Reading the
+     * file back is what says which of the two is real: what is on the tally, or what is
+     * in the file.
      *
      * @throws TallyException naming what went wrong, and whether the change was kept.
      */
@@ -227,18 +228,16 @@ public class Tally {
     /**
      * Carries out one command, which by now is not the one that ends the conversation.
      *
-     * <p>Commands are dispatched by a switch over the Command enum, rather than by
-     * a class per command carrying an execute method. The latter is how
-     * AddressBook-Level3 is built, and how several classmates built theirs, such as
-     * <a href="https://github.com/NUS-CS2103-AY2627-S1/ip/pull/535">this one</a>,
-     * which has an abstract Command with an execute(TaskList, Ui, Storage) method and
-     * a subclass for each command.
+     * <p>Commands are dispatched by a switch over the Command enum rather than by a
+     * class per command carrying an execute method, which is how AddressBook-Level3 and
+     * <a href="https://github.com/NUS-CS2103-AY2627-S1/ip/pull/535">some classmates</a>
+     * build theirs. With ten commands of a few lines each, keeping them together shows
+     * the whole conversation at once; the trade reverses once a command needs state of
+     * its own.
      *
-     * <p>With ten commands of a few lines each, keeping them together shows the whole
-     * conversation at once, so the switch stays. The trade reverses once a command
-     * needs state of its own. A switch over an enum is not checked for exhaustiveness,
-     * so a new constant would otherwise compile with nothing to carry it out; the
-     * default clause turns that into a failure that is at least loud.
+     * <p>A switch over an enum is not checked for exhaustiveness, so a new constant
+     * would otherwise compile with nothing to carry it out. The default clause turns
+     * that into a failure that is at least loud.
      *
      * <p>The reply is returned rather than shown, so that the caller can hold it back
      * until the change it describes has been written.
@@ -251,10 +250,8 @@ public class Tally {
     private String[] carryOut(Command command, String arguments) throws TallyException {
         // AI suggested switching to a switch statement instead of the if-else chain.
         // Arrow labels keep each branch self-contained.
-        // Command.parse has already rejected any word that is not a command, and the
-        // caller has already dealt with bye, so reaching default means an enum constant
-        // nobody wired up here: a programming error rather than anything the user typed,
-        // hence IllegalStateException over TallyException.
+        // IllegalStateException rather than TallyException at the default, since only a
+        // constant nobody wired up reaches it, which the user did nothing to cause.
         return switch (command) {
             case LIST -> describeTally();
             case FIND -> describeMatchingTasks(Parser.parseSearchText(arguments));
@@ -288,8 +285,8 @@ public class Tally {
     private String[] deleteTask(int position) {
         Task task = tasks.get(position);
         tasks.remove(task);
-        return new String[] {"Noted. I've removed this task:", task.toString(),
-            formatCountSentence()};
+        String remaining = formatCountSentence();
+        return new String[] {"Noted. I've removed this task:", task.toString(), remaining};
     }
 
     /**
@@ -331,19 +328,23 @@ public class Tally {
     }
 
     /**
-     * Returns the reply for when no such run of days exists within the year searched.
+     * Returns the reply for when no such run of days exists within the days searched.
+     *
+     * <p>The span is named rather than called a year, because the search also stops at
+     * the last day a date can be written as, and from close enough to that day it covers
+     * less than a year.
      *
      * @param earliestDate the day the search started from.
      * @param days how many days in a row were wanted.
      * @return a sentence saying so, reading for one day or for several.
      */
     private static String describeNoRun(LocalDate earliestDate, int days) {
+        String span = String.format("%s to %s", Task.formatDate(earliestDate),
+                Task.formatDate(TaskList.findLastDaySearched(earliestDate)));
         if (days == 1) {
-            return String.format("Every day in the year from %s has something on it.",
-                    Task.formatDate(earliestDate));
+            return String.format("Every day from %s has something on it.", span);
         }
-        return String.format("There is no run of %d free days in the year from %s.", days,
-                Task.formatDate(earliestDate));
+        return String.format("There is no run of %d free days from %s.", days, span);
     }
 
     /** Returns the whole tally, or says so when there is nothing on it. */
@@ -399,8 +400,8 @@ public class Tally {
      */
     private String[] addTask(Task task) {
         tasks.add(task);
-        return new String[] {"Got it. I've added this task:", task.toString(),
-            formatCountSentence()};
+        String remaining = formatCountSentence();
+        return new String[] {"Got it. I've added this task:", task.toString(), remaining};
     }
 
     /**

@@ -60,10 +60,7 @@ public class TaskList {
      */
     public Optional<LocalDate> findFreeRun(int days, LocalDate earliestDate) {
         assert days >= 1 : "Parser.parseFreeQuery refuses a run shorter than a day: " + days;
-        LocalDate lastDay = earliestDate.plusDays(SEARCH_HORIZON_DAYS - 1L);
-        if (lastDay.isAfter(Task.LAST_DATE)) {
-            lastDay = Task.LAST_DATE;
-        }
+        LocalDate lastDay = findLastDaySearched(earliestDate);
         int freeDaysInARow = 0;
         for (LocalDate day = earliestDate; !day.isAfter(lastDay); day = day.plusDays(1)) {
             LocalDate candidate = day;
@@ -74,6 +71,21 @@ public class TaskList {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns the last day a search starting from the given day looks at.
+     *
+     * <p>The reply naming no free run has to say which days were looked at, so where
+     * the search stops is worked out here rather than in two places that could disagree.
+     *
+     * @param earliestDate the first day that may be offered.
+     * @return the last day the search reaches, which is the sooner of a year ahead and
+     *     the last day a date can be written as.
+     */
+    public static LocalDate findLastDaySearched(LocalDate earliestDate) {
+        LocalDate lastDay = earliestDate.plusDays(SEARCH_HORIZON_DAYS - 1L);
+        return lastDay.isAfter(Task.LAST_DATE) ? Task.LAST_DATE : lastDay;
     }
 
     /**

@@ -1,7 +1,9 @@
 package tally.storage;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -41,6 +43,7 @@ public class Storage {
     private static final int TYPE_INDEX = 0;
     private static final int DONE_INDEX = 1;
     private static final int DESCRIPTION_INDEX = 2;
+
     /**
      * Where a task's own two extra parts sit. They are dates for a deadline and a
      * window, and whatever the user typed for an event.
@@ -114,7 +117,10 @@ public class Storage {
         if (unreadableLines.isEmpty()) {
             return new LoadResult(tasks, Optional.empty());
         }
-        return new LoadResult(tasks, Optional.of(describeUnreadableLines(unreadableLines)));
+        // Copying aside is asked for here rather than from inside the wording, because a
+        // method that says it describes something should not also be changing the disk.
+        return new LoadResult(tasks,
+                Optional.of(describeUnreadableLines(unreadableLines) + copyAside()));
     }
 
     /**
@@ -221,7 +227,7 @@ public class Storage {
      *
      * @param unreadableLines the numbers of the lines that held nothing recognizable,
      *     counting from 1.
-     * @return a sentence naming them, and where the file was copied to.
+     * @return a sentence naming them.
      */
     private String describeUnreadableLines(List<Integer> unreadableLines) {
         boolean isSingle = unreadableLines.size() == 1;
@@ -229,9 +235,9 @@ public class Storage {
         String listed = isSingle ? lineNumbers.get(0)
                 : String.join(", ", lineNumbers.subList(0, lineNumbers.size() - 1))
                         + " and " + lineNumbers.get(lineNumbers.size() - 1);
-        return String.format("I could not read %s %s of %s, so %s not on your tally.%s",
+        return String.format("I could not read %s %s of %s, so %s not on your tally.",
                 isSingle ? "line" : "lines", listed, file.getFileName(),
-                isSingle ? "that task is" : "those tasks are", copyAside());
+                isSingle ? "that task is" : "those tasks are");
     }
 
     /**
@@ -255,8 +261,8 @@ public class Storage {
         try {
             byte[] damaged = Files.readAllBytes(file);
             Path backupFile = file.resolveSibling(file.getFileName() + ".broken");
-            for (int attempt = 1; Files.exists(backupFile); attempt++) {
-                if (Arrays.equals(Files.readAllBytes(backupFile), damaged)) {
+            for (int attempt = 1; isNameTaken(backupFile); attempt++) {
+                if (isKeptCopyOf(backupFile, damaged)) {
                     return " It is already copied to " + backupFile.getFileName() + ".";
                 }
                 backupFile = file.resolveSibling(file.getFileName() + ".broken." + attempt);
@@ -269,6 +275,37 @@ public class Storage {
                     + " Move it aside or repair it, then start Tally again.");
             return " I could not copy it aside, so I will not write over it either.";
         }
+    }
+
+    /**
+     * Returns whether anything at all sits at a name, a symbolic link included.
+     *
+     * <p>Links are not followed, because a name holding one is taken whether or not
+     * there is anything at the end of it, and copying onto it would write through the
+     * link rather than make the copy this is looking for a place for.
+     *
+     * @param candidate the name being considered for the copy.
+     * @return true when the name is not free.
+     */
+    private static boolean isNameTaken(Path candidate) {
+        return Files.exists(candidate, LinkOption.NOFOLLOW_LINKS);
+    }
+
+    /**
+     * Returns whether a file already holds exactly the damage about to be copied.
+     *
+     * <p>It has to be a file of its own to count. A symbolic link back to the data file
+     * holds the same bytes and so looks like a copy, while keeping nothing: the next save
+     * writes through it and the damaged lines are gone from both names at once.
+     *
+     * @param candidate the file being considered as an existing copy.
+     * @param damaged what the data file holds.
+     * @return true when the damage is already kept there.
+     * @throws IOException if the file is there but cannot be read.
+     */
+    private static boolean isKeptCopyOf(Path candidate, byte[] damaged) throws IOException {
+        return Files.isRegularFile(candidate, LinkOption.NOFOLLOW_LINKS)
+                && Arrays.equals(Files.readAllBytes(candidate), damaged);
     }
 
     /**
@@ -303,13 +340,33 @@ public class Storage {
             // overwritten, and two Tallys saving at once do not write the same place.
             // It goes in the target's own folder, because the rename that puts it in
             // place is only atomic within one folder.
-            partial = Files.createTempFile(folderOf(target), target.getFileName().toString(),
+            partial = Files.createTempFile(getFolderOf(target), target.getFileName().toString(),
                     ".part");
             writeReplacement(tasks, target, partial);
-            Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
+            moveIntoPlace(partial, target);
         } catch (IOException exception) {
             deleteQuietly(partial);
             throw new TallyException(describeSaveFailure());
+        }
+    }
+
+    /**
+     * Puts the written replacement in place of the file it replaces.
+     *
+     * <p>Asked for as one indivisible step, so that a crash midway leaves either the old
+     * tally or the new one and never a mixture. Not every file system can promise that,
+     * and replacing without the promise is still better than writing into the file where
+     * it lies, which a crash could leave half rewritten.
+     *
+     * @param partial the replacement that has been written.
+     * @param target the file it replaces.
+     * @throws IOException if it cannot be put in place.
+     */
+    private static void moveIntoPlace(Path partial, Path target) throws IOException {
+        try {
+            Files.move(partial, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException exception) {
+            Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -332,7 +389,7 @@ public class Storage {
             throw new TallyException(saveRefusal.get());
         }
         Path target = followLinks(file);
-        Files.createDirectories(folderOf(target));
+        Files.createDirectories(getFolderOf(target));
         if (!Files.notExists(target) && !Files.isWritable(target)) {
             throw new TallyException(describeSaveFailure());
         }
@@ -349,7 +406,7 @@ public class Storage {
      * @param path the file whose folder is wanted.
      * @return the folder holding it.
      */
-    private static Path folderOf(Path path) {
+    private static Path getFolderOf(Path path) {
         return path.toAbsolutePath().getParent();
     }
 

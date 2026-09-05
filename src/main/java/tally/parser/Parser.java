@@ -25,7 +25,7 @@ public class Parser {
      * than the separator as written, because the file joins parts with a space either
      * side: a description merely ending in a bar builds the separator on being saved.
      */
-    private static final String FIELD_SEPARATOR = "|";
+    private static final String SEPARATOR_CHARACTER = "|";
 
     /** The markers the free command takes, each matched as a whole word. */
     private static final String FOR_MARKER = "/for";
@@ -34,7 +34,6 @@ public class Parser {
     /** Prevents anyone making one: every method here is static. */
     private Parser() {
     }
-
 
     /**
      * Returns the command named by the first word of a line.
@@ -251,11 +250,11 @@ public class Parser {
      * @throws TallyException if it holds the separator the data file uses.
      */
     private static void rejectSeparator(String text) throws TallyException {
-        if (text.contains(FIELD_SEPARATOR)) {
+        if (text.contains(SEPARATOR_CHARACTER)) {
             throw new TallyException(String.format(
                     "A task cannot contain \"%s\", because that is how the file Tally keeps"
                             + " your tally in separates one part from the next.",
-                    FIELD_SEPARATOR));
+                    SEPARATOR_CHARACTER));
         }
     }
 

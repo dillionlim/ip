@@ -1764,3 +1764,47 @@ ____________________________________________________________
 Bye. Hope to see you again soon!
 ____________________________________________________________
 ```
+
+## TC-33 - No free day within the days searched
+
+**Aim:** A window covering every day the search reaches leaves no free day to offer, and the reply says which days were looked at rather than claiming a year. The search stops a year ahead or at the last day a date can be written as, whichever comes first, so naming the span is the only wording that stays true at both ends.
+
+**Input**
+```text
+window busy /between 2026-09-09 /and 2027-09-09
+free /from 2026-09-09
+free /for 3 /from 2026-09-09
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[W][ ] busy (window: Sep 09 2026 to Sep 09 2027)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Every day from Sep 09 2026 to Sep 09 2027 has something on it.
+____________________________________________________________
+
+____________________________________________________________
+There is no run of 3 free days from Sep 09 2026 to Sep 09 2027.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
