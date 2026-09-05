@@ -3,6 +3,7 @@ package tally.task;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /** The tasks on the user's tally, and the things that can be done to them. */
 public class TaskList {
@@ -83,13 +84,10 @@ public class TaskList {
      */
     public List<Integer> findPositions(String word) {
         String lowercaseWord = word.toLowerCase();
-        List<Integer> positions = new ArrayList<>();
-        for (int i = 0; i < tasks.size(); i++) {
-            if (tasks.get(i).getDescription().toLowerCase().contains(lowercaseWord)) {
-                positions.add(i);
-            }
-        }
-        return positions;
+        return IntStream.range(0, tasks.size())
+                .filter(i -> tasks.get(i).getDescription().toLowerCase().contains(lowercaseWord))
+                .boxed()
+                .toList();
     }
 
     /**

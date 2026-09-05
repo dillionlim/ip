@@ -138,11 +138,7 @@ public class Storage {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            List<String> lines = new ArrayList<>();
-            for (Task task : tasks) {
-                lines.add(task.toSaveFormat());
-            }
-            Files.write(file, lines);
+            Files.write(file, tasks.stream().map(Task::toSaveFormat).toList());
         } catch (IOException exception) {
             throw new TallyException("I could not save your tally to " + file.getFileName() + ".");
         }

@@ -1,7 +1,7 @@
 package tally.parser;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import tally.TallyException;
 
@@ -46,12 +46,11 @@ public enum Command {
      * @throws TallyException if no command uses that word.
      */
     public static Command parse(String word) throws TallyException {
-        for (Command command : values()) {
-            if (command.keyword.equals(word)) {
-                return command;
-            }
-        }
-        throw new TallyException("I don't know that one. I understand: " + listKeywords() + ".");
+        return Arrays.stream(values())
+                .filter(command -> command.keyword.equals(word))
+                .findFirst()
+                .orElseThrow(() -> new TallyException(
+                        "I don't know that one. I understand: " + listKeywords() + "."));
     }
 
     /**
@@ -60,10 +59,8 @@ public enum Command {
      * @return the words separated by commas, such as "todo, deadline, event".
      */
     public static String listKeywords() {
-        List<String> words = new ArrayList<>();
-        for (Command command : values()) {
-            words.add(command.keyword);
-        }
-        return String.join(", ", words);
+        return Arrays.stream(values())
+                .map(command -> command.keyword)
+                .collect(Collectors.joining(", "));
     }
 }
