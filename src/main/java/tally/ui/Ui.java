@@ -5,8 +5,10 @@ import java.util.Scanner;
 /**
  * Everything Tally says to the user and reads back from them.
  *
- * <p>Gathering it here means the wording and the fencing live in one place, so
- * the rest of the code decides what to say without knowing how it is laid out.
+ * <p>What a reply says is decided by whoever knows the answer, and handed here as
+ * lines. How it is laid out is decided here alone: the rules fencing a message on the
+ * console, and where the reply goes once it is made. Greeting and farewell are Tally's
+ * own words rather than any command's, so they are written here.
  */
 public class Ui {
     /** The name the chatbot introduces itself with. */

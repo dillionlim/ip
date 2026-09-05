@@ -218,10 +218,10 @@ public class Tally {
             // be caught by its own catch, and report the wrong one of the two.
             String outcome;
             try {
-                LoadResult saved = storage.load();
-                tasks.replaceAll(saved.tasks());
+                LoadResult fromFile = storage.load();
+                tasks.replaceAll(fromFile.tasks());
                 outcome = " I have put your tally back the way the file has it."
-                        + saved.note().map(damage -> " " + damage).orElse("");
+                        + fromFile.note().map(damage -> " " + damage).orElse("");
             } catch (TallyException unreadable) {
                 outcome = " Your tally is as you left it here,"
                         + " but a restart will not show it.";
@@ -291,8 +291,8 @@ public class Tally {
     private String[] deleteTask(int position) {
         Task task = tasks.get(position);
         tasks.remove(task);
-        String remaining = formatCountSentence();
-        return new String[] {"Noted. I've removed this task:", task.toString(), remaining};
+        String countSentence = formatCountSentence();
+        return new String[] {"Noted. I've removed this task:", task.toString(), countSentence};
     }
 
     /**
@@ -406,8 +406,8 @@ public class Tally {
      */
     private String[] addTask(Task task) {
         tasks.add(task);
-        String remaining = formatCountSentence();
-        return new String[] {"Got it. I've added this task:", task.toString(), remaining};
+        String countSentence = formatCountSentence();
+        return new String[] {"Got it. I've added this task:", task.toString(), countSentence};
     }
 
     /**

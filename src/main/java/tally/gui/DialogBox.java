@@ -41,7 +41,7 @@ public class DialogBox extends HBox {
      * @param picture the user's picture.
      * @return the box to add to the conversation.
      */
-    public static DialogBox createUserDialog(String text, Image picture) {
+    static DialogBox createUserDialog(String text, Image picture) {
         return new DialogBox(text, picture);
     }
 
@@ -55,7 +55,7 @@ public class DialogBox extends HBox {
      * @param picture Tally's picture.
      * @return the box to add to the conversation.
      */
-    public static DialogBox createTallyDialog(String text, Image picture) {
+    static DialogBox createTallyDialog(String text, Image picture) {
         DialogBox box = new DialogBox(text, picture);
         box.flip();
         return box;

@@ -36,9 +36,14 @@ public class MainWindow {
     private final Image tallyImage =
             new Image(this.getClass().getResourceAsStream("/images/tally.png"));
 
-    /** Scrolls down whenever the conversation grows, so the newest message is in view. */
+    /**
+     * Scrolls down whenever the conversation grows, so the newest message is in view.
+     *
+     * <p>Called by the FXML loader, which finds it by the annotation rather than by it
+     * being visible from outside this package.
+     */
     @FXML
-    public void initialize() {
+    void initialize() {
         dialogContainer.heightProperty().addListener(observed -> scrollPane.setVvalue(1.0));
     }
 
@@ -47,7 +52,7 @@ public class MainWindow {
      *
      * @param tally the chatbot.
      */
-    public void setTally(Tally tally) {
+    void setTally(Tally tally) {
         this.tally = tally;
         dialogContainer.getChildren().add(
                 DialogBox.createTallyDialog(tally.getGreeting(), tallyImage));

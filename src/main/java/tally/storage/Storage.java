@@ -91,15 +91,35 @@ public class Storage {
      *     task is a better answer than losing every other task on the tally.
      */
     public LoadResult load() throws TallyException {
-        List<Task> tasks = new ArrayList<>();
         // notExists rather than !exists: exists answers false both for a file that is
         // not there and for one it could not find out about, and reading the second as
         // the first would let a later save write over a file nobody has seen.
         if (Files.notExists(file)) {
-            return new LoadResult(tasks, Optional.empty());
+            return new LoadResult(new ArrayList<>(), Optional.empty());
         }
 
-        List<String> lines = readLines();
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(file);
+        } catch (IOException exception) {
+            refuseToSave("I could not read " + file.getFileName()
+                    + " when I started, so I will not write over what is in it."
+                    + " Move it aside or repair it, then start Tally again.");
+            throw new TallyException("I could not read " + file.getFileName()
+                    + ", so I am starting with an empty tally." + copyAside()
+                    + " I will not write over it until it can be read.");
+        }
+        return readTally(lines);
+    }
+
+    /**
+     * Returns the tasks the given lines describe, and what could not be read among them.
+     *
+     * @param lines the lines of the data file, in order.
+     * @return the tasks, and a note about any line that held nothing recognizable.
+     */
+    private LoadResult readTally(List<String> lines) {
+        List<Task> tasks = new ArrayList<>();
         List<Integer> unreadableLines = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
@@ -121,26 +141,6 @@ public class Storage {
         // method that says it describes something should not also be changing the disk.
         return new LoadResult(tasks,
                 Optional.of(describeUnreadableLines(unreadableLines) + copyAside()));
-    }
-
-    /**
-     * Returns the lines the data file holds.
-     *
-     * @return every line of the file, in order.
-     * @throws TallyException if the file is there but cannot be read at all, in which
-     *     case there is nothing to keep and nothing to say beyond which file.
-     */
-    private List<String> readLines() throws TallyException {
-        try {
-            return Files.readAllLines(file);
-        } catch (IOException exception) {
-            refuseToSave("I could not read " + file.getFileName()
-                    + " when I started, so I will not write over what is in it."
-                    + " Move it aside or repair it, then start Tally again.");
-            throw new TallyException("I could not read " + file.getFileName()
-                    + ", so I am starting with an empty tally." + copyAside()
-                    + " I will not write over it until it can be read.");
-        }
     }
 
     /**
@@ -221,10 +221,6 @@ public class Storage {
     /**
      * Returns what to tell the user about the lines that could not be read.
      *
-     * <p>The file is copied rather than moved, because the tasks that did load stay on
-     * the tally and the next change writes over the original, which would otherwise
-     * take the unreadable lines with it.
-     *
      * @param unreadableLines the numbers of the lines that held nothing recognizable,
      *     counting from 1.
      * @return a sentence naming them.
@@ -232,11 +228,11 @@ public class Storage {
     private String describeUnreadableLines(List<Integer> unreadableLines) {
         boolean isSingle = unreadableLines.size() == 1;
         List<String> lineNumbers = unreadableLines.stream().map(String::valueOf).toList();
-        String listed = isSingle ? lineNumbers.get(0)
+        String listedNumbers = isSingle ? lineNumbers.get(0)
                 : String.join(", ", lineNumbers.subList(0, lineNumbers.size() - 1))
                         + " and " + lineNumbers.get(lineNumbers.size() - 1);
         return String.format("I could not read %s %s of %s, so %s not on your tally.",
-                isSingle ? "line" : "lines", listed, file.getFileName(),
+                isSingle ? "line" : "lines", listedNumbers, file.getFileName(),
                 isSingle ? "that task is" : "those tasks are");
     }
 

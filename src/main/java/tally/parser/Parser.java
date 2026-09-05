@@ -262,8 +262,9 @@ public class Parser {
      * Returns the date some text names, wherever in a command it was written.
      *
      * <p>Dates are read in the yyyy-mm-dd form alone, and shown back in a different
-     * form, as Level-8 requires. Reading them in one place holds every command that
-     * takes a date, and the data file too, to the same one form.
+     * form, as Level-8 requires. What that form is belongs to Task, which every reader
+     * asks; this adds the complaint to make when a user wrote something else, which the
+     * data file has no use for.
      *
      * @param text what the user typed as the date.
      * @return the date it names.

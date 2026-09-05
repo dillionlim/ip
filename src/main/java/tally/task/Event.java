@@ -50,9 +50,9 @@ public class Event extends Task {
      * its ends were written as dates.
      *
      * <p>An event keeps its ends as the user typed them, so "Mon 2pm" names no day this
-     * can work out. Ends written as yyyy-mm-dd are read here, which lets an event join
-     * the free-day search without changing what is stored for it. A pair written the
-     * other way round still names the same stretch of days.
+     * can work out. Ends written as yyyy-mm-dd were read when the event was made, which
+     * lets an event join the free-day search without changing what is stored for it. A
+     * pair written the other way round still names the same stretch of days.
      *
      * @param day the day being considered.
      * @return true when the day falls within the two ends, both included.

@@ -103,11 +103,11 @@ public class TaskList {
      * <p>This is how the tally is brought back into step with the data file after a save
      * that failed, so that what the user is shown is what a restart would give them.
      *
-     * @param replacement the tasks to hold instead, in the order they should be listed.
+     * @param replacements the tasks to hold instead, in the order they should be listed.
      */
-    public void replaceAll(List<Task> replacement) {
+    public void replaceAll(List<Task> replacements) {
         tasks.clear();
-        tasks.addAll(replacement);
+        tasks.addAll(replacements);
     }
 
     /**
