@@ -1605,3 +1605,63 @@ ____________________________________________________________
 Bye. Hope to see you again soon!
 ____________________________________________________________
 ```
+
+## TC-30 - Text the data file could not carry back is refused
+
+**Aim:** the data file separates a task's parts with ` | ` and has no way to escape it, so a description holding it would be written out and read back as a different number of parts. Refusing it where it is typed is what keeps every task readable back. A date outside the yyyy-mm-dd form is refused for the same reason: the wider forms parse, then overflow the date arithmetic done later.
+
+**Input**
+```text
+todo laundry | dry cleaning
+event meet /from Mon 2pm | room 3 /to 4pm
+deadline pay /by +999999999-12-31
+todo laundry and dry cleaning
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+A task cannot contain " | ", because that is how the file Tally keeps your tally in separates one part from the next.
+____________________________________________________________
+
+____________________________________________________________
+A task cannot contain " | ", because that is how the file Tally keeps your tally in separates one part from the next.
+____________________________________________________________
+
+____________________________________________________________
+I could not read "+999999999-12-31" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] laundry and dry cleaning
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] laundry and dry cleaning
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 0 | laundry and dry cleaning
+```

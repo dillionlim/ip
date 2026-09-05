@@ -1,6 +1,8 @@
 package tally.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 
@@ -8,6 +10,21 @@ import org.junit.jupiter.api.Test;
 
 /** Tests how each kind of task shows itself to the user and writes itself to the file. */
 public class TaskTest {
+    @Test
+    public void occupiedDates_eventEndsWrittenBackwards_stillNameTheSameDays() {
+        Event backwards = new Event("trip", "2026-09-10", "2026-09-08");
+        Event forwards = new Event("trip", "2026-09-08", "2026-09-10");
+        assertEquals(forwards.occupiedDates(), backwards.occupiedDates());
+        assertEquals(3, backwards.occupiedDates().size());
+    }
+
+    @Test
+    public void hasUnreadableDates_onlyWhenTheEndsAreNotDates() {
+        assertFalse(new Event("trip", "2026-09-08", "2026-09-10").hasUnreadableDates());
+        assertFalse(new Event("trip", "2026-09-10", "2026-09-08").hasUnreadableDates());
+        assertTrue(new Event("standup", "Mon 2pm", "3pm").hasUnreadableDates());
+    }
+
     @Test
     public void toString_window_showsBothEndsInTheDisplayFormat() {
         Window window = new Window("submit form",

@@ -18,6 +18,25 @@ public class ParserTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 9, 9);
 
     @Test
+    public void parse_textHoldingTheFileSeparator_throws() {
+        // The data file has no way to escape " | ", so a task holding it would be
+        // written out and read back as a different number of parts.
+        assertThrows(TallyException.class, () -> Parser.parseTodo("laundry | dry cleaning"));
+        assertThrows(TallyException.class, () -> Parser.parseDeadline("a | b /by 2026-10-01"));
+        assertThrows(TallyException.class, () -> Parser.parseEvent("meet /from Mon | room 3 /to 4pm"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseWindow("x | y /between 2026-09-08 /and 2026-09-12"));
+    }
+
+    @Test
+    public void parseDate_yearOutsideTheWrittenForm_throws() {
+        // LocalDate.parse reads this, and the date arithmetic done later then overflows.
+        assertThrows(TallyException.class, () -> Parser.parseDate("+999999999-12-31"));
+        assertThrows(TallyException.class, () -> Parser.parseDate("-2026-09-08"));
+        assertThrows(TallyException.class, () -> Parser.parseDate("20260-09-08"));
+    }
+
+    @Test
     public void parseFreeQuery_noMarkers_isOneDayFromToday() throws TallyException {
         assertEquals(new FreeQuery(1, TODAY), Parser.parseFreeQuery("", TODAY));
     }

@@ -1,7 +1,7 @@
 package tally.task;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 /** A task that runs from one stated point in time to another. */
@@ -41,11 +41,11 @@ public class Event extends Task {
         try {
             LocalDate startDate = LocalDate.parse(start);
             LocalDate endDate = LocalDate.parse(end);
-            if (endDate.isBefore(startDate)) {
-                return List.of();
-            }
-            return startDate.datesUntil(endDate.plusDays(1)).toList();
-        } catch (DateTimeParseException exception) {
+            // Written the other way round they still name the same stretch of days.
+            LocalDate first = endDate.isBefore(startDate) ? endDate : startDate;
+            LocalDate last = endDate.isBefore(startDate) ? startDate : endDate;
+            return first.datesUntil(last.plusDays(1)).toList();
+        } catch (DateTimeException exception) {
             return List.of();
         }
     }
@@ -57,6 +57,8 @@ public class Event extends Task {
      */
     @Override
     public boolean hasUnreadableDates() {
+        // Ends the wrong way round still name a stretch of days, so an empty answer from
+        // occupiedDates now means only that the ends could not be used as dates at all.
         return occupiedDates().isEmpty();
     }
 

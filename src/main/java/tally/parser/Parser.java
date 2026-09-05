@@ -2,6 +2,7 @@ package tally.parser;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 
 import tally.TallyException;
 import tally.task.Deadline;
@@ -17,6 +18,24 @@ import tally.task.Window;
  * show it and carry on rather than deciding what went wrong.
  */
 public class Parser {
+    /**
+     * The shape a date has to be written in.
+     *
+     * <p>LocalDate.parse also reads forms such as "+999999999-12-31", which nobody
+     * means to type and which overflows the date arithmetic done later, so only the
+     * yyyy-mm-dd form the user is told about is accepted.
+     */
+    private static final Pattern DATE_FORM = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+
+    /**
+     * How the data file separates one part of a task from the next.
+     *
+     * <p>The file has no way to escape it, so text holding it would be written out and
+     * read back as a different number of parts. Refusing it where the user types it is
+     * what keeps a task readable back.
+     */
+    private static final String FIELD_SEPARATOR = " | ";
+
     /**
      * Returns the command named by the first word of a line.
      *
@@ -50,6 +69,7 @@ public class Parser {
         if (arguments.isEmpty()) {
             throw new TallyException("A todo needs a description. Try: todo read book");
         }
+        rejectSeparator(arguments);
         return new Todo(arguments);
     }
 
@@ -67,6 +87,7 @@ public class Parser {
                     "A deadline needs a description and a /by date."
                             + " Try: deadline return book /by 2019-10-15");
         }
+        rejectSeparator(fields[0]);
         return new Deadline(fields[0].trim(), parseDate(fields[1].trim()));
     }
 
@@ -96,6 +117,9 @@ public class Parser {
                 || fromAndTo[0].isBlank() || fromAndTo[1].isBlank()) {
             throw new TallyException(usage);
         }
+        rejectSeparator(descriptionAndRest[0]);
+        rejectSeparator(fromAndTo[0]);
+        rejectSeparator(fromAndTo[1]);
         return new Event(descriptionAndRest[0].trim(), fromAndTo[0].trim(), fromAndTo[1].trim());
     }
 
@@ -204,7 +228,21 @@ public class Parser {
                     "A window cannot end before it starts, and this one ends %s"
                             + " but starts %s.", endDate, startDate));
         }
+        rejectSeparator(descriptionAndRest[0]);
         return new Window(descriptionAndRest[0].trim(), startDate, endDate);
+    }
+
+    /**
+     * Refuses text that the data file could not carry back unchanged.
+     *
+     * @param text a part of a task as the user typed it.
+     * @throws TallyException if it holds the separator the data file uses.
+     */
+    private static void rejectSeparator(String text) throws TallyException {
+        if (text.contains(FIELD_SEPARATOR)) {
+            throw new TallyException("A task cannot contain \" | \", because that is how the"
+                    + " file Tally keeps your tally in separates one part from the next.");
+        }
     }
 
     /**
@@ -218,6 +256,11 @@ public class Parser {
      * @throws TallyException if the text is not a date written as yyyy-mm-dd.
      */
     public static LocalDate parseDate(String text) throws TallyException {
+        if (!DATE_FORM.matcher(text).matches()) {
+            throw new TallyException(String.format(
+                    "I could not read \"%s\" as a date."
+                            + " Write it as yyyy-mm-dd, for example 2019-10-15.", text));
+        }
         try {
             return LocalDate.parse(text);
         } catch (DateTimeParseException exception) {
