@@ -186,7 +186,7 @@ public class Tally {
             return false;
         }
 
-        String[] reply = carryOut(command, Parser.parseArguments(line));
+        String[] replyLines = carryOut(command, Parser.parseArguments(line));
 
         // Saving after a command that only read the tally would rewrite the file for
         // nothing, and every rewrite is a chance to lose what is already there.
@@ -195,7 +195,7 @@ public class Tally {
         }
         // The reply waits until the tally is safely written, so that a save that fails
         // is not announced as a success and taken back in the same breath.
-        ui.show(reply);
+        ui.show(replyLines);
         return true;
     }
 

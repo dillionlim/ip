@@ -28,8 +28,8 @@ public class Parser {
     private static final String SEPARATOR_CHARACTER = "|";
 
     /** The markers the free command takes, each matched as a whole word. */
-    private static final String FOR_MARKER = "/for";
-    private static final String FROM_MARKER = "/from";
+    private static final String MARKER_FOR = "/for";
+    private static final String MARKER_FROM = "/from";
 
     /** Prevents anyone making one: every method here is static. */
     private Parser() {
@@ -182,10 +182,10 @@ public class Parser {
         boolean hasDate = false;
         for (int i = 0; i < tokens.length; i += 2) {
             boolean hasValue = i + 1 < tokens.length;
-            if (tokens[i].equals(FOR_MARKER) && hasValue && !hasCount) {
+            if (tokens[i].equals(MARKER_FOR) && hasValue && !hasCount) {
                 days = parseDayCount(tokens[i + 1], usage);
                 hasCount = true;
-            } else if (tokens[i].equals(FROM_MARKER) && hasValue && !hasDate) {
+            } else if (tokens[i].equals(MARKER_FROM) && hasValue && !hasDate) {
                 earliestDate = parseDate(tokens[i + 1]);
                 hasDate = true;
             } else {

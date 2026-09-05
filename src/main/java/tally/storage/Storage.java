@@ -40,22 +40,22 @@ import tally.task.Window;
  */
 public class Storage {
     /** Where each part of a task sits on its line in the data file. */
-    private static final int TYPE_INDEX = 0;
-    private static final int DONE_INDEX = 1;
-    private static final int DESCRIPTION_INDEX = 2;
+    private static final int INDEX_TYPE = 0;
+    private static final int INDEX_DONE = 1;
+    private static final int INDEX_DESCRIPTION = 2;
 
     /**
      * Where a task's own two extra parts sit. They are dates for a deadline and a
      * window, and whatever the user typed for an event.
      */
-    private static final int FIRST_DETAIL_INDEX = 3;
-    private static final int SECOND_DETAIL_INDEX = 4;
+    private static final int INDEX_FIRST_DETAIL = 3;
+    private static final int INDEX_SECOND_DETAIL = 4;
 
     /** How many parts a line of each kind of task has. */
-    private static final int TODO_FIELD_COUNT = 3;
-    private static final int DEADLINE_FIELD_COUNT = 4;
-    private static final int EVENT_FIELD_COUNT = 5;
-    private static final int WINDOW_FIELD_COUNT = 5;
+    private static final int FIELD_COUNT_TODO = 3;
+    private static final int FIELD_COUNT_DEADLINE = 4;
+    private static final int FIELD_COUNT_EVENT = 5;
+    private static final int FIELD_COUNT_WINDOW = 5;
 
     /** How many symbolic links may be followed before the chain is called a loop. */
     private static final int MAX_LINKS_FOLLOWED = 8;
@@ -109,16 +109,33 @@ public class Storage {
                     + ", so I am starting with an empty tally." + copyAside()
                     + " I will not write over it until it can be read.");
         }
-        return readTally(lines);
+        Reading reading = readTally(lines);
+        if (reading.unreadableLines().isEmpty()) {
+            return new LoadResult(reading.tasks(), Optional.empty());
+        }
+        // Deciding what a damaged file calls for is this method's business rather than
+        // the reader's: reading says what it found, and load says what to do about it.
+        String note = describeUnreadableLines(reading.unreadableLines()) + copyAside();
+        return new LoadResult(reading.tasks(), Optional.of(note));
     }
 
     /**
-     * Returns the tasks the given lines describe, and what could not be read among them.
+     * What one pass over the data file's lines found.
+     *
+     * @param tasks the tasks read, in the order they appear.
+     * @param unreadableLines the numbers of the lines that held nothing recognizable,
+     *     counting from 1.
+     */
+    private record Reading(List<Task> tasks, List<Integer> unreadableLines) {
+    }
+
+    /**
+     * Returns what the given lines hold, reading no files and changing nothing.
      *
      * @param lines the lines of the data file, in order.
-     * @return the tasks, and a note about any line that held nothing recognizable.
+     * @return the tasks they describe, and which of them could not be read.
      */
-    private LoadResult readTally(List<String> lines) {
+    private static Reading readTally(List<String> lines) {
         List<Task> tasks = new ArrayList<>();
         List<Integer> unreadableLines = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
@@ -133,14 +150,7 @@ public class Storage {
                 tasks.add(task);
             }
         }
-
-        if (unreadableLines.isEmpty()) {
-            return new LoadResult(tasks, Optional.empty());
-        }
-        // Copying aside is asked for here rather than from inside the wording, because a
-        // method that says it describes something should not also be changing the disk.
-        return new LoadResult(tasks,
-                Optional.of(describeUnreadableLines(unreadableLines) + copyAside()));
+        return new Reading(tasks, unreadableLines);
     }
 
     /**
@@ -154,26 +164,26 @@ public class Storage {
      */
     private static Task readTask(String line) {
         String[] fields = line.split(Pattern.quote(Task.FIELD_SEPARATOR));
-        boolean hasValidCommonFields = fields.length > DESCRIPTION_INDEX
-                && (fields[DONE_INDEX].equals(Task.NOT_DONE) || fields[DONE_INDEX].equals(Task.DONE))
+        boolean hasValidCommonFields = fields.length > INDEX_DESCRIPTION
+                && (fields[INDEX_DONE].equals(Task.FLAG_NOT_DONE) || fields[INDEX_DONE].equals(Task.FLAG_DONE))
                 && Arrays.stream(fields).noneMatch(String::isBlank);
         if (!hasValidCommonFields) {
             return null;
         }
 
-        String description = fields[DESCRIPTION_INDEX];
-        Task task = switch (fields[TYPE_INDEX]) {
-            case Todo.TYPE -> fields.length == TODO_FIELD_COUNT ? new Todo(description) : null;
-            case Deadline.TYPE -> fields.length == DEADLINE_FIELD_COUNT
-                    ? readDeadline(description, fields[FIRST_DETAIL_INDEX]) : null;
-            case Event.TYPE -> fields.length == EVENT_FIELD_COUNT
-                    ? new Event(description, fields[FIRST_DETAIL_INDEX], fields[SECOND_DETAIL_INDEX]) : null;
-            case Window.TYPE -> fields.length == WINDOW_FIELD_COUNT
-                    ? readWindow(description, fields[FIRST_DETAIL_INDEX], fields[SECOND_DETAIL_INDEX]) : null;
+        String description = fields[INDEX_DESCRIPTION];
+        Task task = switch (fields[INDEX_TYPE]) {
+            case Todo.TYPE -> fields.length == FIELD_COUNT_TODO ? new Todo(description) : null;
+            case Deadline.TYPE -> fields.length == FIELD_COUNT_DEADLINE
+                    ? readDeadline(description, fields[INDEX_FIRST_DETAIL]) : null;
+            case Event.TYPE -> fields.length == FIELD_COUNT_EVENT
+                    ? new Event(description, fields[INDEX_FIRST_DETAIL], fields[INDEX_SECOND_DETAIL]) : null;
+            case Window.TYPE -> fields.length == FIELD_COUNT_WINDOW
+                    ? readWindow(description, fields[INDEX_FIRST_DETAIL], fields[INDEX_SECOND_DETAIL]) : null;
             default -> null;
         };
 
-        if (task != null && fields[DONE_INDEX].equals(Task.DONE)) {
+        if (task != null && fields[INDEX_DONE].equals(Task.FLAG_DONE)) {
             task.markAsDone();
         }
         return task;
@@ -255,10 +265,10 @@ public class Storage {
      */
     private String copyAside() {
         try {
-            byte[] damaged = Files.readAllBytes(file);
+            byte[] damagedBytes = Files.readAllBytes(file);
             Path backupFile = file.resolveSibling(file.getFileName() + ".broken");
             for (int attempt = 1; isNameTaken(backupFile); attempt++) {
-                if (isKeptCopyOf(backupFile, damaged)) {
+                if (isKeptCopyOf(backupFile, damagedBytes)) {
                     return " It is already copied to " + backupFile.getFileName() + ".";
                 }
                 backupFile = file.resolveSibling(file.getFileName() + ".broken." + attempt);
@@ -295,13 +305,13 @@ public class Storage {
      * writes through it and the damaged lines are gone from both names at once.
      *
      * @param candidate the file being considered as an existing copy.
-     * @param damaged what the data file holds.
+     * @param damagedBytes what the data file holds.
      * @return true when the damage is already kept there.
      * @throws IOException if the file is there but cannot be read.
      */
-    private static boolean isKeptCopyOf(Path candidate, byte[] damaged) throws IOException {
+    private static boolean isKeptCopyOf(Path candidate, byte[] damagedBytes) throws IOException {
         return Files.isRegularFile(candidate, LinkOption.NOFOLLOW_LINKS)
-                && Arrays.equals(Files.readAllBytes(candidate), damaged);
+                && Arrays.equals(Files.readAllBytes(candidate), damagedBytes);
     }
 
     /**

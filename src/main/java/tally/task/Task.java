@@ -19,10 +19,10 @@ public abstract class Task {
     public static final String FIELD_SEPARATOR = " | ";
 
     /** What the done field of a data-file line holds for a task that is done. */
-    public static final String DONE = "1";
+    public static final String FLAG_DONE = "1";
 
     /** What that same field holds for a task that is not done. */
-    public static final String NOT_DONE = "0";
+    public static final String FLAG_NOT_DONE = "0";
 
     /**
      * The last day a date may name, being the last one the written form can express.
@@ -181,6 +181,6 @@ public abstract class Task {
      * @return for example "1 | read book".
      */
     protected final String toSharedSaveFields() {
-        return (isDone ? DONE : NOT_DONE) + FIELD_SEPARATOR + description;
+        return (isDone ? FLAG_DONE : FLAG_NOT_DONE) + FIELD_SEPARATOR + description;
     }
 }
