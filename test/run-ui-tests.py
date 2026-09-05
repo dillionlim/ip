@@ -97,9 +97,22 @@ def read_into_case(case, lines, index):
     return index + 1
 
 
-def check_complete(cases):
-    """Raises if any case is missing a block that every case must have."""
+def check_plan(cases):
+    """Raises if the plan is empty, or any case is malformed or named twice.
+
+    A plan that parsed to nothing would otherwise report that all zero cases
+    passed, and two cases sharing an ID would make the one named on the command
+    line ambiguous.
+    """
+    if not cases:
+        raise ValueError(f"{PLAN.name} describes no test cases at all")
+    seen = set()
     for case in cases:
+        if case["id"] in seen:
+            raise ValueError(f"{case['id']} is used by more than one case in {PLAN.name}")
+        seen.add(case["id"])
+        if not case["aim"]:
+            raise ValueError(f"{case['id']} has no Aim line saying what it is for")
         if case["input"] is None or case["expected"] is None:
             raise ValueError(f"{case['id']} is missing an Input or Expected output block")
 
@@ -118,7 +131,7 @@ def parse_plan(text):
             index = read_into_case(cases[-1], lines, index)
         else:
             index += 1
-    check_complete(cases)
+    check_plan(cases)
     return cases
 
 
@@ -172,10 +185,14 @@ def invoke(commands, data_file, classpath):
     stdin_text = commands + "\n" if commands else ""
     # -ea so the assertions in the code are checked as the cases run; without it every
     # assert is skipped and these sessions would prove nothing about them.
-    result = subprocess.run(["java", "-ea", "-cp", classpath, MAIN_CLASS, data_file.name],
-                            cwd=data_file.parent,
-                            input=stdin_text, capture_output=True, text=True,
-                            timeout=TIMEOUT_SECONDS)
+    try:
+        result = subprocess.run(["java", "-ea", "-cp", classpath, MAIN_CLASS, data_file.name],
+                                cwd=data_file.parent,
+                                input=stdin_text, capture_output=True, text=True,
+                                timeout=TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as expired:
+        raise Crashed(f"the program was still running after {TIMEOUT_SECONDS} seconds,"
+                      " so it was stopped", expired.stdout or "") from expired
     noise = result.stderr.strip()
     if result.returncode != 0:
         # Expected output followed by a crash is not a pass. An uncaught exception or a
@@ -205,7 +222,12 @@ def run_case(case, data_file, classpath):
         data_file.write_text(case["seed"] + "\n", encoding="utf-8")
     output = invoke(case["input"], data_file, classpath)
     if case["restart"] is not None:
-        output += invoke(case["restart"], data_file, classpath)
+        try:
+            output += invoke(case["restart"], data_file, classpath)
+        except Crashed as crash:
+            # The first run is the state the second one started from, so a report
+            # without it says nothing about how the case got there.
+            raise Crashed(crash.args[0], output + crash.printed) from crash
     return output
 
 

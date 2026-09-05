@@ -24,3 +24,7 @@ text-ui-test/EXPECTED-UNIX.TXT
 
 # Saved tally (user data, not revision-controlled)
 /data/
+
+# Python leaves these beside the test runner when it is imported.
+__pycache__/
+*.pyc
