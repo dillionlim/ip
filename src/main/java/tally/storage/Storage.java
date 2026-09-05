@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -156,15 +158,19 @@ public class Storage {
      *     could not be moved, in which case nothing is promised about it.
      */
     private String copyAside() {
-        Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
-        for (int attempt = 1; Files.exists(spoiled); attempt++) {
-            spoiled = file.resolveSibling(file.getFileName() + ".broken." + attempt);
-        }
         try {
+            byte[] damaged = Files.readAllBytes(file);
+            Path spoiled = file.resolveSibling(file.getFileName() + ".broken");
+            for (int attempt = 1; Files.exists(spoiled); attempt++) {
+                if (Arrays.equals(Files.readAllBytes(spoiled), damaged)) {
+                    return " It is already copied to " + spoiled.getFileName() + ".";
+                }
+                spoiled = file.resolveSibling(file.getFileName() + ".broken." + attempt);
+            }
             Files.copy(file, spoiled);
             return " I copied it to " + spoiled.getFileName() + " so you can repair it.";
         } catch (IOException exception) {
-            return "";
+            return " I could not copy it aside.";
         }
     }
 
@@ -178,20 +184,72 @@ public class Storage {
      * @throws TallyException if the file cannot be written.
      */
     public void save(List<Task> tasks) throws TallyException {
+        Path partial = null;
         try {
             Path parent = file.getParent();
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            Path partial = file.resolveSibling(file.getFileName() + ".part");
-            try {
-                Files.write(partial, tasks.stream().map(Task::toSaveFormat).toList());
-                Files.move(partial, file, StandardCopyOption.REPLACE_EXISTING);
-            } finally {
-                Files.deleteIfExists(partial);
+
+            // Writing beside the file and renaming means a failed write cannot damage what
+            // is already saved. The rename replaces the file rather than writing into it,
+            // so anything the old file carried has to be carried over deliberately: follow
+            // a symbolic link to what it points at, refuse a file the user protected, and
+            // put the old permissions on the replacement.
+            Path target = Files.exists(file) ? file.toRealPath() : file;
+            if (Files.exists(target) && !Files.isWritable(target)) {
+                throw new TallyException(refusal());
             }
+
+            partial = target.resolveSibling(target.getFileName() + ".part");
+            Files.write(partial, tasks.stream().map(Task::toSaveFormat).toList());
+            copyPermissions(target, partial);
+            Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
-            throw new TallyException("I could not save your tally to " + file.getFileName() + ".");
+            deleteQuietly(partial);
+            throw new TallyException(refusal());
+        }
+    }
+
+    /** Returns what to tell the user when the tally could not be written. */
+    private String refusal() {
+        return "I could not save your tally to " + file.getFileName() + ".";
+    }
+
+    /**
+     * Gives the replacement file the permissions the one it replaces already had.
+     *
+     * <p>Without this the new file is made under the umask, so a tally the user had kept
+     * private would quietly become readable by others on the first save.
+     *
+     * @param existing the file being replaced, which may not exist yet.
+     * @param replacement the file about to take its place.
+     * @throws IOException if the permissions can be read but not written.
+     */
+    private static void copyPermissions(Path existing, Path replacement) throws IOException {
+        boolean isPosix = Files.exists(existing)
+                && Files.getFileStore(existing).supportsFileAttributeView(PosixFileAttributeView.class);
+        if (isPosix) {
+            Files.setPosixFilePermissions(replacement, Files.getPosixFilePermissions(existing));
+        }
+    }
+
+    /**
+     * Removes a half-written file, saying nothing if it cannot be removed.
+     *
+     * <p>This runs while a save is already failing, so a complaint from here would hide
+     * the reason the save failed, which is the more useful of the two.
+     *
+     * @param leftover the file to remove, or null if none was made.
+     */
+    private static void deleteQuietly(Path leftover) {
+        if (leftover == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(leftover);
+        } catch (IOException exception) {
+            return;
         }
     }
 

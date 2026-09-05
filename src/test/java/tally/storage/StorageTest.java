@@ -3,12 +3,17 @@ package tally.storage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -24,6 +29,62 @@ import tally.task.Window;
 public class StorageTest {
     @TempDir
     private Path folder;
+
+    @Test
+    public void save_fileTheUserProtected_isRefusedRatherThanReplaced() throws IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | protected\n");
+        assumeTrue(file.toFile().setReadOnly(), "this file system has no read-only bit");
+
+        Storage storage = new Storage(file);
+        // Renaming over a file needs write permission on the directory rather than the
+        // file, so without a check of its own the rename would go straight through.
+        assertThrows(TallyException.class, () -> storage.save(List.of(new Todo("sneaky"))));
+        assertEquals("T | 0 | protected", Files.readString(file).strip());
+    }
+
+    @Test
+    public void save_keepsThePermissionsTheFileAlreadyHad() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | private\n");
+        assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class));
+        Set<PosixFilePermission> onlyMine = PosixFilePermissions.fromString("rw-------");
+        Files.setPosixFilePermissions(file, onlyMine);
+
+        new Storage(file).save(List.of(new Todo("another")));
+        assertEquals(onlyMine, Files.getPosixFilePermissions(file));
+    }
+
+    @Test
+    public void save_dataFileIsASymbolicLink_writesThroughIt() throws TallyException, IOException {
+        Path real = folder.resolve("actual.txt");
+        Files.writeString(real, "T | 0 | alpha\n");
+        Path link = folder.resolve("tally.txt");
+        try {
+            Files.createSymbolicLink(link, real);
+        } catch (IOException | UnsupportedOperationException exception) {
+            assumeTrue(false, "this file system does not allow symbolic links");
+        }
+
+        new Storage(link).save(List.of(new Todo("alpha"), new Todo("beta")));
+        assertTrue(Files.isSymbolicLink(link), "the link was replaced by a regular file");
+        assertTrue(Files.readString(real).contains("beta"), "the link was not written through");
+    }
+
+    @Test
+    public void load_theSameDamageTwice_isCopiedAsideOnce() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | good\nBAD LINE\n");
+
+        new Storage(file).load();
+        String second = new Storage(file).load().note().orElseThrow();
+
+        // Reading does not rewrite the file, so an unrepaired one would otherwise be
+        // copied again on every start, without limit.
+        assertEquals(1, (int) Files.list(folder).filter(each ->
+                each.getFileName().toString().contains(".broken")).count());
+        assertTrue(second.contains("already copied"));
+    }
 
     @Test
     public void save_writeFails_leavesTheFileAsItWas() throws IOException {
