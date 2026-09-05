@@ -17,17 +17,17 @@ public class Deadline extends Task {
     private static final DateTimeFormatter DISPLAY_FORMAT =
             DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
 
-    protected LocalDate by;
+    protected LocalDate dueDate;
 
     /**
      * Creates a deadline that is not done yet.
      *
      * @param description what has to be done.
-     * @param by the date it has to be done by.
+     * @param dueDate the date it has to be done by.
      */
-    public Deadline(String description, LocalDate by) {
+    public Deadline(String description, LocalDate dueDate) {
         super(description);
-        this.by = by;
+        this.dueDate = dueDate;
     }
 
     /**
@@ -37,7 +37,7 @@ public class Deadline extends Task {
      */
     @Override
     public String toString() {
-        return String.format("[D]%s (by: %s)", super.toString(), by.format(DISPLAY_FORMAT));
+        return String.format("[D]%s (by: %s)", super.toString(), dueDate.format(DISPLAY_FORMAT));
     }
 
     /**
@@ -50,6 +50,6 @@ public class Deadline extends Task {
      */
     @Override
     public String toSaveFormat() {
-        return "D | " + super.toSaveFormat() + " | " + by;
+        return "D | " + super.toSaveFormat() + " | " + dueDate;
     }
 }

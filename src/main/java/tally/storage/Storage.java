@@ -90,12 +90,12 @@ public class Storage {
      * line: by returning null.
      *
      * @param description what has to be done.
-     * @param by the date field as it appears in the file.
+     * @param dueDate the date field as it appears in the file.
      * @return the deadline, or null if the date cannot be read.
      */
-    private static Task parseDeadline(String description, String by) {
+    private static Task parseDeadline(String description, String dueDate) {
         try {
-            return new Deadline(description, LocalDate.parse(by));
+            return new Deadline(description, LocalDate.parse(dueDate));
         } catch (DateTimeParseException exception) {
             return null;
         }

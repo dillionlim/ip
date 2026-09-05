@@ -83,7 +83,7 @@ public class Tally {
         } catch (TallyException exception) {
             ui.showError(exception.getMessage());
         }
-        return ui.takePending();
+        return ui.takePendingResponse();
     }
 
     /**
@@ -106,7 +106,7 @@ public class Tally {
         if (loadWarning != null) {
             ui.showError(loadWarning);
         }
-        return ui.takePending();
+        return ui.takePendingResponse();
     }
 
     /** Greets the user, carries out commands until they leave, then says goodbye. */
@@ -199,7 +199,7 @@ public class Tally {
         for (int i = 0; i < tasks.size(); i++) {
             allPositions.add(i);
         }
-        ui.show(numbered("Here are the tasks in your list:", allPositions));
+        ui.show(formatNumberedTasks("Here are the tasks in your list:", allPositions));
     }
 
     /**
@@ -217,7 +217,7 @@ public class Tally {
             ui.show("Nothing on your tally matches that.");
             return;
         }
-        ui.show(numbered("Here are the matching tasks in your list:", positions));
+        ui.show(formatNumberedTasks("Here are the matching tasks in your list:", positions));
     }
 
     /**
@@ -228,7 +228,7 @@ public class Tally {
      * @param positions the places of the tasks to show, counting from 0.
      * @return the lines to show, ready to hand to the user interface.
      */
-    private String[] numbered(String heading, List<Integer> positions) {
+    private String[] formatNumberedTasks(String heading, List<Integer> positions) {
         List<String> lines = new ArrayList<>();
         lines.add(heading);
         for (int position : positions) {

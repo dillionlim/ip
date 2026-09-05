@@ -82,10 +82,10 @@ public class TaskList {
      * @return the positions of the matching tasks, in the order they were added.
      */
     public List<Integer> findPositions(String word) {
-        String wanted = word.toLowerCase();
+        String lowercaseWord = word.toLowerCase();
         List<Integer> positions = new ArrayList<>();
         for (int i = 0; i < tasks.size(); i++) {
-            if (tasks.get(i).getDescription().toLowerCase().contains(wanted)) {
+            if (tasks.get(i).getDescription().toLowerCase().contains(lowercaseWord)) {
                 positions.add(i);
             }
         }

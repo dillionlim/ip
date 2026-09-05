@@ -30,7 +30,7 @@ public class Ui {
 
     private final Scanner scanner;
     private final boolean isConsole;
-    private final StringBuilder pending = new StringBuilder();
+    private final StringBuilder pendingResponse = new StringBuilder();
 
     /** Creates a Ui that reads the user's commands from standard input and prints its replies. */
     public Ui() {
@@ -96,7 +96,7 @@ public class Ui {
      */
     public void show(String... lines) {
         for (String line : lines) {
-            pending.append(line).append(System.lineSeparator());
+            pendingResponse.append(line).append(System.lineSeparator());
         }
         if (!isConsole) {
             return;
@@ -118,9 +118,9 @@ public class Ui {
      *
      * @return the lines said, one per line, with no trailing newline.
      */
-    public String takePending() {
-        String said = pending.toString().stripTrailing();
-        pending.setLength(0);
+    public String takePendingResponse() {
+        String said = pendingResponse.toString().stripTrailing();
+        pendingResponse.setLength(0);
         return said;
     }
 
