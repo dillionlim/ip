@@ -354,7 +354,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read "no idea :-p" as a date. Write it as yyyy-mm-dd. Try: deadline return book /by 2019-10-15
+I could not read "no idea :-p" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -401,7 +401,7 @@ What can I do for you?
 ____________________________________________________________
 
 ____________________________________________________________
-I don't know that one. I understand: todo, deadline, event, list, mark, unmark, delete, find, bye.
+I don't know that one. I understand: todo, deadline, event, window, list, mark, unmark, delete, find, bye.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1335,6 +1335,161 @@ ____________________________________________________________
 ____________________________________________________________
 Here are the matching tasks in your list:
 1.[T][ ] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## TC-25 - A window task is added, saved and read back
+
+**Aim:** `window` records a task that may be done on any day of a period, shows both ends in the display format Level-8 asks for, and writes them in the yyyy-mm-dd form it reads back, so the task survives a restart.
+
+**Input**
+```text
+window submit form /between 2026-09-08 /and 2026-09-12
+list
+bye
+```
+
+**Then restart and type**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> W | 0 | submit form | 2026-09-08 | 2026-09-12
+```
+
+## TC-26 - A window that ends before it starts is refused
+
+**Aim:** the two ends are read as dates rather than kept as text so that a period running backwards can be refused, naming both ends. Nothing reaches the tally.
+
+**Input**
+```text
+window submit form /between 2026-09-12 /and 2026-09-08
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+A window cannot end before it starts, and this one ends 2026-09-08 but starts 2026-09-12.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+## TC-27 - A malformed window command is refused
+
+**Aim:** a missing `/and`, a missing description and an unreadable date are each refused with their own explanation. The date complaint names the format rather than a command, since deadlines and windows both use it.
+
+**Input**
+```text
+window submit form /between 2026-09-08
+window /between 2026-09-08 /and 2026-09-12
+window submit form /between soon /and 2026-09-12
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+A window needs a description, a /between date and an /and date, in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12
+____________________________________________________________
+
+____________________________________________________________
+A window needs a description, a /between date and an /and date, in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12
+____________________________________________________________
+
+____________________________________________________________
+I could not read "soon" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
+____________________________________________________________
+
+____________________________________________________________
+Nothing on your tally yet.
 ____________________________________________________________
 
 ____________________________________________________________

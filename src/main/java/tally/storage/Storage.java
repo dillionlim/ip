@@ -14,6 +14,7 @@ import tally.task.Deadline;
 import tally.task.Event;
 import tally.task.Task;
 import tally.task.Todo;
+import tally.task.Window;
 
 /**
  * Keeps the tally on disk: reads it back when Tally starts, and writes it out
@@ -80,6 +81,22 @@ public class Storage {
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Returns the window task a data-file line describes, or null if either date is unreadable.
+     *
+     * @param description what has to be done.
+     * @param startDate the first date field as it appears in the file.
+     * @param endDate the second date field as it appears in the file.
+     * @return the window task, or null if the line cannot be read.
+     */
+    private static Task parseWindow(String description, String startDate, String endDate) {
+        try {
+            return new Window(description, LocalDate.parse(startDate), LocalDate.parse(endDate));
+        } catch (DateTimeParseException exception) {
+            return null;
+        }
     }
 
     /**
@@ -165,6 +182,7 @@ public class Storage {
             case "T" -> fields.length == 3 ? new Todo(fields[2]) : null;
             case "D" -> fields.length == 4 ? parseDeadline(fields[2], fields[3]) : null;
             case "E" -> fields.length == 5 ? new Event(fields[2], fields[3], fields[4]) : null;
+            case "W" -> fields.length == 5 ? parseWindow(fields[2], fields[3], fields[4]) : null;
             default -> null;
         };
 

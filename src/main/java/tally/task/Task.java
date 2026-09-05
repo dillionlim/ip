@@ -1,7 +1,22 @@
 package tally.task;
 
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
 /** A single entry on the user's tally: what has to be done, and whether it is done yet. */
 public class Task {
+    /**
+     * How a date carried by a task is shown to the user.
+     *
+     * <p>Level-8 asks that dates be read in one format and printed in another, so this
+     * differs from the yyyy-mm-dd form accepted from the user and kept in the data file.
+     * It lives here rather than in one subclass because both Deadline and Window show
+     * dates, and they should not drift apart. The locale is fixed so the month name does
+     * not depend on the machine the chatbot runs on.
+     */
+    protected static final DateTimeFormatter DISPLAY_FORMAT =
+            DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
+
     protected String description;
     protected boolean isDone;
 

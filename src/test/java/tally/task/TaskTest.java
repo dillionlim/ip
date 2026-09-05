@@ -9,6 +9,21 @@ import org.junit.jupiter.api.Test;
 /** Tests how each kind of task shows itself to the user and writes itself to the file. */
 public class TaskTest {
     @Test
+    public void toString_window_showsBothEndsInTheDisplayFormat() {
+        Window window = new Window("submit form",
+                LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 12));
+        assertEquals("[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)",
+                window.toString());
+    }
+
+    @Test
+    public void toSaveFormat_window_writesBothDatesInTheFormatItReadsBack() {
+        Window window = new Window("submit form",
+                LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 12));
+        assertEquals("W | 0 | submit form | 2026-09-08 | 2026-09-12", window.toSaveFormat());
+    }
+
+    @Test
     public void toString_todo_tagsTypeAndCheckbox() {
         assertEquals("[T][ ] read book", new Todo("read book").toString());
     }

@@ -19,6 +19,7 @@ import tally.task.Deadline;
 import tally.task.Event;
 import tally.task.Task;
 import tally.task.Todo;
+import tally.task.Window;
 
 /** Tests that Storage writes a tally it can read back, and refuses one it cannot. */
 public class StorageTest {
@@ -39,7 +40,8 @@ public class StorageTest {
         done.markAsDone();
         List<Task> written = List.of(done,
                 new Deadline("return book", LocalDate.of(2019, 6, 6)),
-                new Event("project meeting", "Aug 6th 2pm", "4pm"));
+                new Event("project meeting", "Aug 6th 2pm", "4pm"),
+                new Window("submit form", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 12)));
         storage.save(written);
 
         List<Task> read = storage.load();

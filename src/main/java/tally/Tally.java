@@ -175,6 +175,7 @@ public class Tally {
             case TODO -> addTask(Parser.parseTodo(arguments));
             case DEADLINE -> addTask(Parser.parseDeadline(arguments));
             case EVENT -> addTask(Parser.parseEvent(arguments));
+            case WINDOW -> addTask(Parser.parseWindow(arguments));
             default -> throw new IllegalStateException("No handling for command: " + command);
         }
         return true;

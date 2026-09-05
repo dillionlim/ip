@@ -7,6 +7,7 @@ import tally.TallyException;
 import tally.task.Deadline;
 import tally.task.Event;
 import tally.task.Todo;
+import tally.task.Window;
 
 /**
  * Turns what the user typed into the things Tally acts on.
@@ -113,6 +114,40 @@ public class Parser {
     }
 
     /**
+     * Returns the window task described by "submit form /between 2026-09-08 /and 2026-09-12".
+     *
+     * <p>Both ends are read as dates rather than kept as text, so that a period running
+     * backwards can be refused here instead of reaching the tally.
+     *
+     * @param arguments everything the user typed after the command word.
+     * @return the window task described.
+     * @throws TallyException if either marker or either part is missing, if a date cannot
+     *     be read, or if the period ends before it starts.
+     */
+    public static Window parseWindow(String arguments) throws TallyException {
+        String usage = "A window needs a description, a /between date and an /and date,"
+                + " in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12";
+        String[] descriptionAndRest = arguments.split(" /between ", 2);
+        if (descriptionAndRest.length < 2) {
+            throw new TallyException(usage);
+        }
+        String[] startAndEnd = descriptionAndRest[1].split(" /and ", 2);
+        if (startAndEnd.length < 2 || descriptionAndRest[0].isBlank()
+                || startAndEnd[0].isBlank() || startAndEnd[1].isBlank()) {
+            throw new TallyException(usage);
+        }
+
+        LocalDate startDate = parseDate(startAndEnd[0].trim());
+        LocalDate endDate = parseDate(startAndEnd[1].trim());
+        if (endDate.isBefore(startDate)) {
+            throw new TallyException(String.format(
+                    "A window cannot end before it starts, and this one ends %s"
+                            + " but starts %s.", endDate, startDate));
+        }
+        return new Window(descriptionAndRest[0].trim(), startDate, endDate);
+    }
+
+    /**
      * Returns the date named by the text the user typed after /by.
      *
      * <p>Dates are read in the yyyy-mm-dd form that LocalDate understands without a
@@ -127,8 +162,8 @@ public class Parser {
             return LocalDate.parse(text);
         } catch (DateTimeParseException exception) {
             throw new TallyException(String.format(
-                    "I could not read \"%s\" as a date. Write it as yyyy-mm-dd."
-                            + " Try: deadline return book /by 2019-10-15", text));
+                    "I could not read \"%s\" as a date."
+                            + " Write it as yyyy-mm-dd, for example 2019-10-15.", text));
         }
     }
 
