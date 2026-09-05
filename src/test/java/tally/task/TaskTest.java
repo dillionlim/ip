@@ -2,8 +2,10 @@ package tally.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
@@ -23,12 +25,29 @@ public class TaskTest {
     }
 
     @Test
-    public void occupies_endsTooExtremeToWorkWith_takesUpNothing() {
-        // Listing the days between these ends would not fit in memory; asking about one
-        // day at a time costs nothing, and an end outside yyyy-mm-dd is not a date here.
-        Event doom = new Event("doom", "+999999999-12-30", "-999999999-01-01");
-        assertFalse(doom.occupies(LocalDate.of(2026, 9, 8)));
-        assertTrue(doom.hasUnreadableDates());
+    public void occupies_endsThousandsOfYearsApart_costsNothingToAsk() {
+        // Both ends are ordinary dates, so the date form does not refuse them: listing
+        // the 3.65 million days between them is what used to exhaust the heap. Asking
+        // about one day has to stay cheap, which only holds if nothing is built.
+        Event doom = new Event("doom", "0001-01-01", "9999-12-31");
+        assertFalse(doom.hasUnreadableDates());
+
+        // Asking a thousand times is the point: each answer has to cost nothing. Building
+        // the three and a half million days between these ends even once takes a third of
+        // a second, so a thousand answers could not be given inside this bound.
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            for (int time = 0; time < 1000; time++) {
+                assertTrue(doom.occupies(LocalDate.of(2026, 9, 8)));
+                assertFalse(doom.occupies(LocalDate.of(10000, 1, 1)));
+            }
+        });
+    }
+
+    @Test
+    public void occupies_endsOutsideTheWrittenDateForm_takeUpNothing() {
+        Event odd = new Event("odd", "+999999999-12-30", "-999999999-01-01");
+        assertFalse(odd.occupies(LocalDate.of(2026, 9, 8)));
+        assertTrue(odd.hasUnreadableDates());
     }
 
     @Test

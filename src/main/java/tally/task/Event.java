@@ -11,6 +11,12 @@ public class Event extends Task {
     /** When the event ends, in the same raw form as {@link #start}. */
     protected String end;
 
+    /** The start read as a date, or empty when it was not written as one. */
+    private final Optional<LocalDate> startDay;
+
+    /** The end read as a date, or empty when it was not written as one. */
+    private final Optional<LocalDate> endDay;
+
     /**
      * Creates an event that is not done yet.
      *
@@ -22,6 +28,10 @@ public class Event extends Task {
         super(description);
         this.start = start;
         this.end = end;
+        // Read once here rather than each time a day is asked about, since the free-day
+        // search asks every task about every day of a year.
+        this.startDay = readDate(start);
+        this.endDay = readDate(end);
     }
 
     /**
@@ -38,13 +48,11 @@ public class Event extends Task {
      */
     @Override
     public boolean occupies(LocalDate day) {
-        Optional<LocalDate> startDate = readDate(start);
-        Optional<LocalDate> endDate = readDate(end);
-        if (startDate.isEmpty() || endDate.isEmpty()) {
+        if (hasUnreadableDates()) {
             return false;
         }
-        LocalDate first = startDate.get().isAfter(endDate.get()) ? endDate.get() : startDate.get();
-        LocalDate last = startDate.get().isAfter(endDate.get()) ? startDate.get() : endDate.get();
+        LocalDate first = startDay.get().isAfter(endDay.get()) ? endDay.get() : startDay.get();
+        LocalDate last = startDay.get().isAfter(endDay.get()) ? startDay.get() : endDay.get();
         return !day.isBefore(first) && !day.isAfter(last);
     }
 
@@ -55,7 +63,7 @@ public class Event extends Task {
      */
     @Override
     public boolean hasUnreadableDates() {
-        return readDate(start).isEmpty() || readDate(end).isEmpty();
+        return startDay.isEmpty() || endDay.isEmpty();
     }
 
     /**
