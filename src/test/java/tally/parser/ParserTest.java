@@ -11,9 +11,46 @@ import tally.TallyException;
 import tally.task.Deadline;
 import tally.task.Event;
 import tally.task.Todo;
+import tally.task.Window;
 
 /** Tests that Parser makes sense of good commands and refuses the rest. */
 public class ParserTest {
+    @Test
+    public void parseWindow_descriptionAndBothDates_returnsWindow() throws TallyException {
+        Window window = Parser.parseWindow("submit form /between 2026-09-08 /and 2026-09-12");
+        assertEquals("[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)",
+                window.toString());
+    }
+
+    @Test
+    public void parseWindow_sameDayAtBothEnds_isAccepted() throws TallyException {
+        // A window of one day is a period, not a mistake, so only a later start is refused.
+        Window window = Parser.parseWindow("submit form /between 2026-09-08 /and 2026-09-08");
+        assertEquals("[W][ ] submit form (window: Sep 08 2026 to Sep 08 2026)",
+                window.toString());
+    }
+
+    @Test
+    public void parseWindow_endBeforeStart_throws() {
+        assertThrows(TallyException.class, () ->
+                Parser.parseWindow("submit form /between 2026-09-12 /and 2026-09-08"));
+    }
+
+    @Test
+    public void parseWindow_missingMarkerOrBlankPart_throws() {
+        assertThrows(TallyException.class, () -> Parser.parseWindow("submit form"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseWindow("submit form /between 2026-09-08"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseWindow(" /between 2026-09-08 /and 2026-09-12"));
+    }
+
+    @Test
+    public void parseWindow_unreadableDate_throws() {
+        assertThrows(TallyException.class, () ->
+                Parser.parseWindow("submit form /between soon /and 2026-09-12"));
+    }
+
     @Test
     public void parseCommand_knownWord_returnsCommand() throws TallyException {
         assertEquals(Command.TODO, Parser.parseCommand("todo read book"));

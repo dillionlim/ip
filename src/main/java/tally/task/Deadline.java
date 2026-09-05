@@ -1,22 +1,9 @@
 package tally.task;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 /** A task that has to be finished before a stated date. */
 public class Deadline extends Task {
-    /**
-     * How a due date is shown to the user.
-     *
-     * <p>Level-8 asks that dates be read in one format and printed in another, so
-     * this differs from the yyyy-mm-dd form accepted from the user and kept in the
-     * data file. The locale is fixed so the month name does not depend on the
-     * machine the chatbot runs on.
-     */
-    private static final DateTimeFormatter DISPLAY_FORMAT =
-            DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH);
-
     protected LocalDate dueDate;
 
     /**

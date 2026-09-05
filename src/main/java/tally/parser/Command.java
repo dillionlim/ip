@@ -16,6 +16,7 @@ public enum Command {
     TODO("todo"),
     DEADLINE("deadline"),
     EVENT("event"),
+    WINDOW("window"),
     LIST("list"),
     MARK("mark"),
     UNMARK("unmark"),
