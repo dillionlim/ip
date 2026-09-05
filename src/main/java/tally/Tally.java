@@ -166,27 +166,41 @@ public class Tally {
             }
             case LIST -> showTasks();
             case FIND -> showMatchingTasks(Parser.parseSearchWord(arguments));
-            case MARK -> {
-                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-                task.markAsDone();
-                ui.show("Nice! I've marked this task as done:", task.toString());
-            }
-            case UNMARK -> {
-                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-                task.markAsNotDone();
-                ui.show("OK, I've marked this task as not done yet:", task.toString());
-            }
-            case DELETE -> {
-                Task task = tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
-                tasks.remove(task);
-                ui.show("Noted. I've removed this task:", task.toString(), countSentence());
-            }
+            case MARK -> markTask(arguments, command);
+            case UNMARK -> unmarkTask(arguments, command);
+            case DELETE -> deleteTask(arguments, command);
             case TODO -> addTask(Parser.parseTodo(arguments));
             case DEADLINE -> addTask(Parser.parseDeadline(arguments));
             case EVENT -> addTask(Parser.parseEvent(arguments));
             default -> throw new IllegalStateException("No handling for command: " + command);
         }
         return true;
+    }
+
+    /** Returns the task the user named by its number, counting from 1. */
+    private Task taskNamedIn(String arguments, Command command) throws TallyException {
+        return tasks.get(Parser.parseTaskIndex(arguments, tasks.size(), command));
+    }
+
+    /** Marks the named task done, and shows it as it now reads. */
+    private void markTask(String arguments, Command command) throws TallyException {
+        Task task = taskNamedIn(arguments, command);
+        task.markAsDone();
+        ui.show("Nice! I've marked this task as done:", task.toString());
+    }
+
+    /** Marks the named task not done after all, and shows it as it now reads. */
+    private void unmarkTask(String arguments, Command command) throws TallyException {
+        Task task = taskNamedIn(arguments, command);
+        task.markAsNotDone();
+        ui.show("OK, I've marked this task as not done yet:", task.toString());
+    }
+
+    /** Takes the named task off the tally, and says how many are left. */
+    private void deleteTask(String arguments, Command command) throws TallyException {
+        Task task = taskNamedIn(arguments, command);
+        tasks.remove(task);
+        ui.show("Noted. I've removed this task:", task.toString(), countSentence());
     }
 
     /** Shows the whole tally, or says so when there is nothing on it. */
