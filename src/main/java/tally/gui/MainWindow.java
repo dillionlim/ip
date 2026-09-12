@@ -68,6 +68,9 @@ public class MainWindow {
     private void handleUserInput() {
         String input = userInput.getText();
         if (input.isBlank()) {
+            // Nothing to send, but Send has taken the focus and has to give it back,
+            // or the next thing typed goes nowhere.
+            userInput.requestFocus();
             return;
         }
         showConversationTurn(input, tally.getResponse(input));

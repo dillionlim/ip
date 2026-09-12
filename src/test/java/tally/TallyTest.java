@@ -236,7 +236,8 @@ public class TallyTest {
         assumeTrue(!Files.isReadable(file), "these tests are running as a user nothing stops");
 
         Tally tally = new Tally(file, false);
-        assertTrue(tally.getGreeting().contains("could not be read"), tally.getGreeting());
+        String greeting = tally.getGreeting();
+        assertTrue(greeting.contains("could not be read"), greeting);
         assertTrue(tally.getResponse("list").contains("Nothing on record."));
 
         // Saving is refused, and reading it back to find out what is really there fails
@@ -289,7 +290,8 @@ public class TallyTest {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | read book\nBAD LINE\n");
         Tally tally = new Tally(file, false);
-        assertTrue(tally.getGreeting().contains("could not be read"), tally.getGreeting());
+        String greeting = tally.getGreeting();
+        assertTrue(greeting.contains("could not be read"), greeting);
 
         assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class),
                 "this file system does not carry POSIX permissions");
