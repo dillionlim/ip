@@ -181,4 +181,22 @@ public class TaskTest {
         assertFalse(todo.occupies(LocalDate.of(2026, 9, 9)));
         assertFalse(todo.hasUnreadableDates(), "a todo names no times to fail to read");
     }
+    @Test
+    public void constructor_datesWrittenWithExtraSpacing_areStillRead() {
+        // The data file is edited by hand, so a date can arrive with a space in front
+        // of it. Tidying the ends and then reading the untidied text left an event
+        // showing two dates and counting as having none, so the free-day search stepped
+        // straight over it while the list showed it plainly.
+        Event padded = new Event("trip", "  2026-09-08", "2026-09-10 ");
+        assertFalse(padded.hasUnreadableDates(), "the dates were shown but not read");
+        assertTrue(padded.occupies(LocalDate.of(2026, 9, 9)));
+        assertEquals("[E][ ] trip (from: 2026-09-08 to: 2026-09-10)", padded.toString());
+    }
+
+    @Test
+    public void constructor_paddedEndsRunningBackwards_areStillRefused() {
+        // Untidied reading also let this past the check, and saving then wrote it back
+        // tidied, so a file that loaded was rejected as damaged on the next start.
+        assertThrows(AssertionError.class, () -> new Event("trip", " 2026-09-12", "2026-09-08 "));
+    }
 }

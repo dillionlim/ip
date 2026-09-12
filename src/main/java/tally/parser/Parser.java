@@ -191,7 +191,7 @@ public class Parser {
         // Two ends that both read as dates can be compared, and an event that ends
         // before it starts is refused for the same reason a window is. Ends written as
         // anything else are the user's to order, since nothing here can read them.
-        if (Event.isBackwards(Task.readDate(parts[1]), Task.readDate(parts[2]))) {
+        if (Event.hasBackwardsDates(parts[1], parts[2])) {
             throw new TallyException(String.format(
                     "An event cannot end before it starts. You have it backwards:"
                             + " ends %s, starts %s.", parts[2], parts[1]));

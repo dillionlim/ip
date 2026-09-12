@@ -285,7 +285,7 @@ public class Storage {
      * @return the event, or null if the line cannot be read.
      */
     private static Task readEvent(String description, String startText, String endText) {
-        if (Event.isBackwards(Task.readDate(startText), Task.readDate(endText))) {
+        if (Event.hasBackwardsDates(startText, endText)) {
             return null;
         }
         return new Event(description, startText, endText);
