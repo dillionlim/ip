@@ -408,4 +408,38 @@ public class StorageTest {
                 Files.readAllLines(folder.resolve("actual.txt")));
         assertTrue(Files.isSymbolicLink(link), "the link was replaced by a regular file");
     }
+
+    @Test
+    public void load_aFileAnEditorMarkedAsUtf8_readsItsFirstTaskAnyway()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // Editors on Windows write this at the start and do not show it, so a user who
+        // opened the file to correct a line saves it back with the mark on task one.
+        Files.writeString(file, "\ufeffT | 0 | read book\nT | 1 | buy bread\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(2, loaded.tasks().size(), loaded.note().orElse("no complaint"));
+        assertEquals("[T][ ] read book", loaded.tasks().get(0).toString());
+        assertTrue(loaded.note().isEmpty(), loaded.note().orElse(""));
+    }
+
+    @Test
+    public void load_unreadableFileThatCannotBeCopied_saysEachThingOnce()
+            throws IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\n");
+        Path occupied = folder.resolve("tally.txt.broken");
+        Files.writeString(occupied, "older damage\n");
+        assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class),
+                "this file system does not carry POSIX permissions");
+        Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("---------"));
+        Files.setPosixFilePermissions(occupied, PosixFilePermissions.fromString("---------"));
+        assumeTrue(!Files.isReadable(file), "these tests are running as a user nothing stops");
+
+        TallyException thrown = assertThrows(TallyException.class, () -> new Storage(file).load());
+        String message = thrown.getMessage();
+        // Both the read and the copy failing used to append the same refusal, so the
+        // user was told twice, in two different wordings, in one breath.
+        assertEquals(1, message.split("will not be written over", -1).length - 1, message);
+    }
 }

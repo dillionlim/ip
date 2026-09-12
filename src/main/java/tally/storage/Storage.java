@@ -57,6 +57,15 @@ public class Storage {
     private static final int FIELD_COUNT_EVENT = 5;
     private static final int FIELD_COUNT_WINDOW = 5;
 
+    /**
+     * The mark some editors write at the start of a UTF-8 file.
+     *
+     * <p>It is invisible in the editor, so a user who opened the file to correct one
+     * line saves it back with this stuck to the front of the first task, and that task
+     * is then the one line Tally cannot read.
+     */
+    private static final String BYTE_ORDER_MARK = "\ufeff";
+
     /** How many symbolic links may be followed before the chain is called a loop. */
     private static final int MAX_LINKS_FOLLOWED = 8;
 
@@ -109,13 +118,41 @@ public class Storage {
                     + " Starting with nothing on record." + copyAside()
                     + " It will not be written over until it can be read.");
         }
-        Reading reading = readTally(lines);
+        return describe(readTally(withoutByteOrderMark(lines)));
+    }
+
+    /**
+     * Returns the lines with any byte-order mark taken off the first of them.
+     *
+     * @param lines the lines of the data file, in order.
+     * @return the same lines, the first no longer carrying an invisible mark.
+     */
+    private static List<String> withoutByteOrderMark(List<String> lines) {
+        if (lines.isEmpty() || !lines.get(0).startsWith(BYTE_ORDER_MARK)) {
+            return lines;
+        }
+        List<String> stripped = new ArrayList<>(lines);
+        stripped.set(0, stripped.get(0).substring(BYTE_ORDER_MARK.length()));
+        return stripped;
+    }
+
+    /**
+     * Returns what was read, with a note about anything in it that could not be.
+     *
+     * <p>Copying aside is asked for here rather than from inside the wording, because a
+     * method that says it describes something should not also be changing the disk.
+     *
+     * @param reading the tasks found, and the lines that held nothing recognizable.
+     * @return the tasks, and what to tell the user about the rest.
+     */
+    private LoadResult describe(Reading reading) {
         if (reading.unreadableLines().isEmpty()) {
             return new LoadResult(reading.tasks(), Optional.empty());
         }
-        // Deciding what a damaged file calls for is this method's business rather than
-        // the reader's: reading says what it found, and load says what to do about it.
         String note = describeUnreadableLines(reading.unreadableLines()) + copyAside();
+        if (saveRefusal.isPresent()) {
+            note += " Nothing will be written over it until it is repaired.";
+        }
         return new LoadResult(reading.tasks(), Optional.of(note));
     }
 
@@ -279,7 +316,7 @@ public class Storage {
             refuseToSave("What could not be read in " + file.getFileName()
                     + " could not be copied aside either, so it will not be written over."
                     + " Move it aside or repair it, then start Tally again.");
-            return " It could not be copied aside, so it will not be written over.";
+            return " It could not be copied aside.";
         }
     }
 
