@@ -181,6 +181,7 @@ public class TaskTest {
         assertFalse(todo.occupies(LocalDate.of(2026, 9, 9)));
         assertFalse(todo.hasUnreadableDates(), "a todo names no times to fail to read");
     }
+
     @Test
     public void constructor_datesWrittenWithExtraSpacing_areStillRead() {
         // The data file is edited by hand, so a date can arrive with a space in front

@@ -275,9 +275,9 @@ public class Storage {
     /**
      * Returns the event a data-file line describes, or null if its dated ends run backwards.
      *
-     * <p>An event's ends are whatever the user wrote, so most pairs cannot be compared
-     * at all. A pair that can be, and runs the wrong way, was edited by hand into
-     * something the parser would have refused.
+     * <p>An event's ends are whatever the user wrote, spacing aside, so most pairs
+     * cannot be compared at all. A pair that can be, and runs the wrong way, was edited
+     * by hand into something the parser would have refused.
      *
      * @param description what is happening.
      * @param startText the first time field as it appears in the file.

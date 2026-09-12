@@ -516,6 +516,7 @@ public class StorageTest {
                 loaded.tasks().stream().map(Task::toString).toList());
         assertTrue(loaded.note().orElseThrow().contains("Line 2"), loaded.note().orElseThrow());
     }
+
     @Test
     public void load_paddedEventEndsRunningBackwards_isSkippedRatherThanCrashing()
             throws TallyException, IOException {
