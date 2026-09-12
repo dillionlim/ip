@@ -87,6 +87,9 @@ public class MainWindow {
                 DialogBox.createUserDialog(input, userImage),
                 DialogBox.createTallyDialog(response, tallyImage));
         userInput.clear();
+        // Pressing Send moves the focus to the button, so the next command would be
+        // typed nowhere. Put it back where the user is about to type.
+        userInput.requestFocus();
     }
 
     /**
