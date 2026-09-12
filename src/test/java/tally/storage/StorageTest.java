@@ -303,4 +303,109 @@ public class StorageTest {
         Files.writeString(file, "\nT | 0 | read book\n\n\nT | 1 | return book\n\n");
         assertEquals(2, new Storage(file).load().tasks().size());
     }
+
+    @Test
+    public void load_aLineOfEachKind_readsThemBackAsThemselves()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, String.join("\n",
+                "T | 0 | read book",
+                "D | 1 | return book | 2019-10-15",
+                "E | 0 | project meeting | Mon 2pm | 4pm",
+                "W | 0 | submit form | 2026-09-08 | 2026-09-12") + "\n");
+
+        List<Task> loaded = new Storage(file).load().tasks();
+        assertEquals(List.of("[T][ ] read book",
+                "[D][X] return book (by: Oct 15 2019)",
+                "[E][ ] project meeting (from: Mon 2pm to: 4pm)",
+                "[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)"),
+                loaded.stream().map(Task::toString).toList());
+    }
+
+    @Test
+    public void load_aTypeLetterNobodyWrites_isSkippedLikeAnyOtherDamage()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\nQ | 0 | whatever this is\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(1, loaded.tasks().size());
+        assertTrue(loaded.note().orElseThrow().contains("Line 2"), loaded.note().orElseThrow());
+    }
+
+    @Test
+    public void save_symbolicLinksPointingAtEachOther_isRefusedRatherThanFollowedForever()
+            throws IOException {
+        Path first = folder.resolve("tally.txt");
+        Path second = folder.resolve("other.txt");
+        try {
+            Files.createSymbolicLink(first, second);
+            Files.createSymbolicLink(second, first);
+        } catch (IOException | UnsupportedOperationException exception) {
+            assumeTrue(false, "this file system does not allow symbolic links");
+        }
+
+        // Following them one after another never reaches a file, so the chain is given
+        // a limit rather than being walked until the program stops responding.
+        List<Task> tasks = List.of(new Todo("read book"));
+        Storage storage = new Storage(first);
+        assertThrows(TallyException.class, () -> storage.save(tasks));
+    }
+
+    @Test
+    public void load_aLineWithTheWrongNumberOfFields_isSkippedAndReported()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // Each of these names a kind of task, then gives it the wrong number of parts.
+        Files.writeString(file, String.join("\n",
+                "T | 0 | read book | extra",
+                "D | 0 | return book",
+                "E | 0 | meeting | 2pm",
+                "W | 0 | form | 2026-09-08",
+                "T | 0 | the only good line") + "\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(1, loaded.tasks().size());
+        assertEquals("[T][ ] the only good line", loaded.tasks().get(0).toString());
+        assertTrue(loaded.note().orElseThrow().contains("1, 2, 3 and 4"),
+                loaded.note().orElseThrow());
+    }
+
+    @Test
+    public void load_aWindowWhoseDatesCannotBeRead_isSkipped() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "W | 0 | submit form | last Tuesday | 2026-09-12\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertTrue(loaded.tasks().isEmpty());
+        assertTrue(loaded.note().orElseThrow().contains("Line 1"));
+    }
+
+    @Test
+    public void load_aBlankFieldWhereOneIsRequired_isSkipped() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // A blank done flag, and a blank description: neither is a task anyone wrote.
+        Files.writeString(file, "T |   | read book\nT | 0 |   \nT | 0 | good\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(1, loaded.tasks().size());
+        assertTrue(loaded.note().orElseThrow().contains("1 and 2"), loaded.note().orElseThrow());
+    }
+
+    @Test
+    public void save_aLinkNamedRelativeToItsOwnFolder_isFollowedToWhereItPoints()
+            throws TallyException, IOException {
+        Path link = folder.resolve("tally.txt");
+        try {
+            // Named without a folder, so it resolves against the link's own folder.
+            Files.createSymbolicLink(link, Path.of("actual.txt"));
+        } catch (IOException | UnsupportedOperationException exception) {
+            assumeTrue(false, "this file system does not allow symbolic links");
+        }
+
+        new Storage(link).save(List.of(new Todo("read book")));
+        assertEquals(List.of("T | 0 | read book"),
+                Files.readAllLines(folder.resolve("actual.txt")));
+        assertTrue(Files.isSymbolicLink(link), "the link was replaced by a regular file");
+    }
 }

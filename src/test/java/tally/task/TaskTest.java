@@ -158,4 +158,12 @@ public class TaskTest {
         todo.markAsDone();
         assertEquals("X", todo.getStatusIcon());
     }
+
+    @Test
+    public void occupies_aTaskNamingNoDays_takesUpNone() {
+        // A todo is owed whenever; it does not stand between the user and a free day.
+        Task todo = new Todo("read book");
+        assertFalse(todo.occupies(LocalDate.of(2026, 9, 9)));
+        assertFalse(todo.hasUnreadableDates(), "a todo names no times to fail to read");
+    }
 }

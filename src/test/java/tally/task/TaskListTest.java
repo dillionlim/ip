@@ -2,11 +2,13 @@ package tally.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -182,5 +184,42 @@ public class TaskListTest {
         tasks.add(new Todo("first"));
         tasks.asList().clear();
         assertEquals(1, tasks.size());
+    }
+
+    @Test
+    public void add_aNullTask_isRefusedWhereItHappensRatherThanLater() {
+        // Nothing builds one, so a null here is a programming error. Left to itself it
+        // would surface much later, as a save that cannot write the task out.
+        assertThrows(AssertionError.class, () -> new TaskList().add((Task) null));
+    }
+
+    @Test
+    public void findFreeRun_aRunShorterThanADay_isRefused() {
+        assertThrows(AssertionError.class, () -> new TaskList().findFreeRun(0, SEP_9));
+    }
+
+    @Test
+    public void get_aPlaceTheTallyDoesNotHold_isRefused() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("only"));
+        assertThrows(AssertionError.class, () -> tasks.get(1));
+        assertThrows(AssertionError.class, () -> tasks.get(-1));
+    }
+
+    @Test
+    public void findPositions_underATurkishLocale_stillMatchesTheSameWay() {
+        // Turkish lowercases I to a dotless i, so case folding that follows the machine's
+        // own language stops "INDEX" matching "index" there and nowhere else. CI runs on
+        // three operating systems and all of them are English, so only this would catch it.
+        Locale wasDefault = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr"));
+            TaskList tasks = new TaskList();
+            tasks.add(new Todo("INDEX the notes"));
+            assertEquals(List.of(0), tasks.findPositions("index"));
+            assertEquals(List.of(0), tasks.findPositions("INDEX"));
+        } finally {
+            Locale.setDefault(wasDefault);
+        }
     }
 }

@@ -65,6 +65,30 @@ These cases cover Level-0 through Level-10, the `A-Classes`, `A-Inheritance`,
 `A-Exceptions` and `A-Collections` extensions, the `B-DoWithinPeriodTasks` and
 `B-FindFreeTimes` extensions, and `A-MoreErrorHandling`.
 
+## What is tested by hand
+
+The JUnit suite covers 98% of the lines outside the window, measured with JaCoCo.
+What it does not reach is either the window itself or code that needs a file
+system behaving differently from this one: the fallback for a file system that
+cannot rename atomically, the failure to delete a half-written file, and the
+branch for a file system without POSIX permissions.
+
+The window is checked by hand, since driving JavaFX from a test would test the
+harness more than the program:
+
+| Checked | How |
+| --- | --- |
+| It starts from the packaged jar and draws its window | every push, on Linux, under a virtual display |
+| Replies appear, scroll, and the input keeps focus | by using it |
+| Widening the window gives the text the room | by dragging it wider, and at a forced 780px |
+| The window can still be made small | its minimum is 420 by 420 |
+| Saying `bye` closes it after the goodbye is read | by using it |
+
+Three operating systems run the JUnit suite, this console suite, and the
+packaged-jar check on every push. All three are English, so a machine whose own
+language folds letters differently is covered by a JUnit test that sets the
+default locale to Turkish rather than by CI.
+
 Cases that exercise a rejected command also issue a good command afterwards and
 list the tally at the end. Checking only the error message would miss a bad
 command that printed the right complaint but still altered the stored tasks.
