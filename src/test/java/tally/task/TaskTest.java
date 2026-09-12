@@ -43,15 +43,29 @@ public class TaskTest {
     }
 
     @Test
-    public void occupies_eventEndsWrittenBackwards_stillNameTheSameDays() {
-        Event backwards = new Event("trip", "2026-09-10", "2026-09-08");
-        Event forwards = new Event("trip", "2026-09-08", "2026-09-10");
-        for (int day = 7; day <= 11; day++) {
-            LocalDate each = LocalDate.of(2026, 9, day);
-            assertEquals(forwards.occupies(each), backwards.occupies(each), each.toString());
-        }
-        assertTrue(backwards.occupies(LocalDate.of(2026, 9, 9)));
-        assertFalse(backwards.occupies(LocalDate.of(2026, 9, 11)));
+    public void constructor_eventWithDatedEndsRunningBackwards_isRefused() {
+        // This used to be accepted and quietly read as the same stretch of days, shown
+        // to the user back to front. The parser and the storage reader both refuse it
+        // now, for the same reason a window that ends before it starts is refused, so
+        // one arriving here came from neither.
+        assertThrows(AssertionError.class, () -> new Event("trip", "2026-09-10", "2026-09-08"));
+    }
+
+    @Test
+    public void constructor_eventEndsThatAreNotDates_areLeftAlone() {
+        // Nothing can tell whether "4pm" falls before "Mon 2pm", so neither is refused.
+        Event event = new Event("standup", "Mon 2pm", "4pm");
+        assertTrue(event.hasUnreadableDates());
+        assertFalse(event.occupies(LocalDate.of(2026, 9, 9)));
+    }
+
+    @Test
+    public void occupies_eventWithDatedEnds_coversTheDaysBetweenThem() {
+        Event trip = new Event("trip", "2026-09-08", "2026-09-10");
+        assertFalse(trip.occupies(LocalDate.of(2026, 9, 7)));
+        assertTrue(trip.occupies(LocalDate.of(2026, 9, 8)));
+        assertTrue(trip.occupies(LocalDate.of(2026, 9, 10)));
+        assertFalse(trip.occupies(LocalDate.of(2026, 9, 11)));
     }
 
     @Test
@@ -83,8 +97,9 @@ public class TaskTest {
     @Test
     public void hasUnreadableDates_datesOrTextEnds_trueOnlyForText() {
         assertFalse(new Event("trip", "2026-09-08", "2026-09-10").hasUnreadableDates());
-        assertFalse(new Event("trip", "2026-09-10", "2026-09-08").hasUnreadableDates());
         assertTrue(new Event("standup", "Mon 2pm", "3pm").hasUnreadableDates());
+        // One end readable and the other not still leaves the pair unusable.
+        assertTrue(new Event("standup", "2026-09-08", "3pm").hasUnreadableDates());
     }
 
     @Test

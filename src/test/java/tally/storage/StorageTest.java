@@ -32,6 +32,20 @@ public class StorageTest {
     @TempDir
     private Path folder;
 
+    /**
+     * Makes a symbolic link, skipping the test where the file system has no such thing.
+     *
+     * @param link where the link goes.
+     * @param target what it points at, which need not exist.
+     */
+    private static void linkOrSkip(Path link, Path target) {
+        try {
+            Files.createSymbolicLink(link, target);
+        } catch (IOException | UnsupportedOperationException exception) {
+            assumeTrue(false, "this file system does not allow symbolic links");
+        }
+    }
+
     @Test
     public void load_backwardsWindow_isSkipped() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
@@ -74,11 +88,7 @@ public class StorageTest {
         Path real = folder.resolve("actual.txt");
         Files.writeString(real, "T | 0 | alpha\n");
         Path link = folder.resolve("tally.txt");
-        try {
-            Files.createSymbolicLink(link, real);
-        } catch (IOException | UnsupportedOperationException exception) {
-            assumeTrue(false, "this file system does not allow symbolic links");
-        }
+        linkOrSkip(link, real);
 
         new Storage(link).save(List.of(new Todo("alpha"), new Todo("beta")));
         assertTrue(Files.isSymbolicLink(link), "the link was replaced by a regular file");
@@ -92,11 +102,7 @@ public class StorageTest {
         // from the case above: there is nothing for toRealPath to resolve the link to.
         Path real = folder.resolve("actual.txt");
         Path link = folder.resolve("tally.txt");
-        try {
-            Files.createSymbolicLink(link, real);
-        } catch (IOException | UnsupportedOperationException exception) {
-            assumeTrue(false, "this file system does not allow symbolic links");
-        }
+        linkOrSkip(link, real);
 
         new Storage(link).save(List.of(new Todo("alpha")));
         assertTrue(Files.isSymbolicLink(link), "the link was replaced by a regular file");
@@ -136,11 +142,7 @@ public class StorageTest {
         Path file = folder.resolve("tally.txt");
         Files.writeString(file, "T | 0 | good\nBAD LINE\n");
         Path decoy = folder.resolve("tally.txt.broken");
-        try {
-            Files.createSymbolicLink(decoy, file);
-        } catch (IOException | UnsupportedOperationException exception) {
-            assumeTrue(false, "this file system does not allow symbolic links");
-        }
+        linkOrSkip(decoy, file);
 
         Storage storage = new Storage(file);
         LoadResult loaded = storage.load();
@@ -338,12 +340,8 @@ public class StorageTest {
             throws IOException {
         Path first = folder.resolve("tally.txt");
         Path second = folder.resolve("other.txt");
-        try {
-            Files.createSymbolicLink(first, second);
-            Files.createSymbolicLink(second, first);
-        } catch (IOException | UnsupportedOperationException exception) {
-            assumeTrue(false, "this file system does not allow symbolic links");
-        }
+        linkOrSkip(first, second);
+        linkOrSkip(second, first);
 
         // Following them one after another never reaches a file, so the chain is given
         // a limit rather than being walked until the program stops responding.
@@ -441,5 +439,44 @@ public class StorageTest {
         // Both the read and the copy failing used to append the same refusal, so the
         // user was told twice, in two different wordings, in one breath.
         assertEquals(1, message.split("will not be written over", -1).length - 1, message);
+    }
+    @Test
+    public void load_eventWithDatedEndsRunningBackwards_isSkipped()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // The parser refuses this, so a file holding it was edited by hand.
+        Files.writeString(file, "E | 0 | trip | 2026-09-12 | 2026-09-08\nT | 0 | good\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(1, loaded.tasks().size());
+        assertTrue(loaded.note().orElseThrow().contains("Line 1"), loaded.note().orElseThrow());
+    }
+    @Test
+    public void load_aTaskNamedTwice_isKeptOnceAndReported() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // Tally refuses to add a task it already holds, so a file naming one twice
+        // would otherwise put the tally in a state no command could have reached.
+        // Whether either copy is done makes no difference: it is the same task.
+        Files.writeString(file, "T | 0 | read book\nT | 1 | read book\nT | 0 | buy bread\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(List.of("[T][ ] read book", "[T][ ] buy bread"),
+                loaded.tasks().stream().map(Task::toString).toList());
+        String note = loaded.note().orElseThrow();
+        assertTrue(note.contains("Line 2"), note);
+        assertTrue(note.contains("repeats a task already on record"), note);
+    }
+
+    @Test
+    public void load_repeatsButNoDamage_keepsNoRescueCopy() throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\nT | 0 | read book\n");
+
+        new Storage(file).load();
+        // A repeat is a readable line, not damage, so there is nothing to quarantine.
+        try (Stream<Path> left = Files.list(folder)) {
+            assertEquals(0, (int) left.filter(each ->
+                    each.getFileName().toString().contains(".broken")).count());
+        }
     }
 }

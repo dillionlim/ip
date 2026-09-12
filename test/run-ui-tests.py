@@ -255,39 +255,51 @@ def run_case(case, data_file, classpath):
     return output
 
 
-def check_files(case, data_file):
-    """Returns a complaint about the files left behind, or None if they are right.
+def parse_expected_files(block):
+    """Returns the files a case expects, as {name: [line, ...]}.
 
     Each line of the block names a file and one line it should hold, written as
-    "name >>> line". Checking the files as well as the console catches a change
-    that prints the right thing and then damages what is on disk.
-
-    The block has to name every file the run leaves behind, so that a half
-    written file nobody cleaned up is a failure rather than something the check
-    passes over in silence.
+    "name >>> line".
     """
     wanted = {}
-    for entry in case["files"].split("\n"):
+    for entry in block.split("\n"):
         if not entry.strip():
             continue
         name, _, content = entry.partition(" >>> ")
         wanted.setdefault(name.strip(), []).append(content)
+    return wanted
 
-    left = sorted(path.name for path in data_file.parent.iterdir())
-    unexpected = [name for name in left if name not in wanted]
+
+def describe_wrong_contents(path, lines):
+    """Returns a complaint about one file's contents, or None if they are right."""
+    if not path.exists():
+        return f"{path.name} does not exist after the run"
+    # splitlines rather than dropping every blank line, so that a stray blank
+    # in the middle of the file is a difference like any other.
+    actual = path.read_text(encoding="utf-8").splitlines()
+    if actual == lines:
+        return None
+    return (f"{path.name} holds:\n    " + "\n    ".join(actual)
+            + "\n  but should hold:\n    " + "\n    ".join(lines))
+
+
+def check_files(case, data_file):
+    """Returns a complaint about the files left behind, or None if they are right.
+
+    Checking the files as well as the console catches a change that prints the
+    right thing and then damages what is on disk.  The block has to name every
+    file the run leaves behind, so that a half written file nobody cleaned up is
+    a failure rather than something the check passes over in silence.
+    """
+    wanted = parse_expected_files(case["files"])
+    unexpected = [path.name for path in sorted(data_file.parent.iterdir())
+                  if path.name not in wanted]
     if unexpected:
         return "the run left files the case does not account for: " + ", ".join(unexpected)
-
     for name, lines in wanted.items():
-        path = data_file.parent / name
-        if not path.exists():
-            return f"{name} does not exist after the run"
-        # splitlines rather than dropping every blank line, so that a stray blank
-        # in the middle of the file is a difference like any other.
-        actual = path.read_text(encoding="utf-8").splitlines()
-        if actual != lines:
-            return (f"{name} holds:\n    " + "\n    ".join(actual)
-                    + "\n  but should hold:\n    " + "\n    ".join(lines))
+        complaint = describe_wrong_contents(data_file.parent / name, lines)
+        if complaint is not None:
+            return complaint
     return None
 
 
@@ -331,7 +343,7 @@ def show_files_left(data_file):
     print("--- Files left behind ---")
     for path in sorted(data_file.parent.iterdir()):
         print(f"  {path.name}: " + " / ".join(
-            l for l in path.read_text(encoding="utf-8").split("\n") if l))
+            line for line in path.read_text(encoding="utf-8").split("\n") if line))
 
 
 def run_and_check(case, data_file, classpath):

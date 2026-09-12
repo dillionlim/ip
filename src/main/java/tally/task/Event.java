@@ -43,6 +43,23 @@ public class Event extends Task {
         // search asks every task about every day of a year.
         this.startDay = readDate(start);
         this.endDay = readDate(end);
+        assert !isBackwards(startDay, endDay)
+                : "Parser.parseEvent and Storage refuse an event whose dated ends run"
+                + " backwards, so one arriving here came from neither: " + start + " to " + end;
+    }
+
+    /**
+     * Returns whether two ends are both dates, the later one written first.
+     *
+     * <p>Only a pair that both read as dates can be compared at all. "Mon 2pm" to "4pm"
+     * may well be back to front, and nothing here can tell.
+     *
+     * @param from the start, read as a date if it is one.
+     * @param to the end, read as a date if it is one.
+     * @return true when both are dates and the end falls before the start.
+     */
+    public static boolean isBackwards(Optional<LocalDate> from, Optional<LocalDate> to) {
+        return from.isPresent() && to.isPresent() && to.get().isBefore(from.get());
     }
 
     /**
@@ -51,8 +68,7 @@ public class Event extends Task {
      *
      * <p>An event keeps its ends as the user typed them, so "Mon 2pm" names no day this
      * can work out. Ends written as yyyy-mm-dd were read when the event was made, which
-     * lets an event join the free-day search without changing what is stored for it. A
-     * pair written the other way round still names the same stretch of days.
+     * lets an event join the free-day search without changing what is stored for it.
      *
      * @param day the day being considered.
      * @return true when the day falls within the two ends, both included.
@@ -62,12 +78,7 @@ public class Event extends Task {
         if (hasUnreadableDates()) {
             return false;
         }
-        LocalDate from = startDay.get();
-        LocalDate to = endDay.get();
-        boolean isBackwards = from.isAfter(to);
-        LocalDate first = isBackwards ? to : from;
-        LocalDate last = isBackwards ? from : to;
-        return !day.isBefore(first) && !day.isAfter(last);
+        return !day.isBefore(startDay.get()) && !day.isAfter(endDay.get());
     }
 
     /**

@@ -28,7 +28,7 @@
                 </VBox>
             </content>
         </ScrollPane>
-        <HBox fx:id="inputRow" styleClass="input-row" alignment="CENTER_LEFT">
+        <HBox styleClass="input-row" alignment="CENTER_LEFT">
             <children>
                 <TextField fx:id="userInput" onAction="#handleUserInput"
                            promptText="Type a command, then press Enter">

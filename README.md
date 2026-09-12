@@ -46,10 +46,10 @@ Prerequisites: JDK 25, update Intellij to the most recent version.
      | | (_| | | | |_| |
      |_|\__,_|_|_|\__, |
                   |___/
-   Hello! I'm Tally.
-   What can I do for you?
+   Tally.
+   I keep the count. You keep the promises.
    ____________________________________________________________
-   Bye. Hope to see you again soon!
+   Session ended. Your tasks did not.
    ____________________________________________________________
    ```
 

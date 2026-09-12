@@ -315,4 +315,16 @@ public class ParserTest {
                 TallyException.class, () -> Parser.parseTaskIndex("abc", 3, Command.DELETE));
         assertEquals("delete needs the number of a task. Example: delete 2", thrown.getMessage());
     }
+    @Test
+    public void parseEvent_datedEndsRunningBackwards_throws() {
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("trip /from 2026-09-12 /to 2026-09-08"));
+    }
+
+    @Test
+    public void parseEvent_endsThatAreNotDates_areAcceptedInAnyOrder() throws TallyException {
+        // Nothing can read these, so nothing can say they are the wrong way round.
+        assertEquals("[E][ ] standup (from: 4pm to: Mon 2pm)",
+                Parser.parseEvent("standup /from 4pm /to Mon 2pm").toString());
+    }
 }

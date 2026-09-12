@@ -79,6 +79,10 @@ welcome as a date. The trade is that Tally cannot tell which days those are, so 
 event written that way is not counted when you ask for free days, and it says so
 when that happens.
 
+If you write both ends as dates, Tally can compare them, and it refuses an event
+that ends before it starts. Written any other way they are yours to order, since
+nothing can read them.
+
 #### `window`: something you may do any time between two dates
 
 ```
@@ -206,7 +210,8 @@ bye
   `18/9/26`. An event's times are the exception: those are yours to write.
 - **Commands don't care about capitals.** `List`, `TODO` and `bye` all work.
 - **The same task twice is refused.** Tally tells you where the first one is rather
-  than leaving you two entries you cannot tell apart.
+  than leaving you two entries you cannot tell apart. A saved file naming the same
+  task twice is read back as one, and says so.
 - **`|` cannot appear in a description**, because that is how the saved file
   separates one part of a task from the next.
 - **Your tasks save themselves** to `data/tally.txt` after every change. There is no

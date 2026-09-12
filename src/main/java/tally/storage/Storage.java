@@ -147,11 +147,19 @@ public class Storage {
      */
     private LoadResult describe(Reading reading) {
         if (reading.unreadableLines().isEmpty()) {
-            return new LoadResult(reading.tasks(), Optional.empty());
+            if (reading.repeatedLines().isEmpty()) {
+                return new LoadResult(reading.tasks(), Optional.empty());
+            }
+            // A repeat is a readable line, not damage, so no copy is kept of it.
+            return new LoadResult(reading.tasks(),
+                    Optional.of(describeRepeatedLines(reading.repeatedLines())));
         }
         String note = describeUnreadableLines(reading.unreadableLines()) + copyAside();
         if (saveRefusal.isPresent()) {
             note += " Nothing will be written over it until it is repaired.";
+        }
+        if (!reading.repeatedLines().isEmpty()) {
+            note += " " + describeRepeatedLines(reading.repeatedLines());
         }
         return new LoadResult(reading.tasks(), Optional.of(note));
     }
@@ -162,8 +170,11 @@ public class Storage {
      * @param tasks the tasks read, in the order they appear.
      * @param unreadableLines the numbers of the lines that held nothing recognizable,
      *     counting from 1.
+     * @param repeatedLines the numbers of the lines that named a task an earlier line
+     *     had already named, counting from 1.
      */
-    private record Reading(List<Task> tasks, List<Integer> unreadableLines) {
+    private record Reading(List<Task> tasks, List<Integer> unreadableLines,
+            List<Integer> repeatedLines) {
     }
 
     /**
@@ -175,6 +186,7 @@ public class Storage {
     private static Reading readTally(List<String> lines) {
         List<Task> tasks = new ArrayList<>();
         List<Integer> unreadableLines = new ArrayList<>();
+        List<Integer> repeatedLines = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
             if (line.isEmpty()) {
@@ -183,11 +195,15 @@ public class Storage {
             Task task = readTask(line);
             if (task == null) {
                 unreadableLines.add(i + 1);
+            } else if (tasks.stream().anyMatch(task::isSameAs)) {
+                // Tally refuses to add a task it already holds, so a file naming one
+                // twice would otherwise put the tally in a state no command can reach.
+                repeatedLines.add(i + 1);
             } else {
                 tasks.add(task);
             }
         }
-        return new Reading(tasks, unreadableLines);
+        return new Reading(tasks, unreadableLines, repeatedLines);
     }
 
     /**
@@ -214,7 +230,8 @@ public class Storage {
             case Deadline.TYPE -> fields.length == FIELD_COUNT_DEADLINE
                     ? readDeadline(description, fields[INDEX_FIRST_DETAIL]) : null;
             case Event.TYPE -> fields.length == FIELD_COUNT_EVENT
-                    ? new Event(description, fields[INDEX_FIRST_DETAIL], fields[INDEX_SECOND_DETAIL]) : null;
+                    ? readEvent(description, fields[INDEX_FIRST_DETAIL],
+                            fields[INDEX_SECOND_DETAIL]) : null;
             case Window.TYPE -> fields.length == FIELD_COUNT_WINDOW
                     ? readWindow(description, fields[INDEX_FIRST_DETAIL], fields[INDEX_SECOND_DETAIL]) : null;
             default -> null;
@@ -241,6 +258,25 @@ public class Storage {
         return Task.readDate(dueDateText)
                 .<Task>map(dueDate -> new Deadline(description, dueDate))
                 .orElse(null);
+    }
+
+    /**
+     * Returns the event a data-file line describes, or null if its dated ends run backwards.
+     *
+     * <p>An event's ends are whatever the user wrote, so most pairs cannot be compared
+     * at all. A pair that can be, and runs the wrong way, was edited by hand into
+     * something the parser would have refused.
+     *
+     * @param description what is happening.
+     * @param startText the first time field as it appears in the file.
+     * @param endText the second time field as it appears in the file.
+     * @return the event, or null if the line cannot be read.
+     */
+    private static Task readEvent(String description, String startText, String endText) {
+        if (Event.isBackwards(Task.readDate(startText), Task.readDate(endText))) {
+            return null;
+        }
+        return new Event(description, startText, endText);
     }
 
     /**
@@ -274,13 +310,37 @@ public class Storage {
      */
     private String describeUnreadableLines(List<Integer> unreadableLines) {
         boolean isSingle = unreadableLines.size() == 1;
-        List<String> lineNumbers = unreadableLines.stream().map(String::valueOf).toList();
-        String listedNumbers = isSingle ? lineNumbers.get(0)
-                : String.join(", ", lineNumbers.subList(0, lineNumbers.size() - 1))
-                        + " and " + lineNumbers.get(lineNumbers.size() - 1);
         return String.format("%s %s of %s could not be read, so %s not on record.",
-                isSingle ? "Line" : "Lines", listedNumbers, file.getFileName(),
+                isSingle ? "Line" : "Lines", listNumbers(unreadableLines), file.getFileName(),
                 isSingle ? "that task is" : "those tasks are");
+    }
+
+    /**
+     * Returns what to tell the user about lines naming a task an earlier line named.
+     *
+     * @param repeatedLines the numbers of those lines, counting from 1.
+     * @return a sentence naming them.
+     */
+    private String describeRepeatedLines(List<Integer> repeatedLines) {
+        boolean isSingle = repeatedLines.size() == 1;
+        return String.format("%s %s of %s %s a task already on record, so %s kept once.",
+                isSingle ? "Line" : "Lines", listNumbers(repeatedLines), file.getFileName(),
+                isSingle ? "repeats" : "repeat", isSingle ? "it is" : "they are");
+    }
+
+    /**
+     * Returns line numbers written out for a reader, such as "1, 2 and 5".
+     *
+     * @param numbers the line numbers, in order.
+     * @return them joined by commas, with "and" before the last.
+     */
+    private static String listNumbers(List<Integer> numbers) {
+        List<String> written = numbers.stream().map(String::valueOf).toList();
+        if (written.size() == 1) {
+            return written.get(0);
+        }
+        return String.join(", ", written.subList(0, written.size() - 1))
+                + " and " + written.get(written.size() - 1);
     }
 
     /**
