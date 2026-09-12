@@ -2130,7 +2130,7 @@ tally.txt >>> T | 0 | write essay
 
 ## TC-39 - Dates a hand-edited file padded are still dates
 
-**Aim:** The data file is edited by hand, so a date in it can arrive with a space either side. An event tidies the spacing of its ends, and used to read its dates from the untidied text, so the list showed an event carrying two readable dates while `free` stepped over it and reported that the answer had left events out. The first two commands here show the event both listed and counted. The third line of the file pads a pair that runs backwards, which the reader refuses as it would refuse an unpadded one, rather than loading it and rejecting it on the next start.
+**Aim:** The data file is edited by hand, so a date in it can arrive with a space either side. An event tidies the spacing of its ends, and used to read its dates from the untidied text, so the list showed an event carrying two readable dates while `free` stepped over it and reported that the answer had left events out. The first two commands here show the event both listed and counted. The second line of the file pads a pair that runs backwards, which the reader refuses as it would refuse an unpadded one, rather than loading it and rejecting it on the next start.
 
 **Given the data file**
 ```text
