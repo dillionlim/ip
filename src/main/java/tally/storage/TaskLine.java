@@ -19,8 +19,10 @@ import tally.task.Window;
  * knows what it carries; reading one cannot be, because which kind of task to build
  * is only known once the type letter has been read.
  *
- * <p>A line that does not describe a task is reported by returning null rather than
- * by throwing, since the reader skips it and carries on with the rest of the file.
+ * <p>A line that does not describe a task is answered with an empty Optional rather
+ * than by throwing, since the reader skips it and carries on with the rest of the
+ * file. The helpers below still answer with null among themselves, which read keeps
+ * to itself, so that no caller has to remember to ask.
  */
 final class TaskLine {
     /** Where each part of a task sits on its line in the data file. */
@@ -52,15 +54,15 @@ final class TaskLine {
      * to build is only known once the type letter has been read.
      *
      * @param line one line of the data file, with surrounding spaces removed.
-     * @return the task described, or null if the line is not in the expected format.
+     * @return the task described, or empty if the line is not in the expected format.
      */
-    static Task read(String line) {
+    static Optional<Task> read(String line) {
         String[] fields = line.split(Pattern.quote(Task.FIELD_SEPARATOR));
         boolean hasValidCommonFields = fields.length > INDEX_DESCRIPTION
                 && (fields[INDEX_DONE].equals(Task.FLAG_NOT_DONE) || fields[INDEX_DONE].equals(Task.FLAG_DONE))
                 && Arrays.stream(fields).noneMatch(String::isBlank);
         if (!hasValidCommonFields) {
-            return null;
+            return Optional.empty();
         }
 
         String description = fields[INDEX_DESCRIPTION];
@@ -79,7 +81,7 @@ final class TaskLine {
         if (task != null && fields[INDEX_DONE].equals(Task.FLAG_DONE)) {
             task.markAsDone();
         }
-        return task;
+        return Optional.ofNullable(task);
     }
 
     /**
