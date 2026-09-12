@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import tally.Tally;
 
@@ -13,7 +13,7 @@ import tally.Tally;
 public class Main extends Application {
     /** How small the window may be made before the conversation stops fitting in it. */
     private static final double MIN_WINDOW_HEIGHT = 420.0;
-    private static final double MIN_WINDOW_WIDTH = 460.0;
+    private static final double MIN_WINDOW_WIDTH = 420.0;
 
     private final Tally tally = new Tally(false);
 
@@ -26,7 +26,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         try {
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("/view/MainWindow.fxml"));
-            AnchorPane root = loader.load();
+            Parent root = loader.load();
             Scene scene = new Scene(root);
             scene.getStylesheets().add(
                     Main.class.getResource("/view/tally.css").toExternalForm());

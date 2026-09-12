@@ -13,9 +13,19 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.shape.Circle;
 
 /** One turn of the conversation: a picture of whoever spoke, and what they said. */
 public class DialogBox extends HBox {
+    /**
+     * How much of the window's width one side's words may take.
+     *
+     * <p>Bound to the window rather than fixed, so that widening it gives the text the
+     * room rather than leaving a margin that grows while the words stay in a column.
+     * Short of the whole width, so that which side spoke is still read at a glance.
+     */
+    private static final double SHARE_OF_WIDTH = 0.85;
+
     @FXML
     private Label dialogText;
     @FXML
@@ -32,6 +42,22 @@ public class DialogBox extends HBox {
         }
         dialogText.setText(text);
         speakerPicture.setImage(picture);
+        cropToCircle(speakerPicture);
+        dialogText.maxWidthProperty().bind(widthProperty().multiply(SHARE_OF_WIDTH));
+    }
+
+    /**
+     * Crops a picture to a circle.
+     *
+     * <p>The corners of a square portrait are the part that shows the backdrop it was
+     * cut from rather than the face, so taking them off is what lets the picture sit on
+     * the window's own colour instead of on a patch of its own.
+     *
+     * @param picture the view to crop, already given the size it will be shown at.
+     */
+    private static void cropToCircle(ImageView picture) {
+        double radius = picture.getFitWidth() / 2;
+        picture.setClip(new Circle(radius, radius, radius));
     }
 
     /**
