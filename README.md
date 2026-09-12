@@ -22,8 +22,8 @@ java -cp build/classes/java/main tally.Tally
 To hand the chatbot to someone else, build the jar and give them that one file:
 
 ```bash
-./gradlew shadowJar          # writes build/libs/tally.jar
-java -jar "tally.jar"        # run it from any folder; it keeps its tally in ./data
+./gradlew shadowJar                  # writes build/libs/tally.jar
+java -jar "build/libs/tally.jar"     # or copy it anywhere and run it from there
 ```
 
 ## Setting up in Intellij
