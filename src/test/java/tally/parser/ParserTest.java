@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -184,8 +185,28 @@ public class ParserTest {
     }
 
     @Test
-    public void parseCommand_wrongCase_throws() {
-        assertThrows(TallyException.class, () -> Parser.parseCommand("TODO read book"));
+    public void parseCommand_anyCase_namesTheSameCommand() throws TallyException {
+        // A capital letter is the shift key, not a different intention. Refusing "List"
+        // taught the user nothing they did not already know about their own typing.
+        assertEquals(Command.TODO, Parser.parseCommand("TODO read book"));
+        assertEquals(Command.LIST, Parser.parseCommand("List"));
+        assertEquals(Command.DEADLINE, Parser.parseCommand("DeAdLiNe x /by 2026-09-10"));
+        // A word that is no command in any case is still refused.
+        assertThrows(TallyException.class, () -> Parser.parseCommand("blah"));
+    }
+
+    @Test
+    public void parseCommand_underATurkishLocale_stillNamesTheSameCommand()
+            throws TallyException {
+        // Turkish folds I to a dotless i, so matching that followed the machine's own
+        // language would stop "LIST" naming the list command there and nowhere else.
+        Locale wasDefault = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr"));
+            assertEquals(Command.LIST, Parser.parseCommand("LIST"));
+        } finally {
+            Locale.setDefault(wasDefault);
+        }
     }
 
     @Test

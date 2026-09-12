@@ -2,6 +2,7 @@ package tally.parser;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -87,8 +88,12 @@ public enum Command {
      * @throws TallyException if no command uses that word.
      */
     public static Command parse(String word) throws TallyException {
+        // Matched without regard to case, since "List" and "TODO" are the shift key
+        // rather than a different intention. Locale.ROOT so the machine's own language
+        // cannot decide what the command words fold to.
+        String folded = word.toLowerCase(Locale.ROOT);
         return Arrays.stream(values())
-                .filter(command -> command.keyword.equals(word))
+                .filter(command -> command.keyword.equals(folded))
                 .findFirst()
                 .orElseThrow(() -> new TallyException(
                         "Unknown command. The ones I answer to: " + listKeywords() + "."));
