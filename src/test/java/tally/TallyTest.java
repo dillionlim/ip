@@ -42,38 +42,38 @@ public class TallyTest {
         }
     }
 
-    private Tally newTally() {
+    private Tally makeTally() {
         return new Tally(folder.resolve("tally.txt"), false);
     }
 
     @Test
     public void getGreeting_freshTally_greetsWithoutComplaining() {
-        String greeting = newTally().getGreeting();
+        String greeting = makeTally().getGreeting();
         assertTrue(greeting.contains("Tally."));
         assertTrue(greeting.contains("I keep the count. You keep the promises."));
     }
 
     @Test
     public void getResponse_addThenList_reportsBoth() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         assertTrue(tally.getResponse("todo read book").contains("[T][ ] read book"));
         assertTrue(tally.getResponse("list").contains("1.[T][ ] read book"));
     }
 
     @Test
     public void getResponse_badCommand_returnsTheComplaintRatherThanThrowing() {
-        assertTrue(newTally().getResponse("blah").startsWith("Unknown command."));
+        assertTrue(makeTally().getResponse("blah").startsWith("Unknown command."));
     }
 
     @Test
     public void getResponse_reply_carriesNoHorizontalRules() {
         // The rules separate messages in a terminal; a chat window separates them itself.
-        assertFalse(newTally().getResponse("todo read book").contains("____"));
+        assertFalse(makeTally().getResponse("todo read book").contains("____"));
     }
 
     @Test
     public void getResponse_everyReply_isNeverEmpty() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         List<String> commands = List.of("list", "todo read book", "mark 1", "find book",
                 "delete 1", "blah", "mark 99");
         for (String command : commands) {
@@ -83,7 +83,7 @@ public class TallyTest {
 
     @Test
     public void isExiting_beforeAndAfterGoodbye_flipsOnlyOnGoodbye() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         tally.getResponse("todo read book");
         assertFalse(tally.isExiting());
         assertTrue(tally.getResponse("bye").contains("Session ended."));
@@ -92,7 +92,7 @@ public class TallyTest {
 
     @Test
     public void isExiting_commandAfterGoodbye_staysTrue() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         assertTrue(tally.getResponse("bye").contains("Session ended."));
         assertTrue(tally.isExiting());
         // A front end that keeps taking input must not be told the conversation resumed.
@@ -102,7 +102,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_theSameTaskTwice_isRefusedAndNamesWhereItAlreadyIs() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         tally.getResponse("todo read book");
         String reply = tally.getResponse("todo read    book");
         assertTrue(reply.contains("Already on record as task 1"), reply);
@@ -112,7 +112,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_goodbyeWithTextAfterIt_doesNotEndTheConversation() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         // "bye now" used to be read as bye, ending the conversation and, on the console,
         // swallowing every command that followed it.
         assertTrue(tally.getResponse("bye now").contains("takes nothing after it"));
@@ -123,7 +123,7 @@ public class TallyTest {
     public void getResponse_freeFromTheLastWritableDate_namesOnlyTheDaysItSearched() {
         // Only one day can be written down at all from there, so a reply naming a year
         // would be describing days the search never looked at and could not offer.
-        String reply = newTally().getResponse("free /for 2 /from 9999-12-31");
+        String reply = makeTally().getResponse("free /for 2 /from 9999-12-31");
         assertTrue(reply.contains("from Dec 31 9999 to Dec 31 9999"), reply);
     }
 
@@ -180,7 +180,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_eachKindOfTask_isRecordedAndShown() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         assertTrue(tally.getResponse("todo read book").contains("[T][ ] read book"));
         assertTrue(tally.getResponse("deadline return book /by 2019-10-15")
                 .contains("[D][ ] return book (by: Oct 15 2019)"));
@@ -194,7 +194,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_markThenUnmark_putsTheTaskBackAsItWas() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         tally.getResponse("todo read book");
         assertTrue(tally.getResponse("mark 1").contains("[T][X] read book"));
         String undone = tally.getResponse("unmark 1");
@@ -204,14 +204,14 @@ public class TallyTest {
 
     @Test
     public void getResponse_findingNothing_saysSoRatherThanShowingAnEmptyList() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         tally.getResponse("todo read book");
         assertTrue(tally.getResponse("find quidditch").startsWith("No match."));
     }
 
     @Test
     public void getResponse_free_readsForOneDayAndForARunOfThem() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         assertEquals("Next free day: Sep 09 2026.", tally.getResponse("free /from 2026-09-09"));
         assertEquals("Next 3 free days in a row begin Sep 09 2026.",
                 tally.getResponse("free /for 3 /from 2026-09-09"));
@@ -219,7 +219,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_everyDayTakenUp_saysThereIsNoneRatherThanSearchingOn() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         tally.getResponse("window busy /between 2026-09-09 /and 2027-09-09");
         String reply = tally.getResponse("free /from 2026-09-09");
         assertTrue(reply.startsWith("No free day from Sep 09 2026 to Sep 09 2027."), reply);
@@ -277,7 +277,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_freeWithAnEventThatNamesNoDates_saysTheAnswerIsPartial() {
-        Tally tally = newTally();
+        Tally tally = makeTally();
         tally.getResponse("event standup /from Mon 2pm /to 3pm");
         String reply = tally.getResponse("free /from 2026-09-09");
         assertTrue(reply.contains("Next free day: Sep 09 2026."), reply);

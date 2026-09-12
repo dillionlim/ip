@@ -68,6 +68,13 @@ them:
 - `A-Assertions`: documenting the assumptions that hold between the parts
 - `A-CodeQuality`: reviewing against the code quality guidelines and fixing the
   highest-priority issue found
+- `A-MoreErrorHandling`: finding the commands and data files Tally acted on
+  rather than questioned, and refusing them
+- `A-Personality`: rewriting every phrase in one voice, and dressing the window
+  to match it
+- `A-BetterGui`: laying the window out, redrawing the portraits, and cutting the
+  space spent on neither words nor input
+- `A-MoreTesting`: measuring what the suite reached and covering what it did not
 
 **Written by Claude to my requirements,** and marked as such in the files
 themselves:

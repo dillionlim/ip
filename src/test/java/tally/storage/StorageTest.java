@@ -394,12 +394,8 @@ public class StorageTest {
     public void save_aLinkNamedRelativeToItsOwnFolder_isFollowedToWhereItPoints()
             throws TallyException, IOException {
         Path link = folder.resolve("tally.txt");
-        try {
-            // Named without a folder, so it resolves against the link's own folder.
-            Files.createSymbolicLink(link, Path.of("actual.txt"));
-        } catch (IOException | UnsupportedOperationException exception) {
-            assumeTrue(false, "this file system does not allow symbolic links");
-        }
+        // Named without a folder, so it resolves against the link's own folder.
+        linkOrSkip(link, Path.of("actual.txt"));
 
         new Storage(link).save(List.of(new Todo("read book")));
         assertEquals(List.of("T | 0 | read book"),
@@ -440,6 +436,7 @@ public class StorageTest {
         // user was told twice, in two different wordings, in one breath.
         assertEquals(1, message.split("will not be written over", -1).length - 1, message);
     }
+
     @Test
     public void load_eventWithDatedEndsRunningBackwards_isSkipped()
             throws TallyException, IOException {
@@ -451,16 +448,18 @@ public class StorageTest {
         assertEquals(1, loaded.tasks().size());
         assertTrue(loaded.note().orElseThrow().contains("Line 1"), loaded.note().orElseThrow());
     }
+
     @Test
     public void load_aTaskNamedTwice_isKeptOnceAndReported() throws TallyException, IOException {
         Path file = folder.resolve("tally.txt");
         // Tally refuses to add a task it already holds, so a file naming one twice
         // would otherwise put the tally in a state no command could have reached.
-        // Whether either copy is done makes no difference: it is the same task.
+        // The two copies disagree about being done, and dropping one must not throw
+        // that away: a task recorded as done anywhere in the file has been done.
         Files.writeString(file, "T | 0 | read book\nT | 1 | read book\nT | 0 | buy bread\n");
 
         LoadResult loaded = new Storage(file).load();
-        assertEquals(List.of("[T][ ] read book", "[T][ ] buy bread"),
+        assertEquals(List.of("[T][X] read book", "[T][ ] buy bread"),
                 loaded.tasks().stream().map(Task::toString).toList());
         String note = loaded.note().orElseThrow();
         assertTrue(note.contains("Line 2"), note);
@@ -478,5 +477,16 @@ public class StorageTest {
             assertEquals(0, (int) left.filter(each ->
                     each.getFileName().toString().contains(".broken")).count());
         }
+    }
+
+    @Test
+    public void load_repeatsThatAgreeOnBeingDone_leaveTheFlagAlone()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\nT | 0 | read book\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(List.of("[T][ ] read book"),
+                loaded.tasks().stream().map(Task::toString).toList());
     }
 }

@@ -1909,3 +1909,112 @@ ____________________________________________________________
 ```text
 tally.txt >>> T | 0 | read book
 ```
+
+## TC-35 - An event that ends before it starts is refused
+
+**Aim:** An event's two times are kept as the user typed them, so most pairs cannot be compared at all. A pair that both read as dates can be, and one running backwards is refused for the same reason a backwards window is, rather than being shown back to front and quietly counted as the days between them. Times written as anything else stay the user's to order, which the second command here shows.
+
+**Input**
+```text
+event trip /from 2026-09-12 /to 2026-09-08
+event standup /from 4pm /to Mon 2pm
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+An event cannot end before it starts. You have it backwards: ends 2026-09-08, starts 2026-09-12.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] standup (from: 4pm to: Mon 2pm)
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[E][ ] standup (from: 4pm to: Mon 2pm)
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | standup | 4pm | Mon 2pm
+```
+
+## TC-36 - A task the data file names twice is kept once
+
+**Aim:** Tally refuses to add a task it already holds, so a saved file naming one twice could otherwise put the tally in a state no command can reach. The repeat is dropped and the line named. The two copies here disagree about being done, and the one kept takes the done flag, since a task recorded as done anywhere in the file has been done. A repeat is a readable line rather than damage, so no rescue copy is made: the only file left is the tally itself, rewritten without the repeat once a command changes it.
+
+**Given the data file**
+```text
+T | 0 | read book
+T | 1 | read book
+T | 0 | buy bread
+```
+
+**Input**
+```text
+list
+todo write essay
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Line 2 of tally.txt repeats a task already on record, so it is kept once.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[T][X] read book
+2.[T][ ] buy bread
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[T][ ] write essay
+3 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 1 | read book
+tally.txt >>> T | 0 | buy bread
+tally.txt >>> T | 0 | write essay
+```

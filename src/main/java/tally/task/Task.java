@@ -174,6 +174,15 @@ public abstract class Task {
     public abstract String toSaveFormat();
 
     /**
+     * Returns whether this task has been done.
+     *
+     * @return true once it has been marked done.
+     */
+    public boolean isDone() {
+        return isDone;
+    }
+
+    /**
      * Returns whether another task records the same thing as this one.
      *
      * <p>Whether either is done does not enter into it: marking a task done does not
@@ -188,7 +197,7 @@ public abstract class Task {
      * @return true when the two record the same thing.
      */
     public boolean isSameAs(Task other) {
-        return withoutDoneFlag(toSaveFormat()).equals(withoutDoneFlag(other.toSaveFormat()));
+        return stripDoneFlag(toSaveFormat()).equals(stripDoneFlag(other.toSaveFormat()));
     }
 
     /**
@@ -197,7 +206,7 @@ public abstract class Task {
      * @param savedLine a line as the data file would record it.
      * @return the same line without its second field.
      */
-    private static String withoutDoneFlag(String savedLine) {
+    private static String stripDoneFlag(String savedLine) {
         String[] fields = savedLine.split(Pattern.quote(FIELD_SEPARATOR));
         return fields[0] + FIELD_SEPARATOR
                 + String.join(FIELD_SEPARATOR, Arrays.copyOfRange(fields, 2, fields.length));

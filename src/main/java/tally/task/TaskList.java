@@ -183,7 +183,7 @@ public class TaskList {
     }
 
     /**
-     * Returns the tasks as a plain list, for code that only reads them.
+     * Returns a copy of the tasks as a plain list, for code that only reads them.
      *
      * <p>The list is a copy, so adding or removing through it does not change the tally.
      * The tasks in it are the same objects the tally holds, though, so marking one done
@@ -191,7 +191,7 @@ public class TaskList {
      *
      * @return the tasks, in the order they were added.
      */
-    public List<Task> asList() {
+    public List<Task> copyAsList() {
         return new ArrayList<>(tasks);
     }
 }

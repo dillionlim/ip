@@ -216,7 +216,7 @@ public class Tally {
      */
     private void saveOrPutBack() throws TallyException {
         try {
-            storage.save(tasks.asList());
+            storage.save(tasks.copyAsList());
             return;
         } catch (TallyException failure) {
             // The message is worked out first: throwing from inside the inner try would

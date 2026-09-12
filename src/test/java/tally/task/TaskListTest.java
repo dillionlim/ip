@@ -179,10 +179,10 @@ public class TaskListTest {
     }
 
     @Test
-    public void asList_changingTheResult_doesNotChangeTheTally() {
+    public void copyAsList_changingTheResult_doesNotChangeTheTally() {
         TaskList tasks = new TaskList();
         tasks.add(new Todo("first"));
-        tasks.asList().clear();
+        tasks.copyAsList().clear();
         assertEquals(1, tasks.size());
     }
 
