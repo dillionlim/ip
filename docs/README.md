@@ -1,6 +1,6 @@
-# Tally :receipt:
+# Tally 🧾
 
-**Tally** keeps a running tally of your tasks — what is due, what is happening, and
+**Tally** keeps a running tally of your tasks: what is due, what is happening, and
 what you keep meaning to get to. It saves every change as you make it, so what you
 wrote down is still there tomorrow.
 
@@ -12,7 +12,7 @@ It is blunt about it. That is the point.
 
 1. Check you have **Java 25**: run `java -version` in a terminal.
 2. Download `tally.jar` from the [latest release](https://github.com/dillionlim/ip/releases).
-3. Put it in a folder of its own — Tally keeps your tasks in `data/tally.txt` beside
+3. Put it in a folder of its own. Tally keeps your tasks in `data/tally.txt` beside
    the jar, so give it somewhere to do that.
 4. Run it:
 
@@ -29,7 +29,7 @@ Type a command, press <kbd>Enter</kbd>, and Tally answers.
 Tally records four kinds of task. Which one you want depends on whether it has a
 date, and what that date means.
 
-#### `todo` — something with no date attached
+#### `todo`: something with no date attached
 
 ```
 todo DESCRIPTION
@@ -44,7 +44,7 @@ todo DESCRIPTION
 > 1 task on record.
 > ```
 
-#### `deadline` — something due on a particular day
+#### `deadline`: something due on a particular day
 
 ```
 deadline DESCRIPTION /by yyyy-mm-dd
@@ -59,7 +59,7 @@ deadline DESCRIPTION /by yyyy-mm-dd
 > 1 task on record.
 > ```
 
-#### `event` — something that runs from one time to another
+#### `event`: something that runs from one time to another
 
 ```
 event DESCRIPTION /from START /to END
@@ -76,10 +76,10 @@ event DESCRIPTION /from START /to END
 
 An event's two times are kept **exactly as you type them**, so `Mon 2pm` is as
 welcome as a date. The trade is that Tally cannot tell which days those are, so an
-event written that way is not counted when you ask for free days — and it says so
+event written that way is not counted when you ask for free days, and it says so
 when that happens.
 
-#### `window` — something you may do any time between two dates
+#### `window`: something you may do any time between two dates
 
 ```
 window DESCRIPTION /between yyyy-mm-dd /and yyyy-mm-dd
@@ -94,7 +94,7 @@ window DESCRIPTION /between yyyy-mm-dd /and yyyy-mm-dd
 > 1 task on record.
 > ```
 
-### `list` — see everything on record
+### `list`: see everything on record
 
 ```
 list
@@ -109,7 +109,7 @@ list
 
 `[X]` means done, `[ ]` means not. The letter is the kind: `T`, `D`, `E` or `W`.
 
-### `mark` and `unmark` — done, or not after all
+### `mark` and `unmark`: done, or not after all
 
 ```
 mark NUMBER
@@ -126,7 +126,7 @@ The number is the one `list` shows beside the task.
 > [T][X] read the tP user stories
 > ```
 
-### `delete` — take a task off the record
+### `delete`: take a task off the record
 
 ```
 delete NUMBER
@@ -141,7 +141,7 @@ delete NUMBER
 > 0 tasks on record.
 > ```
 
-### `find` — search descriptions
+### `find`: search descriptions
 
 ```
 find TEXT
@@ -159,7 +159,7 @@ they have on the full list, so you can `mark` or `delete` straight from the resu
 > 2.[D][ ] draft the tP feature spec (by: Sep 20 2026)
 > ```
 
-### `free` — when are you next free?
+### `free`: when are you next free?
 
 ```
 free [/for COUNT] [/from yyyy-mm-dd]
@@ -176,7 +176,7 @@ somewhere other than today. Tally looks a year ahead and no further.
 > Next 3 free days in a row begin Sep 27 2026.
 > ```
 
-### `bye` — close the window
+### `bye`: close the window
 
 ```
 bye
@@ -220,4 +220,4 @@ bye
 | `Unreadable date: "monday". The form is yyyy-mm-dd...` | Write the date as `2026-09-18`. |
 | `Already on record as task 3. Once is enough.` | That task is already there, at number 3. |
 | `Line 2 of tally.txt could not be read...` | Someone edited the saved file by hand and a line no longer makes sense. Tally keeps the rest, and copies the whole file to `tally.txt.broken` so you can repair it. |
-| `tally.txt could not be read...` | Tally could not open the file at all, so it started empty — and it will **not** write over a file it could not read. Move it aside or fix its permissions, then start Tally again. |
+| `tally.txt could not be read...` | Tally could not open the file at all, so it started empty, and it will **not** write over a file it could not read. Move it aside or fix its permissions, then start Tally again. |

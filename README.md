@@ -72,8 +72,8 @@ them:
 **Written by Claude to my requirements,** and marked as such in the files
 themselves:
 
-- `test/run-ui-tests.py` — the console test runner
-- `.claude/skills/test-ui/SKILL.md` — the skill that drives it
+- `test/run-ui-tests.py`: the console test runner
+- `.claude/skills/test-ui/SKILL.md`: the skill that drives it
 
 **Individual suggestions,** each marked with a comment where it was taken:
 
