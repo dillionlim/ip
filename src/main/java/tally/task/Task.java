@@ -48,7 +48,7 @@ public abstract class Task {
             DateTimeFormatter.ofPattern("MMM dd uuuu", Locale.ENGLISH);
 
     /**
-     * The one shape a date may be written in, wherever it comes from.
+     * Pattern for the required date syntax: {@code yyyy-MM-dd}.
      *
      * <p>LocalDate.parse also reads forms such as "+999999999-12-31", which nobody means
      * to type and which cannot be worked with afterwards without overflowing.
