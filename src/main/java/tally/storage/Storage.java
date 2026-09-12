@@ -158,11 +158,12 @@ public class Storage {
             if (line.isEmpty()) {
                 continue;
             }
-            Task task = TaskLine.read(line);
-            if (task == null) {
+            Optional<Task> read = TaskLine.read(line);
+            if (read.isEmpty()) {
                 unreadableLines.add(i + 1);
                 continue;
             }
+            Task task = read.get();
             Optional<Task> alreadyRead = tasks.stream().filter(task::isSameAs).findFirst();
             if (alreadyRead.isEmpty()) {
                 tasks.add(task);

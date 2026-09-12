@@ -203,7 +203,7 @@ def invoke(commands, data_file, classpath):
     path written that way names no parent directory of its own, and saving to
     one used to crash; running every case this way keeps that from coming back.
     """
-    stdin_text = commands + "\n" if commands else ""
+    stdin_text = with_escapes(commands) + "\n" if commands else ""
     # -ea so the assertions in the code are checked as the cases run; without it every
     # assert is skipped and these sessions would prove nothing about them.
     try:
@@ -231,16 +231,22 @@ def invoke(commands, data_file, classpath):
     return result.stdout
 
 
-def seed_text(block):
-    """Returns what to write into the data file for a Given block.
+def with_escapes(block):
+    """Returns a block with the characters the plan spells out put back.
 
-    "<BOM>" at the very start stands for the byte-order mark some editors put
-    there.  Writing the character into the plan itself would leave something
-    invisible in the file, which is the sort of thing this case exists to catch.
+    A plan holding a real tab, or a real byte-order mark, would hold something
+    nobody can see, and an editor that tidied it would break the case without
+    anyone touching the program.  Both are written out instead:
+
+        <TAB>   a tab
+        <BOM>   the byte-order mark some editors put at the start of a file
     """
-    if block.startswith("<BOM>"):
-        return "\ufeff" + block[len("<BOM>"):] + "\n"
-    return block + "\n"
+    return block.replace("<BOM>", "\ufeff").replace("<TAB>", "\t")
+
+
+def seed_text(block):
+    """Returns what to write into the data file for a Given block."""
+    return with_escapes(block) + "\n"
 
 
 def run_case(case, data_file, classpath):

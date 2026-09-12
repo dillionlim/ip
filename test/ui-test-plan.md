@@ -44,9 +44,12 @@ appears in the middle of a data file is a difference like any other.
 
 A case may add an optional `**Given the data file**` block before the input, to
 write that content into the data file before the run. That is how a damaged file
-is tested. `<BOM>` at the very start of that block stands for the byte-order mark
-some editors write, which is spelled out rather than typed so the plan holds
-nothing invisible.
+is tested.
+
+Two characters are spelled out rather than typed, in an input block or a data
+file block alike, so that the plan holds nothing invisible and no editor can
+tidy one away: `<TAB>` for a tab, and `<BOM>` for the byte-order mark some
+editors write at the start of a file.
 
 A case may add an optional `**Then restart and type**` block between the input
 and the expected output. The runner then runs the program a second time against
@@ -2186,4 +2189,49 @@ tally.txt >>> T | 0 | keep me
 tally.txt.broken >>> E | 0 | trip |  2026-09-08 | 2026-09-10
 tally.txt.broken >>> E | 0 | backwards |  2026-09-12 | 2026-09-08
 tally.txt.broken >>> T | 0 | keep me
+```
+
+## TC-40 - A tab between a command and what follows it
+
+**Aim:** A task's own text has its spacing tidied wherever it comes from, so a tab inside a description is recorded as a space. The command word was split off on a literal space alone, so the same line typed with a tab after the command was refused as an unknown command. Any run of spaces or tabs separates the two now, and the description that follows is tidied as it always was.
+
+**Input**
+```text
+todo<TAB>read<TAB>the tP user stories
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[T][ ] read the tP user stories
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[T][ ] read the tP user stories
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 0 | read the tP user stories
 ```
