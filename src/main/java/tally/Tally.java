@@ -3,14 +3,10 @@ package tally;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import tally.parser.Command;
-import tally.parser.FreeQuery;
 import tally.parser.Parser;
 import tally.storage.LoadResult;
 import tally.storage.Storage;
@@ -35,6 +31,7 @@ public class Tally {
     private final Ui ui;
     private final Storage storage;
     private final TaskList tasks;
+    private final Replies replies;
 
     /** Whether replies are printed as they are made rather than handed back. */
     private final boolean isConsole;
@@ -92,6 +89,7 @@ public class Tally {
             warning = Optional.of(exception.getMessage());
         }
         this.tasks = loaded;
+        this.replies = new Replies(loaded);
         this.loadWarning = warning;
     }
 
@@ -262,9 +260,9 @@ public class Tally {
         // AI suggested switching to a switch statement instead of the if-else chain.
         // Arrow labels keep each branch self-contained.
         return switch (command) {
-            case LIST -> describeTally();
-            case FIND -> describeMatchingTasks(Parser.parseSearchText(arguments));
-            case FREE -> describeFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
+            case LIST -> replies.describeTally();
+            case FIND -> replies.describeMatchingTasks(Parser.parseSearchText(arguments));
+            case FREE -> replies.describeFreeDays(Parser.parseFreeQuery(arguments, LocalDate.now()));
             case MARK -> markTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
             case UNMARK -> unmarkTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
             case DELETE -> deleteTask(Parser.parseTaskIndex(arguments, tasks.size(), command));
@@ -296,111 +294,8 @@ public class Tally {
     private String[] deleteTask(int position) {
         Task task = tasks.get(position);
         tasks.remove(task);
-        String countSentence = formatCountSentence();
+        String countSentence = replies.formatCountSentence();
         return new String[] {"Struck from the record:", task.toString(), countSentence};
-    }
-
-    /**
-     * Returns when the user is next free for as long as they asked, or says there is
-     * no such stretch.
-     *
-     * <p>The reply says so when the tally holds a task whose days could not be read,
-     * because the answer is then drawn from less than everything on it.
-     *
-     * @param query the run of days wanted, and the day to start looking from.
-     * @return the lines to tell the user.
-     */
-    private String[] describeFreeDays(FreeQuery query) {
-        int days = query.days();
-        Optional<LocalDate> found = tasks.findFreeRun(days, query.earliestDate());
-        String answer = found.isPresent()
-                ? describeRunFound(found.get(), days)
-                : describeNoRun(query.earliestDate(), days);
-
-        if (tasks.hasUnreadableDates()) {
-            return new String[] {answer, "Events whose times are not dates were not counted."};
-        }
-        return new String[] {answer};
-    }
-
-    /**
-     * Returns the reply naming when the user is next free for as long as they asked.
-     *
-     * @param start the first day of the run found.
-     * @param days how many days in a row were wanted.
-     * @return a sentence naming the day, reading for one day or for several.
-     */
-    private static String describeRunFound(LocalDate start, int days) {
-        if (days == 1) {
-            return String.format("Next free day: %s.", Task.formatDate(start));
-        }
-        return String.format("Next %d free days in a row begin %s.", days,
-                Task.formatDate(start));
-    }
-
-    /**
-     * Returns the reply for when no such run of days exists within the days searched.
-     *
-     * <p>The span is named rather than called a year, because the search also stops at
-     * the last day a date can be written as, and from close enough to that day it covers
-     * less than a year.
-     *
-     * @param earliestDate the day the search started from.
-     * @param days how many days in a row were wanted.
-     * @return a sentence saying so, reading for one day or for several.
-     */
-    private static String describeNoRun(LocalDate earliestDate, int days) {
-        String span = String.format("%s to %s", Task.formatDate(earliestDate),
-                Task.formatDate(TaskList.findLastDaySearched(earliestDate)));
-        if (days == 1) {
-            return String.format("No free day from %s. You did this to yourself.", span);
-        }
-        return String.format("No run of %d free days from %s. Ambitious.", days, span);
-    }
-
-    /** Returns the whole tally, or says so when there is nothing on it. */
-    private String[] describeTally() {
-        if (tasks.isEmpty()) {
-            return new String[] {"Nothing on record. Enjoy it while it lasts."};
-        }
-        List<Integer> allPositions = IntStream.range(0, tasks.size()).boxed().toList();
-        return formatNumberedTasks("On record:", allPositions);
-    }
-
-    /**
-     * Returns the tasks whose description contains the given text.
-     *
-     * <p>Each is shown against its place on the whole tally rather than its place
-     * among the matches, so the number beside it still names that task if the user
-     * goes on to mark or delete it.
-     *
-     * @param searchText the text to look for.
-     * @return the lines to tell the user.
-     */
-    private String[] describeMatchingTasks(String searchText) {
-        List<Integer> positions = tasks.findPositions(searchText);
-        if (positions.isEmpty()) {
-            return new String[] {"No match. Nothing you wrote down, at least."};
-        }
-        return formatNumberedTasks("Matching:", positions);
-    }
-
-    /**
-     * Returns a heading followed by one line per task, each numbered by its place on
-     * the tally counting from 1.
-     *
-     * @param heading the line introducing the list.
-     * @param positions the places of the tasks to show, counting from 0.
-     * @return the lines to show, ready to hand to the user interface.
-     */
-    private String[] formatNumberedTasks(String heading, List<Integer> positions) {
-        assert positions.stream().allMatch(position -> position >= 0 && position < tasks.size())
-                : "positions come from findPositions or from a walk over the whole tally, and"
-                + " both yield only places that hold a task, unlike one of: " + positions;
-        // AI suggested String.format instead of concatenating strings manually.
-        Stream<String> numberedTasks = positions.stream()
-                .map(position -> String.format("%d.%s", position + 1, tasks.get(position)));
-        return Stream.concat(Stream.of(heading), numberedTasks).toArray(String[]::new);
     }
 
     /**
@@ -422,19 +317,8 @@ public class Tally {
                     alreadyThere.getAsInt() + 1));
         }
         tasks.add(task);
-        String countSentence = formatCountSentence();
+        String countSentence = replies.formatCountSentence();
         return new String[] {"Recorded:", task.toString(), countSentence};
-    }
-
-    /**
-     * Returns the sentence reporting how many tasks the tally now holds.
-     *
-     * @return for example "3 tasks on record."
-     */
-    private String formatCountSentence() {
-        // AI identified grammatical error, manual fix.
-        return String.format("%d %s on record.",
-                tasks.size(), tasks.size() == 1 ? "task" : "tasks");
     }
 
     /**
