@@ -1,0 +1,98 @@
+/*
+ * Tally's look: an instrument, not a companion.
+ *
+ * Cold greys, a single muted accent, square corners and a monospaced face, so
+ * that the window reads as something that keeps a record rather than something
+ * that keeps you company. Nothing here is decorative: every colour is either
+ * the ground, the text on it, or a rule separating one from the next.
+ */
+
+.root {
+    -fx-font-family: "DejaVu Sans Mono", "Menlo", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12px;
+    /* Cold charcoal: the ground everything else is measured against. */
+    -fx-background-color: #14181c;
+}
+
+/* The conversation sits directly on the ground, with no panel of its own. */
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #2a313a;
+    -fx-background-radius: 0;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button,
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-shape: null;
+}
+
+/* One turn of the conversation. Square, ruled off, never a bubble. */
+.dialog-box {
+    -fx-background-color: #1b2027;
+    -fx-border-color: #2a313a;
+    -fx-border-width: 0 0 1 0;
+}
+
+.dialog-text {
+    -fx-text-fill: #c8ccd0;
+}
+
+/* Tally's own words, set apart by a rule rather than by a colour of their own. */
+.from-tally {
+    -fx-background-color: #14181c;
+    -fx-border-color: #2a313a;
+    -fx-border-width: 0 0 1 2;
+}
+
+.from-tally .dialog-text {
+    -fx-text-fill: #9fb0bd;
+}
+
+.text-field {
+    -fx-background-color: #1b2027;
+    -fx-background-radius: 0;
+    -fx-border-color: #2a313a;
+    -fx-border-width: 1 0 0 0;
+    -fx-text-fill: #c8ccd0;
+    -fx-prompt-text-fill: #5b6672;
+    -fx-highlight-fill: #2a313a;
+}
+
+.text-field:focused {
+    -fx-border-color: #6f8899;
+}
+
+.button {
+    -fx-background-color: #1b2027;
+    -fx-background-radius: 0;
+    -fx-border-color: #2a313a;
+    -fx-border-width: 1 0 0 1;
+    -fx-text-fill: #9fb0bd;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-text-fill: #c8ccd0;
+    -fx-border-color: #6f8899;
+}
+
+.button:pressed {
+    -fx-background-color: #14181c;
+}

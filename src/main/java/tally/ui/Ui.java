@@ -5,6 +5,11 @@ import java.util.Scanner;
 /**
  * Everything Tally says to the user and reads back from them.
  *
+ * <p>Tally's register is dry and unsparing: it states what is so, and is willing to
+ * be pointed about it. The one place it drops the edge is when the user's record is at
+ * risk -- a failed save, a file that cannot be read -- where a joke at their expense
+ * would be both unkind and in the way of what they need to do next.
+ *
  * <p>What a reply says is decided by whoever knows the answer, and handed here as
  * lines. How it is laid out is decided here alone: the rules fencing a message on the
  * console, and where the reply goes once it is made. Greeting and farewell are Tally's
@@ -13,6 +18,9 @@ import java.util.Scanner;
 public class Ui {
     /** The name the chatbot introduces itself with. */
     private static final String NAME = "Tally";
+
+    /** What it says for itself, once, on being started. */
+    private static final String GREETING = "I keep the count. You keep the promises.";
 
     /** Horizontal rule fencing off each of the chatbot's messages. */
     private static final String RULE = "_".repeat(60);
@@ -69,14 +77,24 @@ public class Ui {
         return scanner.nextLine().trim();
     }
 
-    /** Greets the user. */
+    /**
+     * Greets the user.
+     *
+     * <p>The banner is a terminal flourish: it is drawn to be read in a fixed-width
+     * console, and a window already carries the name in its title bar. Showing it there
+     * would spend the top of a small window on a picture of a word.
+     */
     public void showWelcome() {
-        show(BANNER, "Hello! I'm " + NAME + ".", "What can I do for you?");
+        if (isConsole) {
+            show(BANNER, NAME + ".", GREETING);
+            return;
+        }
+        show(NAME + ".", GREETING);
     }
 
     /** Says goodbye. */
     public void showGoodbye() {
-        show("Bye. Hope to see you again soon!");
+        show("Session ended. Your tasks did not.");
     }
 
     /**

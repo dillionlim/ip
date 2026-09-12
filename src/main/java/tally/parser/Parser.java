@@ -67,9 +67,8 @@ public class Parser {
             return;
         }
         throw new TallyException(String.format(
-                "%s takes nothing after it, so I do not know what you meant by \"%s\"."
-                        + " Try: %s",
-                command.getKeyword(), arguments, command.getKeyword()));
+                "%s takes nothing after it. \"%s\" is yours to explain.",
+                command.getKeyword(), arguments));
     }
 
     /**
@@ -90,7 +89,7 @@ public class Parser {
         int first = padded.indexOf(marker);
         if (first >= 0 && padded.indexOf(marker, first + 1) >= 0) {
             throw new TallyException(String.format(
-                    "%s is given more than once, and I cannot tell which one you mean.",
+                    "%s is given more than once. Choose.",
                     marker.trim()));
         }
     }
@@ -129,7 +128,7 @@ public class Parser {
      */
     public static Todo parseTodo(String arguments) throws TallyException {
         if (arguments.isEmpty()) {
-            throw new TallyException("A todo needs a description. Try: todo read book");
+            throw new TallyException("A todo needs a description. Example: todo read book");
         }
         rejectSeparator(arguments);
         return new Todo(tidySpacing(arguments));
@@ -148,7 +147,7 @@ public class Parser {
         if (fields.length < 2 || fields[0].isBlank() || fields[1].isBlank()) {
             throw new TallyException(
                     "A deadline needs a description and a /by date."
-                            + " Try: deadline return book /by 2019-10-15");
+                            + " Example: deadline return book /by 2019-10-15");
         }
         rejectSeparator(fields[0]);
         return new Deadline(tidySpacing(fields[0]), parseDate(fields[1].trim()));
@@ -201,7 +200,7 @@ public class Parser {
     public static Event parseEvent(String arguments) throws TallyException {
         // AI found the bug, manually fixed.
         String usage = "An event needs a description, a /from time and a /to time,"
-                + " in that order. Try: event project meeting /from Mon 2pm /to 4pm";
+                + " in that order. Example: event project meeting /from Mon 2pm /to 4pm";
         String[] parts = splitOnTwoMarkers(arguments, " /from ", " /to ", usage);
         for (String part : parts) {
             rejectSeparator(part);
@@ -218,7 +217,7 @@ public class Parser {
      */
     public static String parseSearchText(String arguments) throws TallyException {
         if (arguments.isEmpty()) {
-            throw new TallyException("find needs something to look for. Try: find book");
+            throw new TallyException("find needs something to look for. Example: find book");
         }
         return arguments;
     }
@@ -238,7 +237,7 @@ public class Parser {
      */
     public static FreeQuery parseFreeQuery(String arguments, LocalDate today) throws TallyException {
         String usage = "free takes an optional /for count and an optional /from date."
-                + " Try: free /for 3 /from 2026-09-08";
+                + " Example: free /for 3 /from 2026-09-08";
         String trimmed = arguments.trim();
         String[] tokens = trimmed.isEmpty() ? new String[0] : trimmed.split("\\s+");
 
@@ -277,7 +276,7 @@ public class Parser {
             throw new TallyException(usage);
         }
         if (days < 1) {
-            throw new TallyException("A free stretch has to be at least one day long.");
+            throw new TallyException("A free stretch must be at least one day. Fewer is not a stretch.");
         }
         return days;
     }
@@ -295,7 +294,8 @@ public class Parser {
      */
     public static Window parseWindow(String arguments) throws TallyException {
         String usage = "A window needs a description, a /between date and an /and date,"
-                + " in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12";
+                + " in that order."
+                + " Example: window submit form /between 2026-09-08 /and 2026-09-12";
         String[] parts = splitOnTwoMarkers(arguments, " /between ", " /and ", usage);
         rejectSeparator(parts[0]);
 
@@ -303,8 +303,9 @@ public class Parser {
         LocalDate endDate = parseDate(parts[2]);
         if (endDate.isBefore(startDate)) {
             throw new TallyException(String.format(
-                    "A window cannot end before it starts, and this one ends %s"
-                            + " but starts %s.", endDate, startDate));
+                    "A window cannot end before it starts. You have it backwards:"
+                            + " ends %s, starts %s.",
+                    endDate, startDate));
         }
         return new Window(parts[0], startDate, endDate);
     }
@@ -318,8 +319,8 @@ public class Parser {
     private static void rejectSeparator(String text) throws TallyException {
         if (text.contains(SEPARATOR_CHARACTER)) {
             throw new TallyException(String.format(
-                    "A task cannot contain \"%s\", because that is how the file Tally keeps"
-                            + " your tally in separates one part from the next.",
+                    "A task cannot contain \"%s\": the record file separates one part"
+                            + " from the next with it. Choose another character.",
                     SEPARATOR_CHARACTER));
         }
     }
@@ -338,8 +339,8 @@ public class Parser {
      */
     public static LocalDate parseDate(String text) throws TallyException {
         return Task.readDate(text).orElseThrow(() -> new TallyException(String.format(
-                "I could not read \"%s\" as a date."
-                        + " Write it as yyyy-mm-dd, for example 2019-10-15.", text)));
+                "Unreadable date: \"%s\". The form is yyyy-mm-dd, and has not changed."
+                        + " Example: 2019-10-15.", text)));
     }
 
     /**
@@ -362,12 +363,12 @@ public class Parser {
             position = Integer.parseInt(arguments);
         } catch (NumberFormatException exception) {
             throw new TallyException(String.format(
-                    "%s needs the number of a task. Try: %s 2",
+                    "%s needs the number of a task. Example: %s 2",
                     command.getKeyword(), command.getKeyword()));
         }
         if (position < 1 || position > size) {
             throw new TallyException(String.format(
-                    "There is no task %d on your tally. Type list to see what is there.",
+                    "There is no task %d on record. Type list before guessing.",
                     position));
         }
         return position - 1;

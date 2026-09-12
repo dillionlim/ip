@@ -27,8 +27,8 @@ public class TallyTest {
     @Test
     public void getGreeting_freshTally_greetsWithoutComplaining() {
         String greeting = newTally().getGreeting();
-        assertTrue(greeting.contains("Hello! I'm Tally."));
-        assertTrue(greeting.contains("What can I do for you?"));
+        assertTrue(greeting.contains("Tally."));
+        assertTrue(greeting.contains("I keep the count. You keep the promises."));
     }
 
     @Test
@@ -40,7 +40,7 @@ public class TallyTest {
 
     @Test
     public void getResponse_badCommand_returnsTheComplaintRatherThanThrowing() {
-        assertTrue(newTally().getResponse("blah").startsWith("I don't know that one."));
+        assertTrue(newTally().getResponse("blah").startsWith("Unknown command."));
     }
 
     @Test
@@ -64,14 +64,14 @@ public class TallyTest {
         Tally tally = newTally();
         tally.getResponse("todo read book");
         assertFalse(tally.isExiting());
-        assertTrue(tally.getResponse("bye").contains("Bye."));
+        assertTrue(tally.getResponse("bye").contains("Session ended."));
         assertTrue(tally.isExiting());
     }
 
     @Test
     public void isExiting_commandAfterGoodbye_staysTrue() {
         Tally tally = newTally();
-        assertTrue(tally.getResponse("bye").contains("Bye."));
+        assertTrue(tally.getResponse("bye").contains("Session ended."));
         assertTrue(tally.isExiting());
         // A front end that keeps taking input must not be told the conversation resumed.
         tally.getResponse("list");
@@ -83,7 +83,7 @@ public class TallyTest {
         Tally tally = newTally();
         tally.getResponse("todo read book");
         String reply = tally.getResponse("todo read    book");
-        assertTrue(reply.contains("already on your tally, as task 1"), reply);
+        assertTrue(reply.contains("Already on record as task 1"), reply);
         // Refusing it is only useful if the tally is left as it was.
         assertEquals(1, tally.getResponse("list").lines().count() - 1);
     }
@@ -118,8 +118,8 @@ public class TallyTest {
         String reply = tally.getResponse("todo write essay");
 
         // Saying "Got it" and then taking it back leaves the user unsure which happened.
-        assertFalse(reply.contains("Got it."), "a failed save was announced as a success: " + reply);
-        assertTrue(reply.contains("could not save"), reply);
+        assertFalse(reply.contains("Recorded:"), "a failed save was announced as a success: " + reply);
+        assertTrue(reply.contains("could not be saved"), reply);
         assertFalse(tally.getResponse("list").contains("write essay"),
                 "the tally kept a change that never reached the file");
     }

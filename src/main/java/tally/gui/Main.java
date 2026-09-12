@@ -28,6 +28,8 @@ public class Main extends Application {
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("/view/MainWindow.fxml"));
             AnchorPane root = loader.load();
             Scene scene = new Scene(root);
+            scene.getStylesheets().add(
+                    Main.class.getResource("/view/tally.css").toExternalForm());
             stage.setScene(scene);
             stage.setTitle("Tally");
             stage.setMinHeight(MIN_WINDOW_HEIGHT);

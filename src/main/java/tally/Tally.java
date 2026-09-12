@@ -225,10 +225,10 @@ public class Tally {
             try {
                 LoadResult fromFile = storage.load();
                 tasks.replaceAll(fromFile.tasks());
-                outcome = " I have put your tally back the way the file has it."
+                outcome = " The record has been put back to what the file holds."
                         + fromFile.note().map(damage -> " " + damage).orElse("");
             } catch (TallyException unreadable) {
-                outcome = " Your tally is as you left it here,"
+                outcome = " The record here is as you left it,"
                         + " but a restart will not show it.";
             }
             throw new TallyException(failure.getMessage() + outcome);
@@ -282,14 +282,14 @@ public class Tally {
     private String[] markTask(int position) {
         Task task = tasks.get(position);
         task.markAsDone();
-        return new String[] {"Nice! I've marked this task as done:", task.toString()};
+        return new String[] {"Marked done:", task.toString()};
     }
 
     /** Marks the task at the given place not done after all, and returns it as it now reads. */
     private String[] unmarkTask(int position) {
         Task task = tasks.get(position);
         task.markAsNotDone();
-        return new String[] {"OK, I've marked this task as not done yet:", task.toString()};
+        return new String[] {"Marked not done. As you were:", task.toString()};
     }
 
     /** Takes the task at the given place off the tally, and says how many are left. */
@@ -297,7 +297,7 @@ public class Tally {
         Task task = tasks.get(position);
         tasks.remove(task);
         String countSentence = formatCountSentence();
-        return new String[] {"Noted. I've removed this task:", task.toString(), countSentence};
+        return new String[] {"Struck from the record:", task.toString(), countSentence};
     }
 
     /**
@@ -332,9 +332,9 @@ public class Tally {
      */
     private static String describeRunFound(LocalDate start, int days) {
         if (days == 1) {
-            return String.format("The next free day is %s.", Task.formatDate(start));
+            return String.format("Next free day: %s.", Task.formatDate(start));
         }
-        return String.format("The next %d free days in a row start %s.", days,
+        return String.format("Next %d free days in a row begin %s.", days,
                 Task.formatDate(start));
     }
 
@@ -353,18 +353,18 @@ public class Tally {
         String span = String.format("%s to %s", Task.formatDate(earliestDate),
                 Task.formatDate(TaskList.findLastDaySearched(earliestDate)));
         if (days == 1) {
-            return String.format("Every day from %s has something on it.", span);
+            return String.format("No free day from %s. You did this to yourself.", span);
         }
-        return String.format("There is no run of %d free days from %s.", days, span);
+        return String.format("No run of %d free days from %s. Ambitious.", days, span);
     }
 
     /** Returns the whole tally, or says so when there is nothing on it. */
     private String[] describeTally() {
         if (tasks.isEmpty()) {
-            return new String[] {"Nothing on your tally yet."};
+            return new String[] {"Nothing on record. Enjoy it while it lasts."};
         }
         List<Integer> allPositions = IntStream.range(0, tasks.size()).boxed().toList();
-        return formatNumberedTasks("Here are the tasks in your list:", allPositions);
+        return formatNumberedTasks("On record:", allPositions);
     }
 
     /**
@@ -380,9 +380,9 @@ public class Tally {
     private String[] describeMatchingTasks(String searchText) {
         List<Integer> positions = tasks.findPositions(searchText);
         if (positions.isEmpty()) {
-            return new String[] {"Nothing on your tally matches that."};
+            return new String[] {"No match. Nothing you wrote down, at least."};
         }
-        return formatNumberedTasks("Here are the matching tasks in your list:", positions);
+        return formatNumberedTasks("Matching:", positions);
     }
 
     /**
@@ -418,22 +418,22 @@ public class Tally {
         OptionalInt alreadyThere = tasks.findPositionOf(task);
         if (alreadyThere.isPresent()) {
             throw new TallyException(String.format(
-                    "That is already on your tally, as task %d. I have not added it again.",
+                    "Already on record as task %d. Once is enough.",
                     alreadyThere.getAsInt() + 1));
         }
         tasks.add(task);
         String countSentence = formatCountSentence();
-        return new String[] {"Got it. I've added this task:", task.toString(), countSentence};
+        return new String[] {"Recorded:", task.toString(), countSentence};
     }
 
     /**
      * Returns the sentence reporting how many tasks the tally now holds.
      *
-     * @return for example "Now you have 3 tasks in the list."
+     * @return for example "3 tasks on record."
      */
     private String formatCountSentence() {
         // AI identified grammatical error, manual fix.
-        return String.format("Now you have %d %s in the list.",
+        return String.format("%d %s on record.",
                 tasks.size(), tasks.size() == 1 ? "task" : "tasks");
     }
 
