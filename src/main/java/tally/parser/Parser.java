@@ -1,6 +1,7 @@
 package tally.parser;
 
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 
 import tally.TallyException;
 import tally.task.Deadline;
@@ -27,6 +28,15 @@ public class Parser {
      */
     private static final String SEPARATOR_CHARACTER = "|";
 
+    /**
+     * What separates the command word from the rest of the line.
+     *
+     * <p>Any run of spaces or tabs, not a single space. A task's own text has its
+     * spacing tidied wherever it comes from, so a line typed with a tab in it would
+     * otherwise be read as a task everywhere except at the command word.
+     */
+    private static final Pattern AFTER_THE_COMMAND = Pattern.compile("\\s+");
+
     /** The markers the free command takes, each matched as a whole word. */
     private static final String MARKER_FOR = "/for";
     private static final String MARKER_FROM = "/from";
@@ -43,7 +53,7 @@ public class Parser {
      * @throws TallyException if the first word names no command.
      */
     public static Command parseCommand(String line) throws TallyException {
-        return Command.parse(line.split(" ", 2)[0]);
+        return Command.parse(AFTER_THE_COMMAND.split(line, 2)[0]);
     }
 
     /**
@@ -97,7 +107,7 @@ public class Parser {
      * @return the arguments, or an empty string if the line is only a command word.
      */
     public static String parseArguments(String line) {
-        String[] words = line.split(" ", 2);
+        String[] words = AFTER_THE_COMMAND.split(line, 2);
         return words.length > 1 ? words[1].trim() : "";
     }
 
