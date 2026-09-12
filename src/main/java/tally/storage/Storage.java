@@ -102,12 +102,12 @@ public class Storage {
         try {
             lines = Files.readAllLines(file);
         } catch (IOException exception) {
-            refuseToSave("I could not read " + file.getFileName()
-                    + " when I started, so I will not write over what is in it."
+            refuseToSave(file.getFileName() + " could not be read at startup,"
+                    + " so it will not be written over."
                     + " Move it aside or repair it, then start Tally again.");
-            throw new TallyException("I could not read " + file.getFileName()
-                    + ", so I am starting with an empty tally." + copyAside()
-                    + " I will not write over it until it can be read.");
+            throw new TallyException(file.getFileName() + " could not be read."
+                    + " Starting with nothing on record." + copyAside()
+                    + " It will not be written over until it can be read.");
         }
         Reading reading = readTally(lines);
         if (reading.unreadableLines().isEmpty()) {
@@ -241,8 +241,8 @@ public class Storage {
         String listedNumbers = isSingle ? lineNumbers.get(0)
                 : String.join(", ", lineNumbers.subList(0, lineNumbers.size() - 1))
                         + " and " + lineNumbers.get(lineNumbers.size() - 1);
-        return String.format("I could not read %s %s of %s, so %s not on your tally.",
-                isSingle ? "line" : "lines", listedNumbers, file.getFileName(),
+        return String.format("%s %s of %s could not be read, so %s not on record.",
+                isSingle ? "Line" : "Lines", listedNumbers, file.getFileName(),
                 isSingle ? "that task is" : "those tasks are");
     }
 
@@ -269,17 +269,17 @@ public class Storage {
             Path backupFile = file.resolveSibling(file.getFileName() + ".broken");
             for (int attempt = 1; isNameTaken(backupFile); attempt++) {
                 if (isKeptCopyOf(backupFile, damagedBytes)) {
-                    return " It is already copied to " + backupFile.getFileName() + ".";
+                    return " Already copied to " + backupFile.getFileName() + ".";
                 }
                 backupFile = file.resolveSibling(file.getFileName() + ".broken." + attempt);
             }
             Files.copy(file, backupFile);
-            return " I copied it to " + backupFile.getFileName() + " so you can repair it.";
+            return " Copied to " + backupFile.getFileName() + " for repair.";
         } catch (IOException exception) {
-            refuseToSave("I could not keep a copy of what I failed to read in "
-                    + file.getFileName() + ", so I will not write over it."
+            refuseToSave("What could not be read in " + file.getFileName()
+                    + " could not be copied aside either, so it will not be written over."
                     + " Move it aside or repair it, then start Tally again.");
-            return " I could not copy it aside, so I will not write over it either.";
+            return " It could not be copied aside, so it will not be written over.";
         }
     }
 
@@ -459,7 +459,7 @@ public class Storage {
 
     /** Returns what to tell the user when the tally could not be written. */
     private String describeSaveFailure() {
-        return "I could not save your tally to " + file.getFileName() + ".";
+        return "The record could not be saved to " + file.getFileName() + ".";
     }
 
     /**

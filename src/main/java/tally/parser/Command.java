@@ -91,7 +91,7 @@ public enum Command {
                 .filter(command -> command.keyword.equals(word))
                 .findFirst()
                 .orElseThrow(() -> new TallyException(
-                        "I don't know that one. I understand: " + listKeywords() + "."));
+                        "Unknown command. The ones I answer to: " + listKeywords() + "."));
     }
 
     /**

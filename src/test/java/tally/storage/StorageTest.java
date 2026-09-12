@@ -41,7 +41,7 @@ public class StorageTest {
 
         LoadResult loaded = new Storage(file).load();
         assertTrue(loaded.tasks().isEmpty());
-        assertTrue(loaded.note().orElseThrow().contains("line 1"));
+        assertTrue(loaded.note().orElseThrow().contains("Line 1"));
     }
 
     @Test
@@ -119,13 +119,13 @@ public class StorageTest {
         Storage storage = new Storage(file);
         LoadResult loaded = storage.load();
         assertEquals(1, loaded.tasks().size());
-        assertTrue(loaded.note().orElseThrow().contains("could not copy it aside"));
+        assertTrue(loaded.note().orElseThrow().contains("could not be copied aside"));
 
         // Saving the one task that loaded would drop the damaged line for good.
         List<Task> readableTasks = loaded.tasks();
         TallyException refused = assertThrows(
                 TallyException.class, () -> storage.save(readableTasks));
-        assertTrue(refused.getMessage().contains("will not write over it"),
+        assertTrue(refused.getMessage().contains("will not be written over"),
                 refused.getMessage());
         assertTrue(Files.readString(file).contains("BAD LINE"), "the damaged line was lost");
     }
@@ -169,7 +169,7 @@ public class StorageTest {
             assertEquals(1, (int) keptFiles.filter(each ->
                     each.getFileName().toString().contains(".broken")).count());
         }
-        assertTrue(second.contains("already copied"));
+        assertTrue(second.contains("Already copied"));
     }
 
     @Test
@@ -254,7 +254,7 @@ public class StorageTest {
         LoadResult loaded = new Storage(file).load();
         assertEquals(1, loaded.tasks().size());
         assertEquals("[T][ ] read book", loaded.tasks().get(0).toString());
-        assertTrue(loaded.note().orElseThrow().contains("line 2"));
+        assertTrue(loaded.note().orElseThrow().contains("Line 2"));
     }
 
     @Test
@@ -268,7 +268,7 @@ public class StorageTest {
         LoadResult loaded = new Storage(file).load();
         assertEquals(1, loaded.tasks().size());
         assertEquals("[T][ ] the only good one", loaded.tasks().get(0).toString());
-        assertTrue(loaded.note().orElseThrow().contains("lines 1, 2 and 3"));
+        assertTrue(loaded.note().orElseThrow().contains("Lines 1, 2 and 3"));
     }
 
     @Test

@@ -58,6 +58,7 @@ public class DialogBox extends HBox {
     static DialogBox createTallyDialog(String text, Image picture) {
         DialogBox box = new DialogBox(text, picture);
         box.flip();
+        box.getStyleClass().add("from-tally");
         return box;
     }
 

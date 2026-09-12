@@ -5,15 +5,15 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 
-<fx:root alignment="TOP_RIGHT" maxHeight="-Infinity" prefWidth="400.0" spacing="10.0"
+<fx:root styleClass="dialog-box" alignment="TOP_RIGHT" maxHeight="-Infinity" prefWidth="400.0" spacing="10.0"
          type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/25"
          xmlns:fx="http://javafx.com/fxml/1">
     <padding>
         <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
     </padding>
     <children>
-        <Label fx:id="dialogText" maxWidth="300.0" minHeight="-Infinity" wrapText="true"
-               style="-fx-font-family: monospace;" />
+        <Label fx:id="dialogText" styleClass="dialog-text" maxWidth="300.0" minHeight="-Infinity" wrapText="true"
+               />
         <ImageView fx:id="speakerPicture" fitHeight="44.0" fitWidth="44.0" pickOnBounds="true"
                    preserveRatio="true" />
     </children>

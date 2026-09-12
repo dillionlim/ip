@@ -89,12 +89,12 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -118,18 +118,18 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -154,16 +154,16 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -191,37 +191,37 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] return book (by: Jun 06 2019)
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
-Now you have 3 tasks in the list.
+3 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] read book
 2.[D][ ] return book (by: Jun 06 2019)
 3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -251,46 +251,46 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] return book
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Nice! I've marked this task as done:
+Marked done:
 [T][X] return book
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] read book
 2.[T][X] return book
 ____________________________________________________________
 
 ____________________________________________________________
-OK, I've marked this task as not done yet:
+Marked not done. As you were:
 [T][ ] return book
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] read book
 2.[T][ ] return book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -316,24 +316,24 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] first
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] second
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -360,27 +360,27 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read "no idea :-p" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
+Unreadable date: "no idea :-p". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] do homework (by: Oct 15 2019)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[D][ ] do homework (by: Oct 15 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -407,27 +407,27 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-I don't know that one. I understand: todo, deadline, event, window, list, mark, unmark, delete, find, free, bye.
+Unknown command. The ones I answer to: todo, deadline, event, window, list, mark, unmark, delete, find, free, bye.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] read book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -453,20 +453,20 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-A todo needs a description. Try: todo read book
+A todo needs a description. Example: todo read book
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -494,31 +494,31 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-A deadline needs a description and a /by date. Try: deadline return book /by 2019-10-15
+A deadline needs a description and a /by date. Example: deadline return book /by 2019-10-15
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from time and a /to time, in that order. Try: event project meeting /from Mon 2pm /to 4pm
+An event needs a description, a /from time and a /to time, in that order. Example: event project meeting /from Mon 2pm /to 4pm
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] return book (by: Oct 15 2019)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[D][ ] return book (by: Oct 15 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -549,44 +549,44 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-mark needs the number of a task. Try: mark 2
+mark needs the number of a task. Example: mark 2
 ____________________________________________________________
 
 ____________________________________________________________
-mark needs the number of a task. Try: mark 2
+mark needs the number of a task. Example: mark 2
 ____________________________________________________________
 
 ____________________________________________________________
-There is no task 4 on your tally. Type list to see what is there.
+There is no task 4 on record. Type list before guessing.
 ____________________________________________________________
 
 ____________________________________________________________
-Nice! I've marked this task as done:
+Marked done:
 [T][X] read book
 ____________________________________________________________
 
 ____________________________________________________________
-There is no task 0 on your tally. Type list to see what is there.
+There is no task 0 on record. Type list before guessing.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][X] read book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -615,42 +615,42 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] return book
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] borrow book
-Now you have 3 tasks in the list.
+3 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Noted. I've removed this task:
+Struck from the record:
 [T][ ] return book
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] read book
 2.[T][ ] borrow book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -678,32 +678,32 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Noted. I've removed this task:
+Struck from the record:
 [T][ ] read book
-Now you have 0 tasks in the list.
+0 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-There is no task 1 on your tally. Type list to see what is there.
+There is no task 1 on record. Type list before guessing.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -732,36 +732,36 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-delete needs the number of a task. Try: delete 2
+delete needs the number of a task. Example: delete 2
 ____________________________________________________________
 
 ____________________________________________________________
-There is no task 5 on your tally. Type list to see what is there.
+There is no task 5 on record. Type list before guessing.
 ____________________________________________________________
 
 ____________________________________________________________
-Noted. I've removed this task:
+Struck from the record:
 [T][ ] read book
-Now you have 0 tasks in the list.
+0 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -788,27 +788,27 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from time and a /to time, in that order. Try: event project meeting /from Mon 2pm /to 4pm
+An event needs a description, a /from time and a /to time, in that order. Example: event project meeting /from Mon 2pm /to 4pm
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [E][ ] meeting (from: 2pm to: 4pm)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[E][ ] meeting (from: 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -841,29 +841,29 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] return book (by: Jun 06 2019)
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Nice! I've marked this task as done:
+Marked done:
 [T][X] read book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -873,18 +873,18 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][X] read book
 2.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -917,30 +917,30 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] return book
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Noted. I've removed this task:
+Struck from the record:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -950,17 +950,17 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] return book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -992,22 +992,22 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read line 2 of tally.txt, so that task is not on your tally. I copied it to tally.txt.broken so you can repair it.
+Line 2 of tally.txt could not be read, so that task is not on record. Copied to tally.txt.broken for repair.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][X] read book
 2.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1041,31 +1041,31 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][X] read book
 2.[D][ ] return book (by: Jun 06 2019)
 3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________
-Nice! I've marked this task as done:
+Marked done:
 [D][X] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][X] read book
 2.[D][X] return book (by: Jun 06 2019)
 3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1097,22 +1097,22 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read lines 2 and 3 of tally.txt, so those tasks are not on your tally. I copied it to tally.txt.broken so you can repair it.
+Lines 2 and 3 of tally.txt could not be read, so those tasks are not on record. Copied to tally.txt.broken for repair.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] start again
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1147,23 +1147,23 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] return book (by: Jun 06 2019)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1198,20 +1198,20 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read line 1 of tally.txt, so that task is not on your tally. I copied it to tally.txt.broken so you can repair it.
+Line 1 of tally.txt could not be read, so that task is not on record. Copied to tally.txt.broken for repair.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1249,59 +1249,59 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] return book (by: Jun 06 2019)
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] buy bread
-Now you have 3 tasks in the list.
+3 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Nice! I've marked this task as done:
+Marked done:
 [T][X] read book
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the matching tasks in your list:
+Matching:
 1.[T][X] read book
 2.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the matching tasks in your list:
+Matching:
 1.[T][X] read book
 2.[D][ ] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Nice! I've marked this task as done:
+Marked done:
 [D][X] return book (by: Jun 06 2019)
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][X] read book
 2.[D][X] return book (by: Jun 06 2019)
 3.[T][ ] buy bread
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1329,31 +1329,31 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally matches that.
+No match. Nothing you wrote down, at least.
 ____________________________________________________________
 
 ____________________________________________________________
-find needs something to look for. Try: find book
+find needs something to look for. Example: find book
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the matching tasks in your list:
+Matching:
 1.[T][ ] read book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1383,23 +1383,23 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1409,17 +1409,17 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1448,20 +1448,20 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-A window cannot end before it starts, and this one ends 2026-09-08 but starts 2026-09-12.
+A window cannot end before it starts. You have it backwards: ends 2026-09-08, starts 2026-09-12.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1487,28 +1487,28 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-A window needs a description, a /between date and an /and date, in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12
+A window needs a description, a /between date and an /and date, in that order. Example: window submit form /between 2026-09-08 /and 2026-09-12
 ____________________________________________________________
 
 ____________________________________________________________
-A window needs a description, a /between date and an /and date, in that order. Try: window submit form /between 2026-09-08 /and 2026-09-12
+A window needs a description, a /between date and an /and date, in that order. Example: window submit form /between 2026-09-08 /and 2026-09-12
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read "soon" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
+Unreadable date: "soon". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
-Nothing on your tally yet.
+Nothing on record. Enjoy it while it lasts.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1534,32 +1534,32 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [D][ ] report (by: Sep 10 2026)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [W][ ] certificate (window: Sep 12 2026 to Sep 14 2026)
-Now you have 2 tasks in the list.
+2 tasks on record.
 ____________________________________________________________
 
 ____________________________________________________________
-The next free day is Sep 09 2026.
+Next free day: Sep 09 2026.
 ____________________________________________________________
 
 ____________________________________________________________
-The next 3 free days in a row start Sep 15 2026.
+Next 3 free days in a row begin Sep 15 2026.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1586,35 +1586,35 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [E][ ] standup (from: Mon 2pm to: 3pm)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-The next free day is Sep 09 2026.
+Next free day: Sep 09 2026.
 Events whose times are not dates were not counted.
 ____________________________________________________________
 
 ____________________________________________________________
-A free stretch has to be at least one day long.
+A free stretch must be at least one day. Fewer is not a stretch.
 ____________________________________________________________
 
 ____________________________________________________________
-free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+free takes an optional /for count and an optional /from date. Example: free /for 3 /from 2026-09-08
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read "nope" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
+Unreadable date: "nope". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1641,35 +1641,35 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
+A task cannot contain "|": the record file separates one part from the next with it. Choose another character.
 ____________________________________________________________
 
 ____________________________________________________________
-A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
+A task cannot contain "|": the record file separates one part from the next with it. Choose another character.
 ____________________________________________________________
 
 ____________________________________________________________
-I could not read "+999999999-12-31" as a date. Write it as yyyy-mm-dd, for example 2019-10-15.
+Unreadable date: "+999999999-12-31". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] laundry and dry cleaning
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] laundry and dry cleaning
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1701,32 +1701,32 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-The next 3 free days in a row start Sep 08 2026.
+Next 3 free days in a row begin Sep 08 2026.
 ____________________________________________________________
 
 ____________________________________________________________
-The next 3 free days in a row start Sep 08 2026.
+Next 3 free days in a row begin Sep 08 2026.
 ____________________________________________________________
 
 ____________________________________________________________
-free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+free takes an optional /for count and an optional /from date. Example: free /for 3 /from 2026-09-08
 ____________________________________________________________
 
 ____________________________________________________________
-free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+free takes an optional /for count and an optional /from date. Example: free /for 3 /from 2026-09-08
 ____________________________________________________________
 
 ____________________________________________________________
-free takes an optional /for count and an optional /from date. Try: free /for 3 /from 2026-09-08
+free takes an optional /for count and an optional /from date. Example: free /for 3 /from 2026-09-08
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1751,24 +1751,24 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
+A task cannot contain "|": the record file separates one part from the next with it. Choose another character.
 ____________________________________________________________
 
 ____________________________________________________________
-A task cannot contain "|", because that is how the file Tally keeps your tally in separates one part from the next.
+A task cannot contain "|": the record file separates one part from the next with it. Choose another character.
 ____________________________________________________________
 
 ____________________________________________________________
-A window cannot end before it starts, and this one ends 2026-09-08 but starts 2026-09-12.
+A window cannot end before it starts. You have it backwards: ends 2026-09-08, starts 2026-09-12.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1793,26 +1793,26 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [W][ ] busy (window: Sep 09 2026 to Sep 09 2027)
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Every day from Sep 09 2026 to Sep 09 2027 has something on it.
+No free day from Sep 09 2026 to Sep 09 2027. You did this to yourself.
 ____________________________________________________________
 
 ____________________________________________________________
-There is no run of 3 free days from Sep 09 2026 to Sep 09 2027.
+No run of 3 free days from Sep 09 2026 to Sep 09 2027. Ambitious.
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
@@ -1841,43 +1841,43 @@ ____________________________________________________________
   | | (_| | | | |_| |
   |_|\__,_|_|_|\__, |
                |___/
-Hello! I'm Tally.
-What can I do for you?
+Tally.
+I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Got it. I've added this task:
+Recorded:
 [T][ ] read book
-Now you have 1 task in the list.
+1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-That is already on your tally, as task 1. I have not added it again.
+Already on record as task 1. Once is enough.
 ____________________________________________________________
 
 ____________________________________________________________
-bye takes nothing after it, so I do not know what you meant by "now". Try: bye
+bye takes nothing after it. "now" is yours to explain.
 ____________________________________________________________
 
 ____________________________________________________________
-list takes nothing after it, so I do not know what you meant by "extra". Try: list
+list takes nothing after it. "extra" is yours to explain.
 ____________________________________________________________
 
 ____________________________________________________________
-/by is given more than once, and I cannot tell which one you mean.
+/by is given more than once. Choose.
 ____________________________________________________________
 
 ____________________________________________________________
-/to is given more than once, and I cannot tell which one you mean.
+/to is given more than once. Choose.
 ____________________________________________________________
 
 ____________________________________________________________
-Here are the tasks in your list:
+On record:
 1.[T][ ] read book
 ____________________________________________________________
 
 ____________________________________________________________
-Bye. Hope to see you again soon!
+Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
