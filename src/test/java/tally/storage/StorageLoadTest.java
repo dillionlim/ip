@@ -260,4 +260,19 @@ public class StorageLoadTest {
                 loaded.tasks().stream().map(Task::toString).toList());
         assertTrue(loaded.note().orElseThrow().contains("Line 1"), loaded.note().orElseThrow());
     }
+    @Test
+    public void load_fileThatCannotBeOpened_keepsWhatTheFileSystemSaid() throws IOException {
+        Path file = folder.resolve("tally.txt");
+        Files.writeString(file, "T | 0 | read book\n");
+        assumeTrue(Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class),
+                "this file system does not carry POSIX permissions");
+        Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("---------"));
+        assumeTrue(!Files.isReadable(file), "these tests are running as a user nothing stops");
+
+        TallyException thrown = assertThrows(TallyException.class, () -> new Storage(file).load());
+        // The user reads the message; the cause says which of a dozen things the file
+        // system objected to, which is the only record of it there will ever be.
+        assertTrue(thrown.getMessage().contains("could not be read"), thrown.getMessage());
+        assertTrue(thrown.getCause() instanceof IOException, String.valueOf(thrown.getCause()));
+    }
 }

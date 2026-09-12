@@ -25,4 +25,18 @@ public class TallyException extends Exception {
     public TallyException(String message) {
         super(message);
     }
+
+    /**
+     * Creates an exception carrying an explanation, and what brought it about.
+     *
+     * <p>The user reads the message; the cause is for whoever has to work out why a
+     * file would not open. Throwing the explanation on its own loses the only record
+     * of which of a dozen things the file system objected to.
+     *
+     * @param message what went wrong, and how to correct it.
+     * @param cause the failure underneath it.
+     */
+    public TallyException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
