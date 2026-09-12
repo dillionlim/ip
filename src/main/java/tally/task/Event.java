@@ -6,7 +6,8 @@ import java.util.Optional;
 /**
  * A task that runs from one stated point in time to another.
  *
- * <p>Its two ends are kept as the user typed them, where a deadline insists on a date.
+ * <p>Its two ends are kept as the user wrote them, give or take the spacing, where a
+ * deadline insists on a date.
  * The requirements ask that dates be handled but do not say every time must be one, and
  * an event is as often written "Mon 2pm" as a date, so insisting would refuse input the
  * user has every reason to expect to work. The cost is that such an event names no days
@@ -40,8 +41,8 @@ public class Event extends Task {
      */
     public Event(String description, String start, String end) {
         super(description);
-        this.start = start;
-        this.end = end;
+        this.start = tidySpacing(start);
+        this.end = tidySpacing(end);
         // Read once here rather than each time a day is asked about, since the free-day
         // search asks every task about every day of a year.
         this.startDay = readDate(start);

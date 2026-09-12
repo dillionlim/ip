@@ -55,6 +55,9 @@ public abstract class Task {
      */
     private static final Pattern DATE_FORM = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
+    /** Runs of spaces and tabs, which no part of a task carries. */
+    private static final Pattern RUN_OF_SPACES = Pattern.compile("\\s+");
+
     private final String description;
     private boolean isDone;
 
@@ -64,8 +67,24 @@ public abstract class Task {
      * @param description what the user wants to be reminded to do.
      */
     protected Task(String description) {
-        this.description = description;
+        this.description = tidySpacing(description);
         this.isDone = false;
+    }
+
+    /**
+     * Returns text with each run of spaces reduced to a single space.
+     *
+     * <p>"read    book" and "read book" name the same thing to a reader, so they are
+     * recorded as the same thing. Done here rather than where a command is read,
+     * because the data file is written by hand too, and a task that came from an
+     * edited file has to be the same task as one that came from the keyboard, or the
+     * rule against holding a task twice holds only on one of the two roads in.
+     *
+     * @param text a part of a task, however it reached us.
+     * @return the same text, spaced as it would be written.
+     */
+    protected static String tidySpacing(String text) {
+        return RUN_OF_SPACES.matcher(text.trim()).replaceAll(" ");
     }
 
     /**

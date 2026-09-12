@@ -184,7 +184,8 @@ public class Storage {
      * Returns what the given lines hold, reading no files and changing nothing.
      *
      * @param lines the lines of the data file, in order.
-     * @return the tasks they describe, and which of them could not be read.
+     * @return the tasks they describe, which lines could not be read, and which named
+     *     a task an earlier line had already named.
      */
     private static Reading readTally(List<String> lines) {
         List<Task> tasks = new ArrayList<>();
@@ -198,33 +199,23 @@ public class Storage {
             Task task = readTask(line);
             if (task == null) {
                 unreadableLines.add(i + 1);
-            } else if (tasks.stream().anyMatch(task::isSameAs)) {
-                // Tally refuses to add a task it already holds, so a file naming one
-                // twice would otherwise put the tally in a state no command can reach.
-                keepDoneFlag(tasks, task);
-                repeatedLines.add(i + 1);
-            } else {
-                tasks.add(task);
+                continue;
             }
+            Optional<Task> alreadyRead = tasks.stream().filter(task::isSameAs).findFirst();
+            if (alreadyRead.isEmpty()) {
+                tasks.add(task);
+                continue;
+            }
+            // Tally refuses to add a task it already holds, so a file naming one twice
+            // would otherwise put the tally in a state no command can reach. The one
+            // kept takes the done flag of any copy carrying it, since a task recorded
+            // as done anywhere in the file has been done.
+            if (task.isDone()) {
+                alreadyRead.get().markAsDone();
+            }
+            repeatedLines.add(i + 1);
         }
         return new Reading(tasks, unreadableLines, repeatedLines);
-    }
-
-    /**
-     * Marks the task already read done, if the repeat of it says it was.
-     *
-     * <p>Two lines naming the same task can disagree about whether it is finished, and
-     * dropping the repeat would throw that away. A task recorded as done anywhere in
-     * the file has been done, so the one kept takes the flag.
-     *
-     * @param alreadyRead the tasks read so far, one of which this repeats.
-     * @param repeat the task the line named again.
-     */
-    private static void keepDoneFlag(List<Task> alreadyRead, Task repeat) {
-        if (!repeat.isDone()) {
-            return;
-        }
-        alreadyRead.stream().filter(repeat::isSameAs).forEach(Task::markAsDone);
     }
 
     /**

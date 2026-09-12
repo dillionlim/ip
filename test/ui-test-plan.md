@@ -44,7 +44,9 @@ appears in the middle of a data file is a difference like any other.
 
 A case may add an optional `**Given the data file**` block before the input, to
 write that content into the data file before the run. That is how a damaged file
-is tested.
+is tested. `<BOM>` at the very start of that block stands for the byte-order mark
+some editors write, which is spelled out rather than typed so the plan holds
+nothing invisible.
 
 A case may add an optional `**Then restart and type**` block between the input
 and the expected output. The runner then runs the program a second time against
@@ -2015,6 +2017,113 @@ ____________________________________________________________
 **Expected files after the run**
 ```text
 tally.txt >>> T | 1 | read book
+tally.txt >>> T | 0 | buy bread
+tally.txt >>> T | 0 | write essay
+```
+
+## TC-37 - A command typed in any case is still that command
+
+**Aim:** A capital letter is the shift key rather than a different intention, so `TODO`, `List` and `BYE` name the same commands as their lowercase forms. `A-MoreErrorHandling` asks that common slips be handled rather than refused, and this is the commonest of them. A word that is no command in any case is still refused, which the last one shows.
+
+**Input**
+```text
+TODO read the tP user stories
+List
+BLAH
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[T][ ] read the tP user stories
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[T][ ] read the tP user stories
+____________________________________________________________
+
+____________________________________________________________
+Unknown command. The ones I answer to: todo, deadline, event, window, list, mark, unmark, delete, find, free, bye.
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 0 | read the tP user stories
+```
+
+## TC-38 - A data file an editor marked as UTF-8 still reads
+
+**Aim:** Editors on Windows write a byte-order mark at the start of a UTF-8 file and do not show it, so a user who opened the data file to correct one line saves it back with an invisible character stuck to the first task. That task used to be the single line Tally could not read, and was quarantined as damage. The mark is taken off before the lines are read, so all three tasks load and nothing is copied aside. Adding a task then rewrites the file, which is what shows the mark is gone rather than merely stepped over: the expected file below holds no invisible character.
+
+**Given the data file**
+```text
+<BOM>T | 0 | read book
+D | 1 | return book | 2019-10-15
+T | 0 | buy bread
+```
+
+**Input**
+```text
+list
+todo write essay
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[T][ ] read book
+2.[D][X] return book (by: Oct 15 2019)
+3.[T][ ] buy bread
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[T][ ] write essay
+4 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 0 | read book
+tally.txt >>> D | 1 | return book | 2019-10-15
 tally.txt >>> T | 0 | buy bread
 tally.txt >>> T | 0 | write essay
 ```

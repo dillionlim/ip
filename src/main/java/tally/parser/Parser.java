@@ -1,7 +1,6 @@
 package tally.parser;
 
 import java.time.LocalDate;
-import java.util.regex.Pattern;
 
 import tally.TallyException;
 import tally.task.Deadline;
@@ -31,9 +30,6 @@ public class Parser {
     /** The markers the free command takes, each matched as a whole word. */
     private static final String MARKER_FOR = "/for";
     private static final String MARKER_FROM = "/from";
-
-    /** Runs of spaces and tabs, which a description is not meant to carry. */
-    private static final Pattern RUN_OF_SPACES = Pattern.compile("\\s+");
 
     /** Prevents anyone making one: every method here is static. */
     private Parser() {
@@ -95,20 +91,6 @@ public class Parser {
     }
 
     /**
-     * Returns text with each run of spaces reduced to a single space.
-     *
-     * <p>"todo read    book" and "todo read book" name the same thing to a reader, so
-     * they are recorded as the same thing, which is also what lets the second be
-     * recognized as already on the tally.
-     *
-     * @param text a part of a task as the user typed it.
-     * @return the same text, spaced as it would be written.
-     */
-    private static String tidySpacing(String text) {
-        return RUN_OF_SPACES.matcher(text.trim()).replaceAll(" ");
-    }
-
-    /**
      * Returns whatever follows the command word on a line.
      *
      * @param line the line the user typed, with surrounding spaces removed.
@@ -131,7 +113,7 @@ public class Parser {
             throw new TallyException("A todo needs a description. Example: todo read book");
         }
         rejectSeparator(arguments);
-        return new Todo(tidySpacing(arguments));
+        return new Todo(arguments);
     }
 
     /**
@@ -150,7 +132,7 @@ public class Parser {
                             + " Example: deadline return book /by 2019-10-15");
         }
         rejectSeparator(fields[0]);
-        return new Deadline(tidySpacing(fields[0]), parseDate(fields[1].trim()));
+        return new Deadline(fields[0], parseDate(fields[1].trim()));
     }
 
     /**
@@ -180,8 +162,8 @@ public class Parser {
                 || secondAndThird[0].isBlank() || secondAndThird[1].isBlank()) {
             throw new TallyException(usage);
         }
-        return new String[] {tidySpacing(descriptionAndRest[0]),
-                tidySpacing(secondAndThird[0]), tidySpacing(secondAndThird[1])};
+        return new String[] {descriptionAndRest[0].trim(), secondAndThird[0].trim(),
+                secondAndThird[1].trim()};
     }
 
     /**
