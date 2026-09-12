@@ -81,9 +81,10 @@ public class Event extends Task {
      * Returns whether this event takes up a given day, which none of them are unless
      * its ends were written as dates.
      *
-     * <p>An event keeps its ends as they were written, so "Mon 2pm" names no day this
-     * can work out. Ends written as yyyy-mm-dd were read when the event was made, which
-     * lets an event join the free-day search without changing what is stored for it.
+     * <p>An event keeps its ends as they were written, apart from their spacing, so
+     * "Mon 2pm" names no day this can work out. Ends written as yyyy-mm-dd were read
+     * when the event was made, which lets an event join the free-day search without
+     * changing what is stored for it.
      *
      * @param day the day being considered.
      * @return true when the day falls within the two ends, both included.

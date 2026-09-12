@@ -80,6 +80,7 @@ them:
 themselves:
 
 - `test/run-ui-tests.py`: the console test runner
+- `test/ui-test-plan.md`: the console test cases and their expected output
 - `.claude/skills/test-ui/SKILL.md`: the skill that drives it
 
 **Individual suggestions,** each marked with a comment where it was taken:

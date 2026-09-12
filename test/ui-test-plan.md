@@ -1914,7 +1914,7 @@ tally.txt >>> T | 0 | read book
 
 ## TC-35 - An event that ends before it starts is refused
 
-**Aim:** An event's two times are kept as the user typed them, so most pairs cannot be compared at all. A pair that both read as dates can be, and one running backwards is refused for the same reason a backwards window is, rather than being shown back to front and quietly counted as the days between them. Times written as anything else stay the user's to order, which the second command here shows.
+**Aim:** An event's two times are kept as the user wrote them, apart from their spacing, so most pairs cannot be compared at all. A pair that both read as dates can be, and one running backwards is refused for the same reason a backwards window is, rather than being shown back to front and quietly counted as the days between them. Times written as anything else stay the user's to order, which the second command here shows.
 
 **Input**
 ```text
@@ -2126,4 +2126,64 @@ tally.txt >>> T | 0 | read book
 tally.txt >>> D | 1 | return book | 2019-10-15
 tally.txt >>> T | 0 | buy bread
 tally.txt >>> T | 0 | write essay
+```
+
+## TC-39 - Dates a hand-edited file padded are still dates
+
+**Aim:** The data file is edited by hand, so a date in it can arrive with a space either side. An event tidies the spacing of its ends, and used to read its dates from the untidied text, so the list showed an event carrying two readable dates while `free` stepped over it and reported that the answer had left events out. The first two commands here show the event both listed and counted. The third line of the file pads a pair that runs backwards, which the reader refuses as it would refuse an unpadded one, rather than loading it and rejecting it on the next start.
+
+**Given the data file**
+```text
+E | 0 | trip |  2026-09-08 | 2026-09-10
+E | 0 | backwards |  2026-09-12 | 2026-09-08
+T | 0 | keep me
+```
+
+**Input**
+```text
+list
+free /from 2026-09-09
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Line 2 of tally.txt could not be read, so that task is not on record. Copied to tally.txt.broken for repair.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[E][ ] trip (from: 2026-09-08 to: 2026-09-10)
+2.[T][ ] keep me
+____________________________________________________________
+
+____________________________________________________________
+Next free day: Sep 11 2026.
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | trip |  2026-09-08 | 2026-09-10
+tally.txt >>> E | 0 | backwards |  2026-09-12 | 2026-09-08
+tally.txt >>> T | 0 | keep me
+tally.txt.broken >>> E | 0 | trip |  2026-09-08 | 2026-09-10
+tally.txt.broken >>> E | 0 | backwards |  2026-09-12 | 2026-09-08
+tally.txt.broken >>> T | 0 | keep me
 ```
