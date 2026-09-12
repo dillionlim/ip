@@ -31,6 +31,9 @@ public class Event extends Task {
     /**
      * Creates an event that is not done yet.
      *
+     * <p>Ends that both read as dates must be in order. Ends written as anything else
+     * are taken as they come, since nothing here can compare them.
+     *
      * @param description what is happening.
      * @param start when it starts, kept exactly as the user typed it.
      * @param end when it ends, kept exactly as the user typed it.

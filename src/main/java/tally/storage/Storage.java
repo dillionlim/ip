@@ -1,7 +1,6 @@
 package tally.storage;
 
 import java.io.IOException;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -118,7 +117,14 @@ public class Storage {
                     + " Starting with nothing on record." + copyAside()
                     + " It will not be written over until it can be read.");
         }
-        return describe(readTally(withoutByteOrderMark(lines)));
+        Reading reading = readTally(stripByteOrderMark(lines));
+        if (reading.unreadableLines().isEmpty() && reading.repeatedLines().isEmpty()) {
+            return new LoadResult(reading.tasks(), Optional.empty());
+        }
+        // Damage is copied aside here, before anything can write over it. A repeat is a
+        // readable line rather than damage, so there is nothing to quarantine for it.
+        String aside = reading.unreadableLines().isEmpty() ? "" : copyAside();
+        return new LoadResult(reading.tasks(), Optional.of(describe(reading, aside)));
     }
 
     /**
@@ -127,7 +133,7 @@ public class Storage {
      * @param lines the lines of the data file, in order.
      * @return the same lines, the first no longer carrying an invisible mark.
      */
-    private static List<String> withoutByteOrderMark(List<String> lines) {
+    private static List<String> stripByteOrderMark(List<String> lines) {
         if (lines.isEmpty() || !lines.get(0).startsWith(BYTE_ORDER_MARK)) {
             return lines;
         }
@@ -137,31 +143,28 @@ public class Storage {
     }
 
     /**
-     * Returns what was read, with a note about anything in it that could not be.
+     * Returns what to tell the user about the lines that did not become tasks.
      *
-     * <p>Copying aside is asked for here rather than from inside the wording, because a
-     * method that says it describes something should not also be changing the disk.
+     * <p>Wording only. Nothing here reads a file, writes one, or decides anything: the
+     * caller has already done whatever the damage called for and says so through
+     * {@code aside}.
      *
-     * @param reading the tasks found, and the lines that held nothing recognizable.
-     * @return the tasks, and what to tell the user about the rest.
+     * @param reading the tasks found, and the lines that did not become one.
+     * @param aside what was done with the damaged file, or empty if there was none.
+     * @return the sentences to show the user.
      */
-    private LoadResult describe(Reading reading) {
-        if (reading.unreadableLines().isEmpty()) {
-            if (reading.repeatedLines().isEmpty()) {
-                return new LoadResult(reading.tasks(), Optional.empty());
+    private String describe(Reading reading, String aside) {
+        List<String> sentences = new ArrayList<>();
+        if (!reading.unreadableLines().isEmpty()) {
+            sentences.add(describeUnreadableLines(reading.unreadableLines()) + aside);
+            if (saveRefusal.isPresent()) {
+                sentences.add("Nothing will be written over it until it is repaired.");
             }
-            // A repeat is a readable line, not damage, so no copy is kept of it.
-            return new LoadResult(reading.tasks(),
-                    Optional.of(describeRepeatedLines(reading.repeatedLines())));
-        }
-        String note = describeUnreadableLines(reading.unreadableLines()) + copyAside();
-        if (saveRefusal.isPresent()) {
-            note += " Nothing will be written over it until it is repaired.";
         }
         if (!reading.repeatedLines().isEmpty()) {
-            note += " " + describeRepeatedLines(reading.repeatedLines());
+            sentences.add(describeRepeatedLines(reading.repeatedLines()));
         }
-        return new LoadResult(reading.tasks(), Optional.of(note));
+        return String.join(" ", sentences);
     }
 
     /**
@@ -198,12 +201,30 @@ public class Storage {
             } else if (tasks.stream().anyMatch(task::isSameAs)) {
                 // Tally refuses to add a task it already holds, so a file naming one
                 // twice would otherwise put the tally in a state no command can reach.
+                keepDoneFlag(tasks, task);
                 repeatedLines.add(i + 1);
             } else {
                 tasks.add(task);
             }
         }
         return new Reading(tasks, unreadableLines, repeatedLines);
+    }
+
+    /**
+     * Marks the task already read done, if the repeat of it says it was.
+     *
+     * <p>Two lines naming the same task can disagree about whether it is finished, and
+     * dropping the repeat would throw that away. A task recorded as done anywhere in
+     * the file has been done, so the one kept takes the flag.
+     *
+     * @param alreadyRead the tasks read so far, one of which this repeats.
+     * @param repeat the task the line named again.
+     */
+    private static void keepDoneFlag(List<Task> alreadyRead, Task repeat) {
+        if (!repeat.isDone()) {
+            return;
+        }
+        alreadyRead.stream().filter(repeat::isSameAs).forEach(Task::markAsDone);
     }
 
     /**
@@ -468,7 +489,11 @@ public class Storage {
     private static void moveIntoPlace(Path partial, Path target) throws IOException {
         try {
             Files.move(partial, target, StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException exception) {
+        } catch (IOException exception) {
+            // Whether an atomic move may replace a file that is already there is left
+            // to the file system, and one that will not say so need not use the named
+            // exception for it. Replacing without the promise is the fallback either
+            // way, and if that fails too its own complaint is the one that gets out.
             Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }

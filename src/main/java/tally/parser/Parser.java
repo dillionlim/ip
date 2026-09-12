@@ -194,8 +194,9 @@ public class Parser {
      *
      * @param arguments what the user typed after the command word.
      * @return the event described.
-     * @throws TallyException if the description, the start or the end is missing,
-     *     or if /to is written before /from.
+     * @throws TallyException if the description, the start or the end is missing, if
+     *     /to is written before /from, or if both ends read as dates and the end falls
+     *     before the start.
      */
     public static Event parseEvent(String arguments) throws TallyException {
         // AI found the bug, manually fixed.
