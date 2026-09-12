@@ -3,6 +3,7 @@ package tally.task;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -171,6 +172,36 @@ public abstract class Task {
      * @return for example "D | 1 | return book | 2019-06-06".
      */
     public abstract String toSaveFormat();
+
+    /**
+     * Returns whether another task records the same thing as this one.
+     *
+     * <p>Whether either is done does not enter into it: marking a task done does not
+     * turn it into a different task, so adding it again would still be adding it twice.
+     *
+     * <p>Compared by the line each would be saved as, because that line already holds
+     * exactly what distinguishes one task from another, and is the one form every kind
+     * of task can be reduced to. Overriding equals was the alternative, and a task that
+     * can be marked done is not a value that should carry equality.
+     *
+     * @param other the task to compare with.
+     * @return true when the two record the same thing.
+     */
+    public boolean isSameAs(Task other) {
+        return withoutDoneFlag(toSaveFormat()).equals(withoutDoneFlag(other.toSaveFormat()));
+    }
+
+    /**
+     * Returns a saved line with the done flag taken out of it.
+     *
+     * @param savedLine a line as the data file would record it.
+     * @return the same line without its second field.
+     */
+    private static String withoutDoneFlag(String savedLine) {
+        String[] fields = savedLine.split(Pattern.quote(FIELD_SEPARATOR));
+        return fields[0] + FIELD_SEPARATOR
+                + String.join(FIELD_SEPARATOR, Arrays.copyOfRange(fields, 2, fields.length));
+    }
 
     /**
      * Returns the parts of a data-file line that every task shares.

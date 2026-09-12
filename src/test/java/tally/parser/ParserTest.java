@@ -33,6 +33,44 @@ public class ParserTest {
     }
 
     @Test
+    public void rejectUnwantedArguments_textAfterACommandTakingNone_throws() {
+        // "bye now" used to end the conversation, taking the rest of the input with it.
+        assertThrows(TallyException.class, () ->
+                Parser.rejectUnwantedArguments(Command.BYE, "now"));
+        assertThrows(TallyException.class, () ->
+                Parser.rejectUnwantedArguments(Command.LIST, "all"));
+    }
+
+    @Test
+    public void rejectUnwantedArguments_commandsThatTakeThem_allowed() throws TallyException {
+        Parser.rejectUnwantedArguments(Command.BYE, "");
+        Parser.rejectUnwantedArguments(Command.LIST, "");
+        Parser.rejectUnwantedArguments(Command.FREE, "/for 3");
+        Parser.rejectUnwantedArguments(Command.FIND, "book");
+    }
+
+    @Test
+    public void parse_aMarkerGivenTwice_throws() {
+        // The parts are split on the first marker, so a second used to end up inside the
+        // value of the first: silently for an event, and misreported for a deadline.
+        assertThrows(TallyException.class, () ->
+                Parser.parseDeadline("essay /by 2026-09-10 /by 2026-09-11"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("party /from 2pm /to 4pm /to 6pm"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("party /from 2pm /from 3pm /to 4pm"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseWindow("form /between 2026-09-08 /and 2026-09-10 /and 2026-09-12"));
+    }
+
+    @Test
+    public void parse_runsOfSpacesInADescription_recordedAsOne() throws TallyException {
+        assertEquals("[T][ ] read book", Parser.parseTodo("read    book").toString());
+        assertEquals("[D][ ] return book (by: Oct 15 2019)",
+                Parser.parseDeadline("return    book /by 2019-10-15").toString());
+    }
+
+    @Test
     public void parseDate_yearOutsideTheWrittenForm_throws() {
         // LocalDate.parse reads this, and the date arithmetic done later then overflows.
         assertThrows(TallyException.class, () -> Parser.parseDate("+999999999-12-31"));

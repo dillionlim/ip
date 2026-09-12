@@ -1,6 +1,7 @@
 package tally.parser;
 
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 
 import tally.TallyException;
 import tally.task.Deadline;
@@ -31,6 +32,9 @@ public class Parser {
     private static final String MARKER_FOR = "/for";
     private static final String MARKER_FROM = "/from";
 
+    /** Runs of spaces and tabs, which a description is not meant to carry. */
+    private static final Pattern RUN_OF_SPACES = Pattern.compile("\\s+");
+
     /** Prevents anyone making one: every method here is static. */
     private Parser() {
     }
@@ -44,6 +48,65 @@ public class Parser {
      */
     public static Command parseCommand(String line) throws TallyException {
         return Command.parse(line.split(" ", 2)[0]);
+    }
+
+    /**
+     * Refuses arguments given to a command that takes none.
+     *
+     * <p>They were being dropped, so "bye now" ended the conversation and "list all"
+     * listed everything: the user is told their line did nothing they asked for, rather
+     * than being given the nearest command Tally could find in it.
+     *
+     * @param command the command the line names.
+     * @param arguments whatever followed the command word.
+     * @throws TallyException if the command takes nothing and something was given.
+     */
+    public static void rejectUnwantedArguments(Command command, String arguments)
+            throws TallyException {
+        if (command.takesArguments() || arguments.isEmpty()) {
+            return;
+        }
+        throw new TallyException(String.format(
+                "%s takes nothing after it, so I do not know what you meant by \"%s\"."
+                        + " Try: %s",
+                command.getKeyword(), arguments, command.getKeyword()));
+    }
+
+    /**
+     * Refuses a line that gives the same marker more than once.
+     *
+     * <p>The parts are split on the first marker found, so a second one ends up inside
+     * the value of the first: "/by Monday /by Tuesday" was read as a date of
+     * "Monday /by Tuesday" and refused for the wrong reason, and an event's free-text
+     * end swallowed it whole without complaint.
+     *
+     * @param arguments everything the user typed after the command word.
+     * @param marker the marker to count, written as it is split on, such as " /by ".
+     * @throws TallyException if the marker appears more than once.
+     */
+    private static void rejectRepeatedMarker(String arguments, String marker)
+            throws TallyException {
+        String padded = " " + arguments + " ";
+        int first = padded.indexOf(marker);
+        if (first >= 0 && padded.indexOf(marker, first + 1) >= 0) {
+            throw new TallyException(String.format(
+                    "%s is given more than once, and I cannot tell which one you mean.",
+                    marker.trim()));
+        }
+    }
+
+    /**
+     * Returns text with each run of spaces reduced to a single space.
+     *
+     * <p>"todo read    book" and "todo read book" name the same thing to a reader, so
+     * they are recorded as the same thing, which is also what lets the second be
+     * recognized as already on the tally.
+     *
+     * @param text a part of a task as the user typed it.
+     * @return the same text, spaced as it would be written.
+     */
+    private static String tidySpacing(String text) {
+        return RUN_OF_SPACES.matcher(text.trim()).replaceAll(" ");
     }
 
     /**
@@ -69,7 +132,7 @@ public class Parser {
             throw new TallyException("A todo needs a description. Try: todo read book");
         }
         rejectSeparator(arguments);
-        return new Todo(arguments);
+        return new Todo(tidySpacing(arguments));
     }
 
     /**
@@ -80,6 +143,7 @@ public class Parser {
      * @throws TallyException if the description or the date is missing or unreadable.
      */
     public static Deadline parseDeadline(String arguments) throws TallyException {
+        rejectRepeatedMarker(arguments, " /by ");
         String[] fields = arguments.split(" /by ", 2);
         if (fields.length < 2 || fields[0].isBlank() || fields[1].isBlank()) {
             throw new TallyException(
@@ -87,7 +151,7 @@ public class Parser {
                             + " Try: deadline return book /by 2019-10-15");
         }
         rejectSeparator(fields[0]);
-        return new Deadline(fields[0].trim(), parseDate(fields[1].trim()));
+        return new Deadline(tidySpacing(fields[0]), parseDate(fields[1].trim()));
     }
 
     /**
@@ -106,6 +170,8 @@ public class Parser {
      */
     private static String[] splitOnTwoMarkers(String arguments, String firstMarker,
             String secondMarker, String usage) throws TallyException {
+        rejectRepeatedMarker(arguments, firstMarker);
+        rejectRepeatedMarker(arguments, secondMarker);
         String[] descriptionAndRest = arguments.split(firstMarker, 2);
         if (descriptionAndRest.length < 2) {
             throw new TallyException(usage);
@@ -115,8 +181,8 @@ public class Parser {
                 || secondAndThird[0].isBlank() || secondAndThird[1].isBlank()) {
             throw new TallyException(usage);
         }
-        return new String[] {descriptionAndRest[0].trim(), secondAndThird[0].trim(),
-                secondAndThird[1].trim()};
+        return new String[] {tidySpacing(descriptionAndRest[0]),
+                tidySpacing(secondAndThird[0]), tidySpacing(secondAndThird[1])};
     }
 
     /**

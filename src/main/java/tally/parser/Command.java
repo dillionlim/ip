@@ -1,6 +1,8 @@
 package tally.parser;
 
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import tally.TallyException;
@@ -25,6 +27,15 @@ public enum Command {
     FREE("free", false),
     BYE("bye", false);
 
+    /**
+     * The commands that take nothing after the command word.
+     *
+     * <p>Kept as a set rather than a second flag on each constant, because a constant
+     * declared as TODO("todo", true, true) says which word it is and nothing about
+     * which answer belongs to which question.
+     */
+    private static final Set<Command> TAKE_NO_ARGUMENTS = EnumSet.of(LIST, BYE);
+
     private final String keyword;
 
     /** Whether carrying this command out can leave the tally different from before. */
@@ -45,6 +56,18 @@ public enum Command {
      */
     public boolean changesTally() {
         return changesTally;
+    }
+
+    /**
+     * Returns whether anything may follow this command word.
+     *
+     * <p>A command that takes nothing is given nothing on purpose: text after it means
+     * the user meant something Tally is not about to guess at.
+     *
+     * @return false for the commands that must be typed on their own.
+     */
+    public boolean takesArguments() {
+        return !TAKE_NO_ARGUMENTS.contains(this);
     }
 
     /**

@@ -14,6 +14,27 @@ import org.junit.jupiter.api.Test;
 /** Tests how each kind of task shows itself to the user and writes itself to the file. */
 public class TaskTest {
     @Test
+    public void isSameAs_theSameThingRecordedTwice_isRecognized() {
+        Task done = new Todo("read book");
+        done.markAsDone();
+        // Marking a task done does not turn it into a different task, so adding it
+        // again would still be adding the same thing twice.
+        assertTrue(new Todo("read book").isSameAs(done));
+        assertTrue(new Deadline("essay", LocalDate.of(2026, 9, 10))
+                .isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 10))));
+    }
+
+    @Test
+    public void isSameAs_tasksDifferingInAnyPart_areNotTheSame() {
+        assertFalse(new Todo("read book").isSameAs(new Todo("buy bread")));
+        // Same words, different kind of task.
+        assertFalse(new Todo("essay").isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 10))));
+        assertFalse(new Deadline("essay", LocalDate.of(2026, 9, 10))
+                .isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 11))));
+        assertFalse(new Event("party", "2pm", "4pm").isSameAs(new Event("party", "2pm", "6pm")));
+    }
+
+    @Test
     public void constructor_windowEndingBeforeItStarts_isRefused() {
         // The class documents that the end is never before the start. The parser and the
         // storage reader both enforce it, so one arriving here came from neither.
