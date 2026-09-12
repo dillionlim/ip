@@ -4,21 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import tally.TallyException;
-import tally.task.Deadline;
-import tally.task.Event;
 import tally.task.Task;
-import tally.task.Todo;
-import tally.task.Window;
 
 /**
  * Keeps the tally on disk: reads it back when Tally starts, and writes it out
@@ -38,24 +30,6 @@ import tally.task.Window;
  * format is that a person can read and correct the file by hand.
  */
 public class Storage {
-    /** Where each part of a task sits on its line in the data file. */
-    private static final int INDEX_TYPE = 0;
-    private static final int INDEX_DONE = 1;
-    private static final int INDEX_DESCRIPTION = 2;
-
-    /**
-     * Where a task's own two extra parts sit. They are dates for a deadline and a
-     * window, and whatever the user typed for an event.
-     */
-    private static final int INDEX_FIRST_DETAIL = 3;
-    private static final int INDEX_SECOND_DETAIL = 4;
-
-    /** How many parts a line of each kind of task has. */
-    private static final int FIELD_COUNT_TODO = 3;
-    private static final int FIELD_COUNT_DEADLINE = 4;
-    private static final int FIELD_COUNT_EVENT = 5;
-    private static final int FIELD_COUNT_WINDOW = 5;
-
     /**
      * The mark some editors write at the start of a UTF-8 file.
      *
@@ -64,9 +38,6 @@ public class Storage {
      * is then the one line Tally cannot read.
      */
     private static final String BYTE_ORDER_MARK = "\ufeff";
-
-    /** How many symbolic links may be followed before the chain is called a loop. */
-    private static final int MAX_LINKS_FOLLOWED = 8;
 
     private final Path file;
 
@@ -196,7 +167,7 @@ public class Storage {
             if (line.isEmpty()) {
                 continue;
             }
-            Task task = readTask(line);
+            Task task = TaskLine.read(line);
             if (task == null) {
                 unreadableLines.add(i + 1);
                 continue;
@@ -216,101 +187,6 @@ public class Storage {
             repeatedLines.add(i + 1);
         }
         return new Reading(tasks, unreadableLines, repeatedLines);
-    }
-
-    /**
-     * Returns the task a line of the data file stands for.
-     *
-     * <p>Reading is a factory rather than a method on Task, because which subclass
-     * to build is only known once the type letter has been read.
-     *
-     * @param line one line of the data file, with surrounding spaces removed.
-     * @return the task described, or null if the line is not in the expected format.
-     */
-    private static Task readTask(String line) {
-        String[] fields = line.split(Pattern.quote(Task.FIELD_SEPARATOR));
-        boolean hasValidCommonFields = fields.length > INDEX_DESCRIPTION
-                && (fields[INDEX_DONE].equals(Task.FLAG_NOT_DONE) || fields[INDEX_DONE].equals(Task.FLAG_DONE))
-                && Arrays.stream(fields).noneMatch(String::isBlank);
-        if (!hasValidCommonFields) {
-            return null;
-        }
-
-        String description = fields[INDEX_DESCRIPTION];
-        Task task = switch (fields[INDEX_TYPE]) {
-            case Todo.TYPE -> fields.length == FIELD_COUNT_TODO ? new Todo(description) : null;
-            case Deadline.TYPE -> fields.length == FIELD_COUNT_DEADLINE
-                    ? readDeadline(description, fields[INDEX_FIRST_DETAIL]) : null;
-            case Event.TYPE -> fields.length == FIELD_COUNT_EVENT
-                    ? readEvent(description, fields[INDEX_FIRST_DETAIL],
-                            fields[INDEX_SECOND_DETAIL]) : null;
-            case Window.TYPE -> fields.length == FIELD_COUNT_WINDOW
-                    ? readWindow(description, fields[INDEX_FIRST_DETAIL], fields[INDEX_SECOND_DETAIL]) : null;
-            default -> null;
-        };
-
-        if (task != null && fields[INDEX_DONE].equals(Task.FLAG_DONE)) {
-            task.markAsDone();
-        }
-        return task;
-    }
-
-    /**
-     * Returns the deadline a data-file line describes.
-     *
-     * <p>A date the file cannot offer as yyyy-mm-dd is damage rather than something
-     * to ask the user about, so this reports it the same way as any other malformed
-     * line: by returning null.
-     *
-     * @param description what has to be done.
-     * @param dueDateText the date field as it appears in the file.
-     * @return the deadline, or null if the date cannot be read.
-     */
-    private static Task readDeadline(String description, String dueDateText) {
-        return Task.readDate(dueDateText)
-                .<Task>map(dueDate -> new Deadline(description, dueDate))
-                .orElse(null);
-    }
-
-    /**
-     * Returns the event a data-file line describes, or null if its dated ends run backwards.
-     *
-     * <p>An event's ends are whatever the user wrote, spacing aside, so most pairs
-     * cannot be compared at all. A pair that can be, and runs the wrong way, was edited
-     * by hand into something the parser would have refused.
-     *
-     * @param description what is happening.
-     * @param startText the first time field as it appears in the file.
-     * @param endText the second time field as it appears in the file.
-     * @return the event, or null if the line cannot be read.
-     */
-    private static Task readEvent(String description, String startText, String endText) {
-        if (Event.hasBackwardsDates(startText, endText)) {
-            return null;
-        }
-        return new Event(description, startText, endText);
-    }
-
-    /**
-     * Returns the window task a data-file line describes, or null if either date cannot be read.
-     *
-     * @param description what has to be done.
-     * @param startDateText the first date field as it appears in the file.
-     * @param endDateText the second date field as it appears in the file.
-     * @return the window task, or null if the line cannot be read.
-     */
-    private static Task readWindow(String description, String startDateText, String endDateText) {
-        Optional<LocalDate> start = Task.readDate(startDateText);
-        Optional<LocalDate> end = Task.readDate(endDateText);
-        if (start.isEmpty() || end.isEmpty()) {
-            return null;
-        }
-        // The parser refuses a backwards window, so a file holding one was edited
-        // by hand; letting it through would crash the free-day search later.
-        if (end.get().isBefore(start.get())) {
-            return null;
-        }
-        return new Window(description, start.get(), end.get());
     }
 
     /**
@@ -448,44 +324,11 @@ public class Storage {
      * @throws TallyException if the file cannot be written.
      */
     public void save(List<Task> tasks) throws TallyException {
-        Path partial = null;
         try {
-            Path target = resolveSaveTarget();
-            // A name of its own, so that a file already sitting at a fixed one is not
-            // overwritten, and two Tallys saving at once do not write the same place.
-            // It goes in the target's own folder, because the rename that puts it in
-            // place is only atomic within one folder.
-            partial = Files.createTempFile(getFolderOf(target), target.getFileName().toString(),
-                    ".part");
-            writeReplacement(tasks, target, partial);
-            moveIntoPlace(partial, target);
+            List<String> lines = tasks.stream().map(Task::toSaveFormat).toList();
+            FileReplacer.replace(resolveSaveTarget(), lines);
         } catch (IOException exception) {
-            deleteQuietly(partial);
             throw new TallyException(describeSaveFailure());
-        }
-    }
-
-    /**
-     * Puts the written replacement in place of the file it replaces.
-     *
-     * <p>Asked for as one indivisible step, so that a crash midway leaves either the old
-     * tally or the new one and never a mixture. Not every file system can promise that,
-     * and replacing without the promise is still better than writing into the file where
-     * it lies, which a crash could leave half rewritten.
-     *
-     * @param partial the replacement that has been written.
-     * @param target the file it replaces.
-     * @throws IOException if it cannot be put in place.
-     */
-    private static void moveIntoPlace(Path partial, Path target) throws IOException {
-        try {
-            Files.move(partial, target, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException exception) {
-            // Whether an atomic move may replace a file that is already there is left
-            // to the file system, and one that will not say so need not use the named
-            // exception for it. Replacing without the promise is the fallback either
-            // way, and if that fails too its own complaint is the one that gets out.
-            Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -507,108 +350,16 @@ public class Storage {
         if (saveRefusal.isPresent()) {
             throw new TallyException(saveRefusal.get());
         }
-        Path target = followLinks(file);
-        Files.createDirectories(getFolderOf(target));
+        Path target = FileReplacer.followLinks(file);
+        Files.createDirectories(FileReplacer.getFolderOf(target));
         if (!Files.notExists(target) && !Files.isWritable(target)) {
             throw new TallyException(describeSaveFailure());
         }
         return target;
     }
 
-    /**
-     * Returns the folder a file sits in.
-     *
-     * <p>Taken from the absolute form of the path, because a path written as a bare
-     * name, such as "tally.txt", has no parent of its own even though it plainly sits
-     * somewhere.
-     *
-     * @param path the file whose folder is wanted.
-     * @return the folder holding it.
-     */
-    private static Path getFolderOf(Path path) {
-        return path.toAbsolutePath().getParent();
-    }
-
-    /**
-     * Returns the file a path finally names, following symbolic links.
-     *
-     * <p>toRealPath covers a link pointing at a file that is there, but a link pointing
-     * at one that is not resolves to nothing at all, and the save would then replace the
-     * link itself with an ordinary file instead of writing through it.
-     *
-     * @param start the path to resolve.
-     * @return what the last link in the chain names, which need not exist yet.
-     * @throws IOException if a link cannot be read, or the chain does not end.
-     */
-    private static Path followLinks(Path start) throws IOException {
-        Path here = start;
-        for (int followed = 0; Files.isSymbolicLink(here); followed++) {
-            if (followed == MAX_LINKS_FOLLOWED) {
-                throw new IOException("Too many symbolic links to follow from " + start);
-            }
-            Path pointee = Files.readSymbolicLink(here);
-            here = pointee.isAbsolute() ? pointee : here.resolveSibling(pointee);
-        }
-        return here;
-    }
-
-    /**
-     * Writes the tally beside the file it will replace, carrying its permissions over.
-     *
-     * <p>Writing beside it and renaming means a write that fails partway cannot damage
-     * what is already saved. The rename replaces the file rather than writing into it,
-     * so what the old one carried has to be carried over deliberately.
-     *
-     * @param tasks the tally to write.
-     * @param target the file that will be replaced.
-     * @param partial where to write it first.
-     * @throws IOException if it cannot be written.
-     */
-    private static void writeReplacement(List<Task> tasks, Path target, Path partial)
-            throws IOException {
-        Files.write(partial, tasks.stream().map(Task::toSaveFormat).toList());
-        copyPermissions(target, partial);
-    }
-
     /** Returns what to tell the user when the tally could not be written. */
     private String describeSaveFailure() {
         return "The record could not be saved to " + file.getFileName() + ".";
-    }
-
-    /**
-     * Gives the replacement file the permissions the one it replaces already had.
-     *
-     * <p>Without this the new file is made under the umask, so a tally the user had kept
-     * private would quietly become readable by others on the first save.
-     *
-     * @param existing the file being replaced, which may not exist yet.
-     * @param replacement the file about to take its place.
-     * @throws IOException if the permissions can be read but not written.
-     */
-    private static void copyPermissions(Path existing, Path replacement) throws IOException {
-        boolean isPosix = Files.exists(existing)
-                && Files.getFileStore(existing).supportsFileAttributeView(PosixFileAttributeView.class);
-        if (isPosix) {
-            Files.setPosixFilePermissions(replacement, Files.getPosixFilePermissions(existing));
-        }
-    }
-
-    /**
-     * Removes a half-written file, saying nothing if it cannot be removed.
-     *
-     * <p>This runs while a save is already failing, so a complaint from here would hide
-     * the reason the save failed, which is the more useful of the two.
-     *
-     * @param leftover the file to remove, or null if none was made.
-     */
-    private static void deleteQuietly(Path leftover) {
-        if (leftover == null) {
-            return;
-        }
-        try {
-            Files.deleteIfExists(leftover);
-        } catch (IOException exception) {
-            // The failing save is the more useful complaint; this would hide it.
-        }
     }
 }

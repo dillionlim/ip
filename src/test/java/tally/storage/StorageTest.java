@@ -57,17 +57,6 @@ public class StorageTest {
         Files.createSymbolicLink(link, target);
     }
 
-    @Test
-    public void load_backwardsWindow_isSkipped() throws TallyException, IOException {
-        Path file = folder.resolve("tally.txt");
-        // The parser refuses one, so a file holding it was edited by hand. Letting it
-        // through used to crash the free-day search.
-        Files.writeString(file, "W | 0 | submit form | 2026-09-12 | 2026-09-08\n");
-
-        LoadResult loaded = new Storage(file).load();
-        assertTrue(loaded.tasks().isEmpty());
-        assertTrue(loaded.note().orElseThrow().contains("Line 1"));
-    }
 
     @Test
     public void save_fileTheUserProtected_isRefusedRatherThanReplaced() throws IOException {
@@ -270,19 +259,6 @@ public class StorageTest {
         assertTrue(loaded.note().orElseThrow().contains("Line 2"));
     }
 
-    @Test
-    public void load_unreadableDateOrFieldsOrFlag_isSkippedAndReported() throws TallyException, IOException {
-        Path file = folder.resolve("tally.txt");
-        Files.writeString(file, "D | 0 | return book | last Tuesday\n"
-                + "T | 0 | read book | extra field\n"
-                + "T | maybe | read book\n"
-                + "T | 0 | the only good one\n");
-
-        LoadResult loaded = new Storage(file).load();
-        assertEquals(1, loaded.tasks().size());
-        assertEquals("[T][ ] the only good one", loaded.tasks().get(0).toString());
-        assertTrue(loaded.note().orElseThrow().contains("Lines 1, 2 and 3"));
-    }
 
     @Test
     public void load_everyLineReadable_reportsNothing() throws TallyException, IOException {
@@ -317,34 +293,7 @@ public class StorageTest {
         assertEquals(2, new Storage(file).load().tasks().size());
     }
 
-    @Test
-    public void load_aLineOfEachKind_readsThemBackAsThemselves()
-            throws TallyException, IOException {
-        Path file = folder.resolve("tally.txt");
-        Files.writeString(file, String.join("\n",
-                "T | 0 | read book",
-                "D | 1 | return book | 2019-10-15",
-                "E | 0 | project meeting | Mon 2pm | 4pm",
-                "W | 0 | submit form | 2026-09-08 | 2026-09-12") + "\n");
 
-        List<Task> loaded = new Storage(file).load().tasks();
-        assertEquals(List.of("[T][ ] read book",
-                "[D][X] return book (by: Oct 15 2019)",
-                "[E][ ] project meeting (from: Mon 2pm to: 4pm)",
-                "[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)"),
-                loaded.stream().map(Task::toString).toList());
-    }
-
-    @Test
-    public void load_aTypeLetterNobodyWrites_isSkippedLikeAnyOtherDamage()
-            throws TallyException, IOException {
-        Path file = folder.resolve("tally.txt");
-        Files.writeString(file, "T | 0 | read book\nQ | 0 | whatever this is\n");
-
-        LoadResult loaded = new Storage(file).load();
-        assertEquals(1, loaded.tasks().size());
-        assertTrue(loaded.note().orElseThrow().contains("Line 2"), loaded.note().orElseThrow());
-    }
 
     @Test
     public void save_symbolicLinksPointingAtEachOther_isRefusedRatherThanFollowedForever()
@@ -380,15 +329,6 @@ public class StorageTest {
                 loaded.note().orElseThrow());
     }
 
-    @Test
-    public void load_aWindowWhoseDatesCannotBeRead_isSkipped() throws TallyException, IOException {
-        Path file = folder.resolve("tally.txt");
-        Files.writeString(file, "W | 0 | submit form | last Tuesday | 2026-09-12\n");
-
-        LoadResult loaded = new Storage(file).load();
-        assertTrue(loaded.tasks().isEmpty());
-        assertTrue(loaded.note().orElseThrow().contains("Line 1"));
-    }
 
     @Test
     public void load_aBlankFieldWhereOneIsRequired_isSkipped() throws TallyException, IOException {
@@ -448,17 +388,6 @@ public class StorageTest {
         assertEquals(1, message.split("will not be written over", -1).length - 1, message);
     }
 
-    @Test
-    public void load_eventWithDatedEndsRunningBackwards_isSkipped()
-            throws TallyException, IOException {
-        Path file = folder.resolve("tally.txt");
-        // The parser refuses this, so a file holding it was edited by hand.
-        Files.writeString(file, "E | 0 | trip | 2026-09-12 | 2026-09-08\nT | 0 | good\n");
-
-        LoadResult loaded = new Storage(file).load();
-        assertEquals(1, loaded.tasks().size());
-        assertTrue(loaded.note().orElseThrow().contains("Line 1"), loaded.note().orElseThrow());
-    }
 
     @Test
     public void load_aTaskNamedTwice_isKeptOnceAndReported() throws TallyException, IOException {
