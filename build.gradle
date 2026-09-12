@@ -65,6 +65,13 @@ application {
 
     // Assertions are off unless asked for, which would leave every assert in the code
     // inert. The JUnit tests already run with them on, and this does the same for the app.
+    //
+    // Only for the app run from here. The released JAR is started without -ea, on
+    // purpose: an assertion states something this code believes about itself, and the
+    // answer to one turning out false is a stack trace for whoever is working on it,
+    // not a crash in front of whoever is using it. What a user types is checked by the
+    // parser and what a file holds is checked by the reader, and neither of those
+    // leans on assertions being on.
     applicationDefaultJvmArgs = ['-ea']
 }
 
