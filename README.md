@@ -2,6 +2,8 @@
 
 Tally is a chatbot that helps you keep a tally of your tasks, in a window or in a terminal. Given below are instructions on how to set it up.
 
+If you want to *use* Tally rather than build it, read the [user guide](https://dillionlim.github.io/ip/) instead.
+
 ## Building and running
 
 The project builds with Gradle, so no JDK setup beyond Java 25 is needed:
