@@ -231,6 +231,18 @@ def invoke(commands, data_file, classpath):
     return result.stdout
 
 
+def seed_text(block):
+    """Returns what to write into the data file for a Given block.
+
+    "<BOM>" at the very start stands for the byte-order mark some editors put
+    there.  Writing the character into the plan itself would leave something
+    invisible in the file, which is the sort of thing this case exists to catch.
+    """
+    if block.startswith("<BOM>"):
+        return "\ufeff" + block[len("<BOM>"):] + "\n"
+    return block + "\n"
+
+
 def run_case(case, data_file, classpath):
     """Returns what the program printed across this case's one or two runs.
 
@@ -243,7 +255,7 @@ def run_case(case, data_file, classpath):
         stale.unlink()
     if case["seed"] is not None:
         data_file.parent.mkdir(parents=True, exist_ok=True)
-        data_file.write_text(case["seed"] + "\n", encoding="utf-8")
+        data_file.write_text(seed_text(case["seed"]), encoding="utf-8")
     output = invoke(case["input"], data_file, classpath)
     if case["restart"] is not None:
         try:

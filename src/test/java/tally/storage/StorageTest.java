@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -35,14 +37,27 @@ public class StorageTest {
     /**
      * Makes a symbolic link, skipping the test where the file system has no such thing.
      *
+     * <p>Only a refusal by the file system counts as a reason to skip. A link that
+     * cannot be made because something is already sitting at the name is a fault in the
+     * test, and reporting that as an environment without symbolic links would hide it.
+     *
      * @param link where the link goes.
      * @param target what it points at, which need not exist.
+     * @throws IOException if the link fails for any reason other than a file system
+     *     that will not make one.
      */
-    private static void linkOrSkip(Path link, Path target) {
+    private static void linkOrSkip(Path link, Path target) throws IOException {
         try {
             Files.createSymbolicLink(link, target);
-        } catch (IOException | UnsupportedOperationException exception) {
+        } catch (UnsupportedOperationException exception) {
             assumeTrue(false, "this file system does not allow symbolic links");
+        } catch (FileAlreadyExistsException exception) {
+            throw exception;
+        } catch (FileSystemException exception) {
+            // Windows refuses this to a user without the privilege for it, which is an
+            // environment this test cannot run in rather than a failure of the code.
+            assumeTrue(false, "this file system will not make a symbolic link: "
+                    + exception.getMessage());
         }
     }
 
@@ -488,5 +503,20 @@ public class StorageTest {
         LoadResult loaded = new Storage(file).load();
         assertEquals(List.of("[T][ ] read book"),
                 loaded.tasks().stream().map(Task::toString).toList());
+    }
+    @Test
+    public void load_theSameTaskSpacedDifferently_isStillOneTask()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // The file is edited by hand, so it can space a description any way at all.
+        // Tally holds "read    book" and "read book" to be the same task when they are
+        // typed, and the rule has to hold on this road in too, or the file can put two
+        // of the same task on a tally no command would have allowed it on.
+        Files.writeString(file, "T | 0 | read    book\nT | 1 | read\tbook\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(List.of("[T][X] read book"),
+                loaded.tasks().stream().map(Task::toString).toList());
+        assertTrue(loaded.note().orElseThrow().contains("Line 2"), loaded.note().orElseThrow());
     }
 }

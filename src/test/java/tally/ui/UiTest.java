@@ -32,8 +32,17 @@ public class UiTest {
         System.setOut(realOutput);
     }
 
-    /** Returns a console Ui reading the given lines, with its output captured. */
-    private Ui openConsoleReading(String typed) {
+    /**
+     * Stands in for standard input and output, and returns a Ui reading the one and
+     * printing to the other.
+     *
+     * <p>The streams stay replaced until the test ends, when putTheStreamsBack puts the
+     * real ones back.
+     *
+     * @param typed what the user is to have typed.
+     * @return a console Ui reading it.
+     */
+    private Ui replaceConsoleWith(String typed) {
         System.setIn(new ByteArrayInputStream(typed.getBytes(StandardCharsets.UTF_8)));
         printed = new ByteArrayOutputStream();
         System.setOut(new PrintStream(printed, true, StandardCharsets.UTF_8));
@@ -41,13 +50,18 @@ public class UiTest {
         return new Ui(true);
     }
 
-    private String readCaptured() {
+    /**
+     * Returns everything printed to the stood-in output since the test began.
+     *
+     * @return what the console would have shown.
+     */
+    private String readPrinted() {
         return printed.toString(StandardCharsets.UTF_8);
     }
 
     @Test
     public void readCommand_linesTyped_areReadInOrderAndTrimmed() {
-        Ui ui = openConsoleReading("  list  \ntodo read book\n");
+        Ui ui = replaceConsoleWith("  list  \ntodo read book\n");
         assertTrue(ui.hasNextCommand());
         assertEquals("list", ui.readCommand());
         assertEquals("todo read book", ui.readCommand());
@@ -56,10 +70,10 @@ public class UiTest {
 
     @Test
     public void show_onTheConsole_fencesTheMessageBetweenRules() {
-        Ui ui = openConsoleReading("");
+        Ui ui = replaceConsoleWith("");
         ui.show("first", "second");
-        String[] lines = readCaptured().split(System.lineSeparator());
-        assertEquals(4, lines.length, readCaptured());
+        String[] lines = readPrinted().split(System.lineSeparator());
+        assertEquals(4, lines.length, readPrinted());
         assertTrue(lines[0].startsWith("____"), lines[0]);
         assertEquals("first", lines[1]);
         assertEquals("second", lines[2]);
@@ -68,17 +82,17 @@ public class UiTest {
 
     @Test
     public void show_nothingToSay_isRefused() {
-        Ui ui = openConsoleReading("");
+        Ui ui = replaceConsoleWith("");
         // A message of no lines would print a pair of rules with a gap between them.
         assertThrows(AssertionError.class, ui::show);
     }
 
     @Test
     public void showWelcome_console_carriesTheBannerAndTheWindowDoesNot() {
-        Ui console = openConsoleReading("");
+        Ui console = replaceConsoleWith("");
         console.showWelcome();
-        assertTrue(readCaptured().contains("|_   _|_ _| | |_"), "the console lost its banner");
-        assertTrue(readCaptured().contains("Tally."));
+        assertTrue(readPrinted().contains("|_   _|_ _| | |_"), "the console lost its banner");
+        assertTrue(readPrinted().contains("Tally."));
 
         Ui window = new Ui(false);
         window.showWelcome();
@@ -106,7 +120,7 @@ public class UiTest {
 
     @Test
     public void close_afterReading_stopsTakingInput() {
-        Ui ui = openConsoleReading("list\n");
+        Ui ui = replaceConsoleWith("list\n");
         assertEquals("list", ui.readCommand());
         ui.close();
         // Reading on past a closed scanner is a programming error, not a quiet false.
