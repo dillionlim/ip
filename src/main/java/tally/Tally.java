@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -182,11 +183,15 @@ public class Tally {
         Command command = Parser.parseCommand(line);
         assert command != null
                 : "Parser.parseCommand returns a constant or throws, so it never yields null";
+        String arguments = Parser.parseArguments(line);
+        // Checked before bye is acted on, so that "bye now" is questioned rather than
+        // quietly ending the conversation and taking the rest of the input with it.
+        Parser.rejectUnwantedArguments(command, arguments);
         if (command == Command.BYE) {
             return false;
         }
 
-        String[] replyLines = carryOut(command, Parser.parseArguments(line));
+        String[] replyLines = carryOut(command, arguments);
 
         // Saving after a command that only read the tally would rewrite the file for
         // nothing, and every rewrite is a chance to lose what is already there.
@@ -401,10 +406,21 @@ public class Tally {
     /**
      * Adds a task to the tally and says what was recorded.
      *
+     * <p>A task the tally already holds is refused rather than added beside it, since
+     * two identical entries give the user no way to tell which is which, and marking
+     * one done leaves the other looking like work still to do.
+     *
      * @param task the task to add.
      * @return the lines to tell the user.
+     * @throws TallyException if the tally already holds the same task.
      */
-    private String[] addTask(Task task) {
+    private String[] addTask(Task task) throws TallyException {
+        OptionalInt alreadyThere = tasks.findPositionOf(task);
+        if (alreadyThere.isPresent()) {
+            throw new TallyException(String.format(
+                    "That is already on your tally, as task %d. I have not added it again.",
+                    alreadyThere.getAsInt() + 1));
+        }
         tasks.add(task);
         String countSentence = formatCountSentence();
         return new String[] {"Got it. I've added this task:", task.toString(), countSentence};

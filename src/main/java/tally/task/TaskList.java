@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
 /** The tasks on the user's tally, and the things that can be done to them. */
@@ -71,6 +72,18 @@ public class TaskList {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns where the tally already holds the same task, if it does.
+     *
+     * @param task the task being considered.
+     * @return its place on the tally counting from 0, or empty if it is not there.
+     */
+    public OptionalInt findPositionOf(Task task) {
+        return IntStream.range(0, tasks.size())
+                .filter(position -> tasks.get(position).isSameAs(task))
+                .findFirst();
     }
 
     /**

@@ -79,6 +79,25 @@ public class TallyTest {
     }
 
     @Test
+    public void getResponse_theSameTaskTwice_isRefusedAndNamesWhereItAlreadyIs() {
+        Tally tally = newTally();
+        tally.getResponse("todo read book");
+        String reply = tally.getResponse("todo read    book");
+        assertTrue(reply.contains("already on your tally, as task 1"), reply);
+        // Refusing it is only useful if the tally is left as it was.
+        assertEquals(1, tally.getResponse("list").lines().count() - 1);
+    }
+
+    @Test
+    public void getResponse_goodbyeWithTextAfterIt_doesNotEndTheConversation() {
+        Tally tally = newTally();
+        // "bye now" used to be read as bye, ending the conversation and, on the console,
+        // swallowing every command that followed it.
+        assertTrue(tally.getResponse("bye now").contains("takes nothing after it"));
+        assertFalse(tally.isExiting(), "a mistyped goodbye ended the conversation");
+    }
+
+    @Test
     public void getResponse_freeFromTheLastWritableDate_namesOnlyTheDaysItSearched() {
         // Only one day can be written down at all from there, so a reply naming a year
         // would be describing days the search never looked at and could not offer.

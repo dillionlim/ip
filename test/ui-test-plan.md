@@ -61,8 +61,9 @@ case this way keeps that from coming back.
 
 ## Coverage
 
-These cases cover Level-0 through Level-9, and the `A-Classes`, `A-Inheritance`,
-`A-Exceptions` and `A-Collections` extensions.
+These cases cover Level-0 through Level-10, the `A-Classes`, `A-Inheritance`,
+`A-Exceptions` and `A-Collections` extensions, the `B-DoWithinPeriodTasks` and
+`B-FindFreeTimes` extensions, and `A-MoreErrorHandling`.
 
 Cases that exercise a rejected command also issue a good command afterwards and
 list the tally at the end. Checking only the error message would miss a bad
@@ -1813,4 +1814,74 @@ ____________________________________________________________
 ____________________________________________________________
 Bye. Hope to see you again soon!
 ____________________________________________________________
+```
+
+## TC-34 - Mistakes Tally names rather than guesses at
+
+**Aim:** Four kinds of user error that Tally used to act on silently. `A-MoreErrorHandling` asks that anticipated errors be handled: a task already on the tally is not added twice; text after a command that takes none is questioned rather than dropped, which matters most for `bye`, since acting on it ended the session and discarded everything typed afterwards; and a marker given twice is named, rather than being swallowed into the value of the first one. Runs of spaces inside a description are recorded as one, which is also what lets the second `todo` here be recognised as the first.
+
+**Input**
+```text
+todo read book
+todo read    book
+bye now
+list extra
+deadline essay /by 2026-09-10 /by 2026-09-11
+event party /from 2pm /to 4pm /to 6pm
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Hello! I'm Tally.
+What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this task:
+[T][ ] read book
+Now you have 1 task in the list.
+____________________________________________________________
+
+____________________________________________________________
+That is already on your tally, as task 1. I have not added it again.
+____________________________________________________________
+
+____________________________________________________________
+bye takes nothing after it, so I do not know what you meant by "now". Try: bye
+____________________________________________________________
+
+____________________________________________________________
+list takes nothing after it, so I do not know what you meant by "extra". Try: list
+____________________________________________________________
+
+____________________________________________________________
+/by is given more than once, and I cannot tell which one you mean.
+____________________________________________________________
+
+____________________________________________________________
+/to is given more than once, and I cannot tell which one you mean.
+____________________________________________________________
+
+____________________________________________________________
+Here are the tasks in your list:
+1.[T][ ] read book
+____________________________________________________________
+
+____________________________________________________________
+Bye. Hope to see you again soon!
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> T | 0 | read book
 ```

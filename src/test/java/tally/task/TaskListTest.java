@@ -21,6 +21,14 @@ public class TaskListTest {
     }
 
     @Test
+    public void findPositionOf_aTaskTheTallyAlreadyHolds_namesWhereItIs() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("first"), new Todo("read book"));
+        assertEquals(1, tasks.findPositionOf(new Todo("read book")).orElse(-1));
+        assertTrue(tasks.findPositionOf(new Todo("buy bread")).isEmpty());
+    }
+
+    @Test
     public void findFreeRun_searchingFromTheLastWritableDate_offersNoDayBeyondIt() {
         TaskList tasks = new TaskList();
         tasks.add(new Window("busy", Task.LAST_DATE, Task.LAST_DATE));
