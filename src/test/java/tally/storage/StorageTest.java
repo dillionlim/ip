@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -37,28 +35,26 @@ public class StorageTest {
     /**
      * Makes a symbolic link, skipping the test where the file system has no such thing.
      *
-     * <p>Only a refusal by the file system counts as a reason to skip. A link that
-     * cannot be made because something is already sitting at the name is a fault in the
-     * test, and reporting that as an environment without symbolic links would hide it.
+     * <p>Whether links can be made at all is asked once, with a link of its own that is
+     * made and removed again. Only that question can be answered by skipping: once it
+     * is known they work, a link that will not be made is a fault in the test, and
+     * reporting it as an environment without symbolic links would hide it.
      *
      * @param link where the link goes.
      * @param target what it points at, which need not exist.
-     * @throws IOException if the link fails for any reason other than a file system
-     *     that will not make one.
+     * @throws IOException if the link cannot be made on a file system that makes them.
      */
-    private static void linkOrSkip(Path link, Path target) throws IOException {
+    private void linkOrSkip(Path link, Path target) throws IOException {
+        Path probe = folder.resolve("probe.link");
         try {
-            Files.createSymbolicLink(link, target);
-        } catch (UnsupportedOperationException exception) {
-            assumeTrue(false, "this file system does not allow symbolic links");
-        } catch (FileAlreadyExistsException exception) {
-            throw exception;
-        } catch (FileSystemException exception) {
+            Files.createSymbolicLink(probe, folder.resolve("probe.target"));
+            Files.delete(probe);
+        } catch (UnsupportedOperationException | IOException exception) {
             // Windows refuses this to a user without the privilege for it, which is an
-            // environment this test cannot run in rather than a failure of the code.
-            assumeTrue(false, "this file system will not make a symbolic link: "
-                    + exception.getMessage());
+            // environment these tests cannot run in rather than a failure of the code.
+            assumeTrue(false, "this file system will not make a symbolic link: " + exception);
         }
+        Files.createSymbolicLink(link, target);
     }
 
     @Test
@@ -504,6 +500,7 @@ public class StorageTest {
         assertEquals(List.of("[T][ ] read book"),
                 loaded.tasks().stream().map(Task::toString).toList());
     }
+
     @Test
     public void load_theSameTaskSpacedDifferently_isStillOneTask()
             throws TallyException, IOException {
@@ -518,5 +515,18 @@ public class StorageTest {
         assertEquals(List.of("[T][X] read book"),
                 loaded.tasks().stream().map(Task::toString).toList());
         assertTrue(loaded.note().orElseThrow().contains("Line 2"), loaded.note().orElseThrow());
+    }
+    @Test
+    public void load_paddedEventEndsRunningBackwards_isSkippedRatherThanCrashing()
+            throws TallyException, IOException {
+        Path file = folder.resolve("tally.txt");
+        // The reader asked about the untidied text while the event read the tidied
+        // text, so this slipped past the guard and stopped the program on startup.
+        Files.writeString(file, "E | 0 | trip |  2026-09-12 | 2026-09-08\nT | 0 | keep me\n");
+
+        LoadResult loaded = new Storage(file).load();
+        assertEquals(List.of("[T][ ] keep me"),
+                loaded.tasks().stream().map(Task::toString).toList());
+        assertTrue(loaded.note().orElseThrow().contains("Line 1"), loaded.note().orElseThrow());
     }
 }

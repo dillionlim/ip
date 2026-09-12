@@ -17,10 +17,10 @@ public class Event extends Task {
     /** The letter standing for this kind of task in the data file. */
     public static final String TYPE = "E";
 
-    /** When the event starts, kept as the user typed it rather than parsed. */
+    /** When the event starts, as written rather than parsed, apart from spacing. */
     private final String start;
 
-    /** When the event ends, in the same raw form as {@link #start}. */
+    /** When the event ends, in the same form as {@link #start}. */
     private final String end;
 
     /** The start read as a date, or empty when it was not written as one. */
@@ -36,18 +36,22 @@ public class Event extends Task {
      * are taken as they come, since nothing here can compare them.
      *
      * @param description what is happening.
-     * @param start when it starts, kept exactly as the user typed it.
-     * @param end when it ends, kept exactly as the user typed it.
+     * @param start when it starts, kept as written apart from its spacing.
+     * @param end when it ends, kept as written apart from its spacing.
      */
     public Event(String description, String start, String end) {
         super(description);
         this.start = tidySpacing(start);
         this.end = tidySpacing(end);
+        // Read from the tidied ends, not the ones passed in: a date written with a
+        // space in front of it is shown as a date, and reading the untidied text would
+        // leave it counted as no date at all.
+        //
         // Read once here rather than each time a day is asked about, since the free-day
         // search asks every task about every day of a year.
-        this.startDay = readDate(start);
-        this.endDay = readDate(end);
-        assert !isBackwards(startDay, endDay)
+        this.startDay = readDate(this.start);
+        this.endDay = readDate(this.end);
+        assert !hasBackwardsDates(start, end)
                 : "Parser.parseEvent and Storage refuse an event whose dated ends run"
                 + " backwards, so one arriving here came from neither: " + start + " to " + end;
     }
@@ -58,11 +62,18 @@ public class Event extends Task {
      * <p>Only a pair that both read as dates can be compared at all. "Mon 2pm" to "4pm"
      * may well be back to front, and nothing here can tell.
      *
-     * @param from the start, read as a date if it is one.
-     * @param to the end, read as a date if it is one.
-     * @return true when both are dates and the end falls before the start.
+     * <p>Takes the ends as written and tidies them itself, so that everyone asking the
+     * question gets the same answer as the event would. Asking it of the untidied text
+     * while the event reads the tidied text let a padded pair past every guard and into
+     * an assertion that stopped the program.
+     *
+     * @param start when it starts, as written.
+     * @param end when it ends, as written.
+     * @return true when both read as dates and the end falls before the start.
      */
-    public static boolean isBackwards(Optional<LocalDate> from, Optional<LocalDate> to) {
+    public static boolean hasBackwardsDates(String start, String end) {
+        Optional<LocalDate> from = readDate(tidySpacing(start));
+        Optional<LocalDate> to = readDate(tidySpacing(end));
         return from.isPresent() && to.isPresent() && to.get().isBefore(from.get());
     }
 
@@ -70,7 +81,7 @@ public class Event extends Task {
      * Returns whether this event takes up a given day, which none of them are unless
      * its ends were written as dates.
      *
-     * <p>An event keeps its ends as the user typed them, so "Mon 2pm" names no day this
+     * <p>An event keeps its ends as they were written, so "Mon 2pm" names no day this
      * can work out. Ends written as yyyy-mm-dd were read when the event was made, which
      * lets an event join the free-day search without changing what is stored for it.
      *
