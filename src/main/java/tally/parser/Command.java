@@ -40,11 +40,11 @@ public enum Command {
     private final String keyword;
 
     /** Whether carrying this command out can leave the tally different from before. */
-    private final boolean changesTally;
+    private final boolean canChangeTally;
 
-    Command(String keyword, boolean changesTally) {
+    Command(String keyword, boolean canChangeTally) {
         this.keyword = keyword;
-        this.changesTally = changesTally;
+        this.canChangeTally = canChangeTally;
     }
 
     /**
@@ -55,8 +55,8 @@ public enum Command {
      *
      * @return true for the commands that add, remove or alter a task.
      */
-    public boolean changesTally() {
-        return changesTally;
+    public boolean canChangeTally() {
+        return canChangeTally;
     }
 
     /**

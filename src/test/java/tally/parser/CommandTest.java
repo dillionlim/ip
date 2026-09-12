@@ -8,21 +8,21 @@ import org.junit.jupiter.api.Test;
 /** Tests that each command knows whether carrying it out can change the tally. */
 public class CommandTest {
     @Test
-    public void changesTally_commandsThatOnlyRead_isFalse() {
-        assertFalse(Command.LIST.changesTally());
-        assertFalse(Command.FIND.changesTally());
-        assertFalse(Command.FREE.changesTally());
-        assertFalse(Command.BYE.changesTally());
+    public void canChangeTally_commandsThatOnlyRead_isFalse() {
+        assertFalse(Command.LIST.canChangeTally());
+        assertFalse(Command.FIND.canChangeTally());
+        assertFalse(Command.FREE.canChangeTally());
+        assertFalse(Command.BYE.canChangeTally());
     }
 
     @Test
-    public void changesTally_commandsThatAddRemoveOrAlter_isTrue() {
-        assertTrue(Command.TODO.changesTally());
-        assertTrue(Command.DEADLINE.changesTally());
-        assertTrue(Command.EVENT.changesTally());
-        assertTrue(Command.WINDOW.changesTally());
-        assertTrue(Command.MARK.changesTally());
-        assertTrue(Command.UNMARK.changesTally());
-        assertTrue(Command.DELETE.changesTally());
+    public void canChangeTally_commandsThatAddRemoveOrAlter_isTrue() {
+        assertTrue(Command.TODO.canChangeTally());
+        assertTrue(Command.DEADLINE.canChangeTally());
+        assertTrue(Command.EVENT.canChangeTally());
+        assertTrue(Command.WINDOW.canChangeTally());
+        assertTrue(Command.MARK.canChangeTally());
+        assertTrue(Command.UNMARK.canChangeTally());
+        assertTrue(Command.DELETE.canChangeTally());
     }
 }

@@ -195,7 +195,7 @@ public class Tally {
 
         // Saving after a command that only read the tally would rewrite the file for
         // nothing, and every rewrite is a chance to lose what is already there.
-        if (command.changesTally()) {
+        if (command.canChangeTally()) {
             saveOrPutBack();
         }
         // The reply waits until the tally is safely written, so that a save that fails
