@@ -77,7 +77,7 @@ public class Storage {
                     + " Move it aside or repair it, then start Tally again.");
             throw new TallyException(file.getFileName() + " could not be read."
                     + " Starting with nothing on record." + quarantine.copyAside()
-                    + " It will not be written over until it can be read.");
+                    + " It will not be written over until it can be read.", exception);
         }
         Reading reading = readTally(stripByteOrderMark(lines));
         if (reading.unreadableLines().isEmpty() && reading.repeatedLines().isEmpty()) {
@@ -237,7 +237,7 @@ public class Storage {
             List<String> lines = tasks.stream().map(Task::toSaveFormat).toList();
             FileReplacer.replace(resolveSaveTarget(), lines);
         } catch (IOException exception) {
-            throw new TallyException(describeSaveFailure());
+            throw new TallyException(describeSaveFailure(), exception);
         }
     }
 
