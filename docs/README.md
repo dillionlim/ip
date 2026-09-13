@@ -11,7 +11,7 @@ It is blunt about it. That is the point.
 ## Getting started
 
 1. Check you have **Java 25**: run `java -version` in a terminal.
-2. Download `tally.jar` from the [latest release](https://github.com/dillionlim/ip/releases/tag/v0.4).
+2. Download `tally.jar` from the [latest release](https://github.com/dillionlim/ip/releases/tag/v0.5).
 3. Put it in a folder of its own. Tally keeps your tasks in `data/tally.txt` beside
    the jar, so give it somewhere to do that.
 4. Run it:
