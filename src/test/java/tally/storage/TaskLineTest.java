@@ -94,4 +94,14 @@ public class TaskLineTest {
             assertEquals(line, TaskLine.read(line).orElseThrow().toSaveFormat(), line);
         }
     }
+
+    @Test
+    public void read_anEventEndWrittenAsADateThatIsNotOne_isNoTask() {
+        // Never accepted at the keyboard, so a file holding one was edited by hand.
+        assertTrue(TaskLine.read("E | 0 | trip | 2026-02-30 | 2026-03-05").isEmpty());
+        assertTrue(TaskLine.read("E | 0 | trip | 2026-09-08 | 2026-13-45").isEmpty());
+        // An end that is no date at all is still the user's own business.
+        assertEquals("[E][ ] standup (from: Mon 2pm to: 4pm)",
+                TaskLine.read("E | 0 | standup | Mon 2pm | 4pm").orElseThrow().toString());
+    }
 }

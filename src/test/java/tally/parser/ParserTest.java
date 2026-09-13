@@ -328,4 +328,26 @@ public class ParserTest {
         assertEquals("[E][ ] standup (from: 4pm to: Mon 2pm)",
                 Parser.parseEvent("standup /from 4pm /to Mon 2pm").toString());
     }
+
+    @Test
+    public void parseEvent_anEndWrittenAsADateThatIsNotOne_throws() {
+        // An event keeps its ends as written, so these used to be kept verbatim and
+        // shown back as though the day existed.
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("trip /from 2026-02-30 /to 2026-03-05"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("trip /from 2026-09-08 /to 2026-13-45"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("trip /from 2026-02-29 /to 2026-03-05"));
+    }
+
+    @Test
+    public void parseEvent_endsThatAreNoDateAtAll_areKeptAsWritten() throws TallyException {
+        // Nothing can say whether "Mon 2pm" is a real time, so nothing refuses it. The
+        // second here only looks like a date until the rest of the line is read.
+        assertEquals("[E][ ] standup (from: Mon 2pm to: 4pm)",
+                Parser.parseEvent("standup /from Mon 2pm /to 4pm").toString());
+        assertEquals("[E][ ] lecture (from: 2026-09-12 4pm to: 6pm)",
+                Parser.parseEvent("lecture /from 2026-09-12 4pm /to 6pm").toString());
+    }
 }

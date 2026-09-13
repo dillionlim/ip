@@ -117,7 +117,22 @@ final class TaskLine {
         if (Event.hasBackwardsDates(startText, endText)) {
             return null;
         }
+        // An end written as a date that names no day was never accepted at the keyboard,
+        // so a file holding one was edited by hand into something the parser refuses.
+        if (namesNoSuchDay(startText) || namesNoSuchDay(endText)) {
+            return null;
+        }
         return new Event(description, startText, endText);
+    }
+
+    /**
+     * Returns whether text is written as a date but names no day.
+     *
+     * @param text one end of an event, as the file holds it.
+     * @return true when it has the shape of a date and is not one.
+     */
+    private static boolean namesNoSuchDay(String text) {
+        return Task.isWrittenAsDate(text) && Task.readDate(text).isEmpty();
     }
 
     /**

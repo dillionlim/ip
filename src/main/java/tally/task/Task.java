@@ -106,17 +106,37 @@ public abstract class Task {
     }
 
     /**
+     * Returns whether text is written in the shape of a date.
+     *
+     * <p>Says nothing about whether the day exists. It is what separates someone who
+     * meant a date and got it wrong from someone who meant something else entirely:
+     * "2026-02-30" is the first, "Mon 2pm" the second.
+     *
+     * @param text the text to look at.
+     * @return true when it is four digits, two, and two, separated by dashes.
+     */
+    public static boolean isWrittenAsDate(String text) {
+        return DATE_FORM.matcher(tidySpacing(text)).matches();
+    }
+
+    /**
      * Returns the date some text names, if it names one at all.
      *
-     * @param text the text to read.
+     * <p>Tidies the text first, as {@link #isWrittenAsDate} does, so that the pair
+     * always agree. A date the hand-edited file padded is the date it names, and
+     * asking one of the two about the padded text and the other about the tidied
+     * text made a readable date look like a day that does not exist.
+     *
+     * @param text the text to read, as written.
      * @return the date, or empty if the text is not a date written as yyyy-mm-dd.
      */
     public static Optional<LocalDate> readDate(String text) {
-        if (!DATE_FORM.matcher(text).matches()) {
+        String tidied = tidySpacing(text);
+        if (!DATE_FORM.matcher(tidied).matches()) {
             return Optional.empty();
         }
         try {
-            return Optional.of(LocalDate.parse(text));
+            return Optional.of(LocalDate.parse(tidied));
         } catch (DateTimeParseException exception) {
             return Optional.empty();
         }

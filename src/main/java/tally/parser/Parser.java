@@ -187,8 +187,8 @@ public class Parser {
      * @param arguments what the user typed after the command word.
      * @return the event described.
      * @throws TallyException if the description, the start or the end is missing, if
-     *     /to is written before /from, or if both ends read as dates and the end falls
-     *     before the start.
+     *     /to is written before /from, if an end is written as a date that names no
+     *     such day, or if both ends read as dates and the end falls before the start.
      */
     public static Event parseEvent(String arguments) throws TallyException {
         // AI found the bug, manually fixed.
@@ -198,6 +198,8 @@ public class Parser {
         for (String part : parts) {
             rejectSeparator(part);
         }
+        rejectImpossibleDate(parts[1]);
+        rejectImpossibleDate(parts[2]);
         // Two ends that both read as dates can be compared, and an event that ends
         // before it starts is refused for the same reason a window is. Ends written as
         // anything else are the user's to order, since nothing here can read them.
@@ -309,6 +311,26 @@ public class Parser {
                     endDate, startDate));
         }
         return new Window(parts[0], startDate, endDate);
+    }
+
+    /**
+     * Refuses an end written as a date that names no such day.
+     *
+     * <p>An event keeps its ends as they were written, so most of them cannot be
+     * checked at all: nothing can say whether "Mon 2pm" is a real time. One written
+     * in the date form can be, and someone who writes "2026-02-30" meant a date and
+     * got it wrong, rather than meaning those characters. Keeping it would show the
+     * day back to them as though it existed.
+     *
+     * @param text one end of an event, as the user typed it.
+     * @throws TallyException if it is written as a date but names no day.
+     */
+    private static void rejectImpossibleDate(String text) throws TallyException {
+        if (!Task.isWrittenAsDate(text) || Task.readDate(text).isPresent()) {
+            return;
+        }
+        throw new TallyException(String.format(
+                "\"%s\" is written as a date, but there is no such day.", text.trim()));
     }
 
     /**

@@ -43,10 +43,6 @@ public class Event extends Task {
         super(description);
         this.start = tidySpacing(start);
         this.end = tidySpacing(end);
-        // Read from the tidied ends, not the ones passed in: a date written with a
-        // space in front of it is shown as a date, and reading the untidied text would
-        // leave it counted as no date at all.
-        //
         // Read once here rather than each time a day is asked about, since the free-day
         // search asks every task about every day of a year.
         this.startDay = readDate(this.start);
@@ -62,18 +58,19 @@ public class Event extends Task {
      * <p>Only a pair that both read as dates can be compared at all. "Mon 2pm" to "4pm"
      * may well be back to front, and nothing here can tell.
      *
-     * <p>Takes the ends as written and tidies them itself, so that everyone asking the
-     * question gets the same answer as the event would. Asking it of the untidied text
-     * while the event reads the tidied text let a padded pair past every guard and into
-     * an assertion that stopped the program.
+     * <p>Takes the ends as written, since reading a date tidies the text first. That
+     * is what lets everyone asking the question get the same answer as the event
+     * would: asking it of the untidied text while the event read the tidied text once
+     * let a padded pair past every guard and into an assertion that stopped the
+     * program.
      *
      * @param start when it starts, as written.
      * @param end when it ends, as written.
      * @return true when both read as dates and the end falls before the start.
      */
     public static boolean hasBackwardsDates(String start, String end) {
-        Optional<LocalDate> from = readDate(tidySpacing(start));
-        Optional<LocalDate> to = readDate(tidySpacing(end));
+        Optional<LocalDate> from = readDate(start);
+        Optional<LocalDate> to = readDate(end);
         return from.isPresent() && to.isPresent() && to.get().isBefore(from.get());
     }
 
