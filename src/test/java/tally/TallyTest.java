@@ -122,6 +122,17 @@ public class TallyTest {
     }
 
     @Test
+    public void getResponse_goodbyeTwice_isAnsweredBothTimes() {
+        Tally tally = makeTally();
+        assertTrue(tally.getResponse("bye").contains("Session ended."));
+        // A command that asks to leave is answered, however many times it is asked.
+        // The window stops taking input at the first one, so this is for any other
+        // front end, and for the reader wondering whether the second is swallowed.
+        assertTrue(tally.getResponse("bye").contains("Session ended."));
+        assertTrue(tally.isExiting());
+    }
+
+    @Test
     public void getResponse_freeFromTheLastWritableDate_namesOnlyTheDaysItSearched() {
         // Only one day can be written down at all from there, so a reply naming a year
         // would be describing days the search never looked at and could not offer.
