@@ -3,6 +3,7 @@ package tally.storage;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 import tally.task.Deadline;
@@ -102,41 +103,19 @@ final class TaskLine {
     }
 
     /**
-     * Returns the event a data-file line describes, or null if its dated ends run backwards.
-     *
-     * <p>An event's ends are whatever the user wrote, spacing aside, so most pairs
-     * cannot be compared at all. A pair that can be, and runs the wrong way, was edited
-     * by hand into something the parser would have refused.
+     * Returns the event a data-file line describes, or null if it cannot be read.
      *
      * @param description what is happening.
-     * @param startText the first time field as it appears in the file.
-     * @param endText the second time field as it appears in the file.
+     * @param startText the first date field as it appears in the file.
+     * @param endText the second date field as it appears in the file.
      * @return the event, or null if the line cannot be read.
      */
     private static Task readEvent(String description, String startText, String endText) {
-        if (Event.hasBackwardsDates(startText, endText)) {
-            return null;
-        }
-        // An end written as a date that names no day was never accepted at the keyboard,
-        // so a file holding one was edited by hand into something the parser refuses.
-        if (namesNoSuchDay(startText) || namesNoSuchDay(endText)) {
-            return null;
-        }
-        return new Event(description, startText, endText);
+        return readSpanned(startText, endText, (start, end) -> new Event(description, start, end));
     }
 
     /**
-     * Returns whether text is written as a date but names no day.
-     *
-     * @param text one end of an event, as the file holds it.
-     * @return true when it has the shape of a date and is not one.
-     */
-    private static boolean namesNoSuchDay(String text) {
-        return Task.isWrittenAsDate(text) && Task.readDate(text).isEmpty();
-    }
-
-    /**
-     * Returns the window task a data-file line describes, or null if either date cannot be read.
+     * Returns the window task a data-file line describes, or null if it cannot be read.
      *
      * @param description what has to be done.
      * @param startDateText the first date field as it appears in the file.
@@ -144,16 +123,31 @@ final class TaskLine {
      * @return the window task, or null if the line cannot be read.
      */
     private static Task readWindow(String description, String startDateText, String endDateText) {
-        Optional<LocalDate> start = Task.readDate(startDateText);
-        Optional<LocalDate> end = Task.readDate(endDateText);
-        if (start.isEmpty() || end.isEmpty()) {
+        return readSpanned(startDateText, endDateText, (start, end) ->
+                new Window(description, start, end));
+    }
+
+    /**
+     * Returns a task running between two dated ends, or null if the file holds no such
+     * pair of days.
+     *
+     * <p>A line the parser would have refused was edited by hand, and is damage rather
+     * than something to ask the user about, so it is reported the way any other
+     * malformed line is: by returning null. Letting a backwards pair through would
+     * leave the free-day search asking about a stretch with no days in it.
+     *
+     * @param startText the first date field as it appears in the file.
+     * @param endText the second date field as it appears in the file.
+     * @param makeTask what to build once the two days are known to be in order.
+     * @return the task, or null if either date cannot be read or they run backwards.
+     */
+    private static Task readSpanned(String startText, String endText,
+            BiFunction<LocalDate, LocalDate, Task> makeTask) {
+        Optional<LocalDate> start = Task.readDate(startText);
+        Optional<LocalDate> end = Task.readDate(endText);
+        if (start.isEmpty() || end.isEmpty() || end.get().isBefore(start.get())) {
             return null;
         }
-        // The parser refuses a backwards window, so a file holding one was edited
-        // by hand; letting it through would crash the free-day search later.
-        if (end.get().isBefore(start.get())) {
-            return null;
-        }
-        return new Window(description, start.get(), end.get());
+        return makeTask.apply(start.get(), end.get());
     }
 }

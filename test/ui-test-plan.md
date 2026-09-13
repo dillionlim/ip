@@ -206,7 +206,7 @@ ____________________________________________________________
 ```text
 todo read book
 deadline return book /by 2019-06-06
-event project meeting /from Aug 6th 2pm /to 4pm
+event project meeting /from 2019-08-06 /to 2019-08-07
 list
 bye
 ```
@@ -238,7 +238,7 @@ ____________________________________________________________
 
 ____________________________________________________________
 Recorded:
-[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)
 3 tasks on record.
 ____________________________________________________________
 
@@ -246,7 +246,7 @@ ____________________________________________________________
 On record:
 1.[T][ ] read book
 2.[D][ ] return book (by: Jun 06 2019)
-3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+3.[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -508,7 +508,7 @@ ____________________________________________________________
 **Input**
 ```text
 deadline return book
-event project meeting /from Mon 2pm
+event project meeting /from 2019-08-06
 deadline return book /by 2019-10-15
 list
 bye
@@ -532,7 +532,7 @@ A deadline needs a description and a /by date. Example: deadline return book /by
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from time and a /to time, in that order. Example: event project meeting /from Mon 2pm /to 4pm
+An event needs a description, a /from date and a /to date, in that order. Example: event project meeting /from 2026-08-06 /to 2026-08-07
 ____________________________________________________________
 
 ____________________________________________________________
@@ -798,12 +798,12 @@ ____________________________________________________________
 
 ## TC-15 - An event with /to before /from is rejected
 
-**Aim:** Writing `/to` before `/from` is refused rather than recorded with the start and end swapped. Regression test: this input previously produced `(from: 4pm to: 2pm)` silently. The correctly ordered event afterwards shows the markers still work when written the right way round.
+**Aim:** Writing `/to` before `/from` is refused rather than recorded with the start and end swapped. Regression test: this input once produced `(from: 4pm to: 2pm)` silently. The correctly ordered event afterwards shows the markers still work when written the right way round.
 
 **Input**
 ```text
-event meeting /to 4pm /from 2pm
-event meeting /from 2pm /to 4pm
+event meeting /to 2026-09-08 /from 2026-09-07
+event meeting /from 2026-09-07 /to 2026-09-08
 list
 bye
 ```
@@ -822,18 +822,18 @@ I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from time and a /to time, in that order. Example: event project meeting /from Mon 2pm /to 4pm
+An event needs a description, a /from date and a /to date, in that order. Example: event project meeting /from 2026-08-06 /to 2026-08-07
 ____________________________________________________________
 
 ____________________________________________________________
 Recorded:
-[E][ ] meeting (from: 2pm to: 4pm)
+[E][ ] meeting (from: Sep 07 2026 to: Sep 08 2026)
 1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
 On record:
-1.[E][ ] meeting (from: 2pm to: 4pm)
+1.[E][ ] meeting (from: Sep 07 2026 to: Sep 08 2026)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1050,7 +1050,7 @@ ____________________________________________________________
 ```text
 T | 1 | read book
 D | 0 | return book | 2019-06-06
-E | 0 | project meeting | Aug 6th 2pm | 4pm
+E | 0 | project meeting | 2019-08-06 | 2019-08-07
 ```
 
 **Input**
@@ -1078,7 +1078,7 @@ ____________________________________________________________
 On record:
 1.[T][X] read book
 2.[D][ ] return book (by: Jun 06 2019)
-3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+3.[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1090,7 +1090,7 @@ ____________________________________________________________
 On record:
 1.[T][X] read book
 2.[D][X] return book (by: Jun 06 2019)
-3.[E][ ] project meeting (from: Aug 6th 2pm to: 4pm)
+3.[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1592,13 +1592,13 @@ Session ended. Your tasks did not.
 ____________________________________________________________
 ```
 
-## TC-29 - A free search says when it saw less than the whole tally
+## TC-29 - A free search counts every event, and refuses what it cannot read
 
-**Aim:** an event whose ends are text names no day, so it cannot be counted; the reply says so rather than implying the day is certainly free. A run shorter than a day, a count that is not a number and an unreadable date are each refused.
+**Aim:** an event runs across the days between its ends, so the free-day search steps past them and answers with the first day no task claims. An event's ends were once free text, which named no day the search could see, and the reply had to say it was drawn from less than the whole tally; there is nothing left to disclaim. A run shorter than a day, a count that is not a number and an unreadable date are each refused.
 
 **Input**
 ```text
-event standup /from Mon 2pm /to 3pm
+event standup /from 2026-09-09 /to 2026-09-09
 free /from 2026-09-09
 free /for 0
 free /for abc
@@ -1621,13 +1621,12 @@ ____________________________________________________________
 
 ____________________________________________________________
 Recorded:
-[E][ ] standup (from: Mon 2pm to: 3pm)
+[E][ ] standup (from: Sep 09 2026 to: Sep 09 2026)
 1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Next free day: Sep 09 2026.
-Events whose times are not dates were not counted.
+Next free day: Sep 10 2026.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1856,7 +1855,7 @@ todo read    book
 bye now
 list extra
 deadline essay /by 2026-09-10 /by 2026-09-11
-event party /from 2pm /to 4pm /to 6pm
+event party /from 2026-09-08 /to 2026-09-09 /to 2026-09-10
 list
 bye
 ```
@@ -1917,12 +1916,12 @@ tally.txt >>> T | 0 | read book
 
 ## TC-35 - An event that ends before it starts is refused
 
-**Aim:** An event's two times are kept as the user wrote them, apart from their spacing, so most pairs cannot be compared at all. A pair that both read as dates can be, and one running backwards is refused for the same reason a backwards window is, rather than being shown back to front and quietly counted as the days between them. Times written as anything else stay the user's to order, which the second command here shows.
+**Aim:** An event's two ends are dates, so the pair can always be compared. One running backwards is refused for the same reason a backwards window is, rather than being shown back to front and quietly counted as the days between them. An event that begins and ends on one day is not backwards, and the second command here shows it is taken.
 
 **Input**
 ```text
 event trip /from 2026-09-12 /to 2026-09-08
-event standup /from 4pm /to Mon 2pm
+event standup /from 2026-09-09 /to 2026-09-09
 list
 bye
 ```
@@ -1946,13 +1945,13 @@ ____________________________________________________________
 
 ____________________________________________________________
 Recorded:
-[E][ ] standup (from: 4pm to: Mon 2pm)
+[E][ ] standup (from: Sep 09 2026 to: Sep 09 2026)
 1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
 On record:
-1.[E][ ] standup (from: 4pm to: Mon 2pm)
+1.[E][ ] standup (from: Sep 09 2026 to: Sep 09 2026)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -1962,7 +1961,7 @@ ____________________________________________________________
 
 **Expected files after the run**
 ```text
-tally.txt >>> E | 0 | standup | 4pm | Mon 2pm
+tally.txt >>> E | 0 | standup | 2026-09-09 | 2026-09-09
 ```
 
 ## TC-36 - A task the data file names twice is kept once
@@ -2133,7 +2132,7 @@ tally.txt >>> T | 0 | write essay
 
 ## TC-39 - Dates a hand-edited file padded are still dates
 
-**Aim:** The data file is edited by hand, so a date in it can arrive with a space either side. An event tidies the spacing of its ends, and used to read its dates from the untidied text, so the list showed an event carrying two readable dates while `free` stepped over it and reported that the answer had left events out. The first two commands here show the event both listed and counted. The second line of the file pads a pair that runs backwards, which the reader refuses as it would refuse an unpadded one, rather than loading it and rejecting it on the next start.
+**Aim:** The data file is edited by hand, so a date in it can arrive with a space either side. Reading a date tidies the text first, so a padded date is the day it names and the event loads as any other would; reading the text as it came left the same date unreadable, which is how a damaged line is reported. The first two commands here show the event both listed and counted. The second line of the file pads a pair that runs backwards, which the reader refuses as it would refuse an unpadded one, rather than loading it and rejecting it on the next start.
 
 **Given the data file**
 ```text
@@ -2168,7 +2167,7 @@ ____________________________________________________________
 
 ____________________________________________________________
 On record:
-1.[E][ ] trip (from: 2026-09-08 to: 2026-09-10)
+1.[E][ ] trip (from: Sep 08 2026 to: Sep 10 2026)
 2.[T][ ] keep me
 ____________________________________________________________
 
@@ -2236,16 +2235,17 @@ ____________________________________________________________
 tally.txt >>> T | 0 | read the tP user stories
 ```
 
-## TC-41 - An event date that names no such day
+## TC-41 - An event needs two dates, as a deadline needs one
 
-**Aim:** An event keeps its two ends as they were written, so most of them cannot be checked: nothing can say whether `Mon 2pm` is a real time. One written in the date form can be, and someone who types `2026-02-30` meant a date and got it wrong. It used to be kept as free text and shown back as though the day existed, while a deadline with the same date was refused. Both are refused now, and an end that is no date at all is still the user's own business.
+**Aim:** An event's ends were once kept as whatever the user typed, so `Mon 2pm` was taken, and so was `y`, and so was `2026-02-30`, which was shown back as though February had thirty days. An event runs across days like a window does, so both its ends are read as dates and refused when they are not, in the same words a deadline refuses the same text. The `list` at the end shows that nothing the first four commands named reached the tally.
 
 **Input**
 ```text
 event trip /from 2026-02-30 /to 2026-03-05
-event trip /from 2026-09-08 /to 2026-13-45
 event standup /from Mon 2pm /to 4pm
+event x /from y /to z
 event lecture /from 2026-09-12 4pm /to 6pm
+event conference /from 2026-09-12 /to 2026-09-14
 list
 bye
 ```
@@ -2264,29 +2264,30 @@ I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-"2026-02-30" is written as a date, but there is no such day.
+Unreadable date: "2026-02-30". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
-"2026-13-45" is written as a date, but there is no such day.
+Unreadable date: "Mon 2pm". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
+____________________________________________________________
+
+____________________________________________________________
+Unreadable date: "y". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
+____________________________________________________________
+
+____________________________________________________________
+Unreadable date: "2026-09-12 4pm". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
 ____________________________________________________________
 
 ____________________________________________________________
 Recorded:
-[E][ ] standup (from: Mon 2pm to: 4pm)
+[E][ ] conference (from: Sep 12 2026 to: Sep 14 2026)
 1 task on record.
 ____________________________________________________________
 
 ____________________________________________________________
-Recorded:
-[E][ ] lecture (from: 2026-09-12 4pm to: 6pm)
-2 tasks on record.
-____________________________________________________________
-
-____________________________________________________________
 On record:
-1.[E][ ] standup (from: Mon 2pm to: 4pm)
-2.[E][ ] lecture (from: 2026-09-12 4pm to: 6pm)
+1.[E][ ] conference (from: Sep 12 2026 to: Sep 14 2026)
 ____________________________________________________________
 
 ____________________________________________________________
@@ -2296,6 +2297,59 @@ ____________________________________________________________
 
 **Expected files after the run**
 ```text
-tally.txt >>> E | 0 | standup | Mon 2pm | 4pm
-tally.txt >>> E | 0 | lecture | 2026-09-12 4pm | 6pm
+tally.txt >>> E | 0 | conference | 2026-09-12 | 2026-09-14
+```
+
+## TC-42 - An event an old data file wrote as free text is set aside
+
+**Aim:** A version of Tally before this one wrote an event's ends as the user typed them, so a data file carried over from it can hold `Mon 2pm` where a date now belongs. Such a line is damage the same way a hand edit is: it is named, copied aside for repair, and left out of the tally, rather than loading as an event Tally can no longer make sense of. The todo on the third line shows the rest of the file still loads.
+
+**Given the data file**
+```text
+E | 0 | project meeting | Mon 2pm | 4pm
+E | 0 | trip | 2026-02-30 | 2026-03-05
+T | 0 | keep me
+```
+
+**Input**
+```text
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Lines 1 and 2 of tally.txt could not be read, so those tasks are not on record. Copied to tally.txt.broken for repair.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[T][ ] keep me
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | project meeting | Mon 2pm | 4pm
+tally.txt >>> E | 0 | trip | 2026-02-30 | 2026-03-05
+tally.txt >>> T | 0 | keep me
+tally.txt.broken >>> E | 0 | project meeting | Mon 2pm | 4pm
+tally.txt.broken >>> E | 0 | trip | 2026-02-30 | 2026-03-05
+tally.txt.broken >>> T | 0 | keep me
 ```

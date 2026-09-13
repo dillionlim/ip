@@ -1,5 +1,6 @@
 package tally.parser;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -246,22 +247,25 @@ public class ParserTest {
     }
 
     @Test
-    public void parseEvent_descriptionAndBothTimes_returnsEvent() throws TallyException {
-        Event event = Parser.parseEvent("project meeting /from Mon 2pm /to 4pm");
-        assertEquals("[E][ ] project meeting (from: Mon 2pm to: 4pm)", event.toString());
+    public void parseEvent_descriptionAndBothDates_returnsEvent() throws TallyException {
+        Event event = Parser.parseEvent("project meeting /from 2019-08-06 /to 2019-08-07");
+        assertEquals("[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)",
+                event.toString());
     }
 
     @Test
     public void parseEvent_toBeforeFrom_throws() {
-        // Once recorded the times the wrong way round instead of refusing the command.
-        assertThrows(TallyException.class, () -> Parser.parseEvent("meeting /to 4pm /from 2pm"));
+        // Once recorded the ends the wrong way round instead of refusing the command.
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("meeting /to 2026-09-08 /from 2026-09-07"));
     }
 
     @Test
     public void parseEvent_missingMarkerOrBlankPart_throws() {
-        assertThrows(TallyException.class, () -> Parser.parseEvent("meeting /from 2pm"));
-        assertThrows(TallyException.class, () -> Parser.parseEvent("meeting /to 4pm"));
-        assertThrows(TallyException.class, () -> Parser.parseEvent("/from 2pm /to 4pm"));
+        assertThrows(TallyException.class, () -> Parser.parseEvent("meeting /from 2026-09-08"));
+        assertThrows(TallyException.class, () -> Parser.parseEvent("meeting /to 2026-09-08"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("/from 2026-09-08 /to 2026-09-09"));
     }
 
     @Test
@@ -323,16 +327,21 @@ public class ParserTest {
     }
 
     @Test
-    public void parseEvent_endsThatAreNotDates_areAcceptedInAnyOrder() throws TallyException {
-        // Nothing can read these, so nothing can say they are the wrong way round.
-        assertEquals("[E][ ] standup (from: 4pm to: Mon 2pm)",
-                Parser.parseEvent("standup /from 4pm /to Mon 2pm").toString());
+    public void parseEvent_anEndThatIsNotADate_throws() {
+        // An event kept its ends as written, so any of these was taken and shown back
+        // as though it named a time Tally understood. A deadline refused the same text
+        // from the start, and an event is no less a stretch of days for being one.
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("standup /from Mon 2pm /to 4pm"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("lecture /from 2026-09-12 4pm /to 6pm"));
+        assertThrows(TallyException.class, () -> Parser.parseEvent("x /from y /to z"));
     }
 
     @Test
     public void parseEvent_anEndWrittenAsADateThatIsNotOne_throws() {
-        // An event keeps its ends as written, so these used to be kept verbatim and
-        // shown back as though the day existed.
+        // Written in the date form and naming no day: a date got wrong rather than
+        // something never meant as one, and the likelier of the two to be a typo.
         assertThrows(TallyException.class, () ->
                 Parser.parseEvent("trip /from 2026-02-30 /to 2026-03-05"));
         assertThrows(TallyException.class, () ->
@@ -342,12 +351,9 @@ public class ParserTest {
     }
 
     @Test
-    public void parseEvent_endsThatAreNoDateAtAll_areKeptAsWritten() throws TallyException {
-        // Nothing can say whether "Mon 2pm" is a real time, so nothing refuses it. The
-        // second here only looks like a date until the rest of the line is read.
-        assertEquals("[E][ ] standup (from: Mon 2pm to: 4pm)",
-                Parser.parseEvent("standup /from Mon 2pm /to 4pm").toString());
-        assertEquals("[E][ ] lecture (from: 2026-09-12 4pm to: 6pm)",
-                Parser.parseEvent("lecture /from 2026-09-12 4pm /to 6pm").toString());
+    public void parseEvent_bothEndsOnOneDay_isAllowed() {
+        // Most events are over within the day, so the two ends naming it are not
+        // backwards and must not be refused as though they were.
+        assertDoesNotThrow(() -> Parser.parseEvent("meeting /from 2026-09-08 /to 2026-09-08"));
     }
 }

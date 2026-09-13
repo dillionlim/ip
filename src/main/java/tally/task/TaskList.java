@@ -102,15 +102,6 @@ public class TaskList {
     }
 
     /**
-     * Returns whether any task names days that could not be read as dates.
-     *
-     * @return true when the free-day search saw less than the whole tally.
-     */
-    public boolean hasUnreadableDates() {
-        return tasks.stream().anyMatch(Task::hasUnreadableDates);
-    }
-
-    /**
      * Puts the given tasks on the tally in place of whatever it holds.
      *
      * <p>This is how the tally is brought back into step with the data file after a save

@@ -52,18 +52,10 @@ public class TaskListTest {
     }
 
     @Test
-    public void findFreeRun_eventWrittenAsDates_takesUpThoseDays() {
+    public void findFreeRun_anEvent_takesUpEveryDayItRunsAcross() {
         TaskList tasks = new TaskList();
-        tasks.add(new Event("trip", "2026-09-09", "2026-09-11"));
+        tasks.add(new Event("trip", LocalDate.of(2026, 9, 9), LocalDate.of(2026, 9, 11)));
         assertEquals(Optional.of(LocalDate.of(2026, 9, 12)), tasks.findFreeRun(1, SEP_9));
-    }
-
-    @Test
-    public void findFreeRun_eventWrittenAsText_takesUpNothingAndIsReported() {
-        TaskList tasks = new TaskList();
-        tasks.add(new Event("standup", "Mon 2pm", "3pm"));
-        assertEquals(Optional.of(SEP_9), tasks.findFreeRun(1, SEP_9));
-        assertTrue(tasks.hasUnreadableDates());
     }
 
     @Test
