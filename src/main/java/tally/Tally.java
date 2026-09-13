@@ -105,16 +105,10 @@ public class Tally {
      */
     public String getResponse(String input) {
         assert !isConsole : "a console Tally prints its replies, leaving nothing to return";
-        boolean wasExiting = isExiting;
         try {
             runCommand(input.trim());
         } catch (TallyException exception) {
             ui.showError(exception.getMessage());
-        }
-        // Only the command that ends the conversation is answered with the farewell. A
-        // front end that keeps taking input afterwards must not be given it again.
-        if (isExiting && !wasExiting) {
-            ui.showGoodbye();
         }
         return ui.takePendingResponse();
     }
@@ -164,16 +158,20 @@ public class Tally {
             }
         }
 
-        ui.showGoodbye();
+        // The command that ended the conversation has already said goodbye. Reaching
+        // here without one means the input ended instead, which is an ending too.
+        if (!isExiting) {
+            ui.showGoodbye();
+        }
         ui.close();
     }
 
     /**
      * Carries out one command from the user.
      *
-     * <p>Saying goodbye is carried out by noting it: isExiting is set here rather than
-     * answered back to the caller, since a true or a false says nothing about which of
-     * the two it means, and both callers already read the field afterwards.
+     * <p>Saying goodbye is a command like any other: it is carried out here, farewell
+     * and all, rather than answered back for a caller to act on. That is what keeps the
+     * farewell to the one command that asked for it, however many follow.
      *
      * @param line the line the user typed, with surrounding spaces removed.
      * @throws TallyException if Tally cannot carry out the command.
@@ -188,6 +186,7 @@ public class Tally {
         Parser.rejectUnwantedArguments(command, arguments);
         if (command == Command.BYE) {
             isExiting = true;
+            ui.showGoodbye();
             return;
         }
 
