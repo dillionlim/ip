@@ -21,6 +21,14 @@ public class MainWindow {
     /** How long the goodbye stays on screen before the window closes itself. */
     private static final Duration FAREWELL_PAUSE = Duration.seconds(1.5);
 
+    /**
+     * How far down the conversation is scrolled to keep the newest message in view.
+     *
+     * <p>A scroll pane measures its position from 0 at the top to 1 at the foot, so
+     * this is the bottom rather than a distance.
+     */
+    private static final double FOOT_OF_THE_CONVERSATION = 1.0;
+
     @FXML
     private ScrollPane scrollPane;
     @FXML
@@ -44,7 +52,8 @@ public class MainWindow {
      */
     @FXML
     void initialize() {
-        dialogContainer.heightProperty().addListener(observed -> scrollPane.setVvalue(1.0));
+        dialogContainer.heightProperty().addListener(
+                observed -> scrollPane.setVvalue(FOOT_OF_THE_CONVERSATION));
     }
 
     /**

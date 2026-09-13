@@ -121,7 +121,7 @@ public class Storage {
             sentences.add(describeUnreadableLines(reading.unreadableLines()) + aside);
         }
         // The only refusal that reaches here comes from a copy that could not be
-        // made, and no copy is attempted unless a line could not be read, so the 
+        // made, and no copy is attempted unless a line could not be read, so the
         // two arrive together.
         if (quarantine.refusal().isPresent()) {
             sentences.add("Nothing will be written over it until it is repaired.");
