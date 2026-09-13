@@ -2235,3 +2235,67 @@ ____________________________________________________________
 ```text
 tally.txt >>> T | 0 | read the tP user stories
 ```
+
+## TC-41 - An event date that names no such day
+
+**Aim:** An event keeps its two ends as they were written, so most of them cannot be checked: nothing can say whether `Mon 2pm` is a real time. One written in the date form can be, and someone who types `2026-02-30` meant a date and got it wrong. It used to be kept as free text and shown back as though the day existed, while a deadline with the same date was refused. Both are refused now, and an end that is no date at all is still the user's own business.
+
+**Input**
+```text
+event trip /from 2026-02-30 /to 2026-03-05
+event trip /from 2026-09-08 /to 2026-13-45
+event standup /from Mon 2pm /to 4pm
+event lecture /from 2026-09-12 4pm /to 6pm
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+"2026-02-30" is written as a date, but there is no such day.
+____________________________________________________________
+
+____________________________________________________________
+"2026-13-45" is written as a date, but there is no such day.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] standup (from: Mon 2pm to: 4pm)
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] lecture (from: 2026-09-12 4pm to: 6pm)
+2 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[E][ ] standup (from: Mon 2pm to: 4pm)
+2.[E][ ] lecture (from: 2026-09-12 4pm to: 6pm)
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | standup | Mon 2pm | 4pm
+tally.txt >>> E | 0 | lecture | 2026-09-12 4pm | 6pm
+```

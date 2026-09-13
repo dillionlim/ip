@@ -200,4 +200,26 @@ public class TaskTest {
         // tidied, so a file that loaded was rejected as damaged on the next start.
         assertThrows(AssertionError.class, () -> new Event("trip", " 2026-09-12", "2026-09-08 "));
     }
+
+    @Test
+    public void isWrittenAsDate_theShapeAlone_isWhatItAnswersAbout() {
+        // True for anything in the date's shape, whether or not the day exists: that is
+        // what separates a date got wrong from something that was never meant as one.
+        assertTrue(Task.isWrittenAsDate("2026-09-18"));
+        assertTrue(Task.isWrittenAsDate("2026-02-30"));
+        assertTrue(Task.isWrittenAsDate("2026-13-45"));
+        assertFalse(Task.isWrittenAsDate("Mon 2pm"));
+        assertFalse(Task.isWrittenAsDate("2026-09-12 4pm"));
+        assertFalse(Task.isWrittenAsDate("2026-9-1"));
+    }
+
+    @Test
+    public void readDate_paddedByAHandEditedFile_readsTheDayItNames() {
+        // The two have to agree on what the text is before they can agree on what it
+        // says. While only the shape check tidied, a padded date was a date nobody
+        // could read, which is the description of a day that does not exist.
+        assertTrue(Task.isWrittenAsDate(" 2026-09-08 "));
+        assertEquals(LocalDate.of(2026, 9, 8), Task.readDate(" 2026-09-08 ").orElseThrow());
+        assertTrue(Task.readDate(" 2026-02-30 ").isEmpty());
+    }
 }
