@@ -187,28 +187,20 @@ public class Parser {
      * @param arguments what the user typed after the command word.
      * @return the event described.
      * @throws TallyException if the description, the start or the end is missing, if
-     *     /to is written before /from, if an end is written as a date that names no
-     *     such day, or if both ends read as dates and the end falls before the start.
+     *     /to is written before /from, if either end cannot be read as a date, or if
+     *     the event ends before it starts.
      */
     public static Event parseEvent(String arguments) throws TallyException {
         // AI found the bug, manually fixed.
-        String usage = "An event needs a description, a /from time and a /to time,"
-                + " in that order. Example: event project meeting /from Mon 2pm /to 4pm";
+        String usage = "An event needs a description, a /from date and a /to date,"
+                + " in that order."
+                + " Example: event project meeting /from 2026-08-06 /to 2026-08-07";
         String[] parts = splitOnTwoMarkers(arguments, " /from ", " /to ", usage);
         for (String part : parts) {
             rejectSeparator(part);
         }
-        rejectImpossibleDate(parts[1]);
-        rejectImpossibleDate(parts[2]);
-        // Two ends that both read as dates can be compared, and an event that ends
-        // before it starts is refused for the same reason a window is. Ends written as
-        // anything else are the user's to order, since nothing here can read them.
-        if (Event.hasBackwardsDates(parts[1], parts[2])) {
-            throw new TallyException(String.format(
-                    "An event cannot end before it starts. You have it backwards:"
-                            + " ends %s, starts %s.", parts[2], parts[1]));
-        }
-        return new Event(parts[0], parts[1], parts[2]);
+        DateSpan span = parseDateSpan(parts[1], parts[2], "An event");
+        return new Event(parts[0], span.start(), span.end());
     }
 
     /**
@@ -302,35 +294,44 @@ public class Parser {
         String[] parts = splitOnTwoMarkers(arguments, " /between ", " /and ", usage);
         rejectSeparator(parts[0]);
 
-        LocalDate startDate = parseDate(parts[1]);
-        LocalDate endDate = parseDate(parts[2]);
-        if (endDate.isBefore(startDate)) {
-            throw new TallyException(String.format(
-                    "A window cannot end before it starts. You have it backwards:"
-                            + " ends %s, starts %s.",
-                    endDate, startDate));
-        }
-        return new Window(parts[0], startDate, endDate);
+        DateSpan span = parseDateSpan(parts[1], parts[2], "A window");
+        return new Window(parts[0], span.start(), span.end());
     }
 
     /**
-     * Refuses an end written as a date that names no such day.
+     * A stretch of days, its ends the right way round.
      *
-     * <p>An event keeps its ends as they were written, so most of them cannot be
-     * checked at all: nothing can say whether "Mon 2pm" is a real time. One written
-     * in the date form can be, and someone who writes "2026-02-30" meant a date and
-     * got it wrong, rather than meaning those characters. Keeping it would show the
-     * day back to them as though it existed.
-     *
-     * @param text one end of an event, as the user typed it.
-     * @throws TallyException if it is written as a date but names no day.
+     * @param start the first day of the stretch.
+     * @param end the last day, never before the start.
      */
-    private static void rejectImpossibleDate(String text) throws TallyException {
-        if (!Task.isWrittenAsDate(text) || Task.readDate(text).isPresent()) {
-            return;
+    private record DateSpan(LocalDate start, LocalDate end) {
+    }
+
+    /**
+     * Returns the stretch of days two ends of a command name.
+     *
+     * <p>An event and a window are both written as two dates, and neither can run
+     * backwards, so both are read here. A task that ends before it starts is turned
+     * away at the keyboard rather than stored, since nothing later can make sense of
+     * it: the free-day search would be asked about a stretch with no days in it.
+     *
+     * @param startText what the user typed as the first date.
+     * @param endText what the user typed as the second date.
+     * @param subject the task named as the sentence opens it, such as "An event".
+     * @return the two days, the earlier first.
+     * @throws TallyException if either date cannot be read, or the second falls before
+     *     the first.
+     */
+    private static DateSpan parseDateSpan(String startText, String endText, String subject)
+            throws TallyException {
+        LocalDate start = parseDate(startText);
+        LocalDate end = parseDate(endText);
+        if (end.isBefore(start)) {
+            throw new TallyException(String.format(
+                    "%s cannot end before it starts. You have it backwards:"
+                            + " ends %s, starts %s.", subject, end, start));
         }
-        throw new TallyException(String.format(
-                "\"%s\" is written as a date, but there is no such day.", text.trim()));
+        return new DateSpan(start, end);
     }
 
     /**

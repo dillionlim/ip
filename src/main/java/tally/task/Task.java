@@ -106,26 +106,11 @@ public abstract class Task {
     }
 
     /**
-     * Returns whether text is written in the shape of a date.
-     *
-     * <p>Says nothing about whether the day exists. It is what separates someone who
-     * meant a date and got it wrong from someone who meant something else entirely:
-     * "2026-02-30" is the first, "Mon 2pm" the second.
-     *
-     * @param text the text to look at.
-     * @return true when it is four digits, two, and two, separated by dashes.
-     */
-    public static boolean isWrittenAsDate(String text) {
-        return DATE_FORM.matcher(tidySpacing(text)).matches();
-    }
-
-    /**
      * Returns the date some text names, if it names one at all.
      *
-     * <p>Tidies the text first, as {@link #isWrittenAsDate} does, so that the pair
-     * always agree. A date the hand-edited file padded is the date it names, and
-     * asking one of the two about the padded text and the other about the tidied
-     * text made a readable date look like a day that does not exist.
+     * <p>Tidies the text first, so that a date the hand-edited data file padded is
+     * still the day it names. The file is meant to be corrected by hand, and a space
+     * either side of a date is the most ordinary thing such an edit leaves behind.
      *
      * @param text the text to read, as written.
      * @return the date, or empty if the text is not a date written as yyyy-mm-dd.
@@ -165,19 +150,6 @@ public abstract class Task {
      * @return true when this task takes up that day.
      */
     public boolean occupies(LocalDate day) {
-        return false;
-    }
-
-    /**
-     * Returns whether this task names days that could not be read as dates.
-     *
-     * <p>A task naming no days at all is not unreadable; this asks only about days
-     * meant to be there, so that a search over days can say when its answer is
-     * built on less than the whole tally.
-     *
-     * @return true when this task means to name days but they could not be read.
-     */
-    public boolean hasUnreadableDates() {
         return false;
     }
 

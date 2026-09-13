@@ -197,8 +197,8 @@ public class TallyTest {
         assertTrue(tally.getResponse("todo read book").contains("[T][ ] read book"));
         assertTrue(tally.getResponse("deadline return book /by 2019-10-15")
                 .contains("[D][ ] return book (by: Oct 15 2019)"));
-        assertTrue(tally.getResponse("event project meeting /from Mon 2pm /to 4pm")
-                .contains("[E][ ] project meeting (from: Mon 2pm to: 4pm)"));
+        assertTrue(tally.getResponse("event project meeting /from 2019-08-06 /to 2019-08-07")
+                .contains("[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)"));
         String fourth = tally.getResponse("window submit form /between 2026-09-08 /and 2026-09-12");
         assertTrue(fourth.contains("[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)"));
         assertTrue(fourth.contains("4 tasks on record."), fourth);
@@ -289,12 +289,16 @@ public class TallyTest {
     }
 
     @Test
-    public void getResponse_freeWithAnEventThatNamesNoDates_saysTheAnswerIsPartial() {
+    public void getResponse_freeWithAnEventOnTheDay_looksPastIt() {
+        // Every event names the days it runs across, so the free-day search sees the
+        // whole tally and has nothing to disclaim. An event whose ends were free text
+        // used to be stepped over, and the answer had to say it was drawn from less
+        // than everything on record.
         Tally tally = makeTally();
-        tally.getResponse("event standup /from Mon 2pm /to 3pm");
+        tally.getResponse("event standup /from 2026-09-09 /to 2026-09-09");
         String reply = tally.getResponse("free /from 2026-09-09");
-        assertTrue(reply.contains("Next free day: Sep 09 2026."), reply);
-        assertTrue(reply.contains("Events whose times are not dates were not counted."), reply);
+        assertTrue(reply.contains("Next free day: Sep 10 2026."), reply);
+        assertEquals(1, reply.lines().count(), reply);
     }
 
     @Test

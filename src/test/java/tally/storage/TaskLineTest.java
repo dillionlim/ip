@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import tally.task.Task;
 
 /**
  * Tests the one line a task is written as, read back.
@@ -21,8 +20,9 @@ public class TaskLineTest {
         assertEquals("[T][ ] read book", TaskLine.read("T | 0 | read book").orElseThrow().toString());
         assertEquals("[D][X] return book (by: Oct 15 2019)",
                 TaskLine.read("D | 1 | return book | 2019-10-15").orElseThrow().toString());
-        assertEquals("[E][ ] project meeting (from: Mon 2pm to: 4pm)",
-                TaskLine.read("E | 0 | project meeting | Mon 2pm | 4pm").orElseThrow().toString());
+        assertEquals("[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)",
+                TaskLine.read("E | 0 | project meeting | 2019-08-06 | 2019-08-07")
+                        .orElseThrow().toString());
         assertEquals("[W][ ] submit form (window: Sep 08 2026 to Sep 12 2026)",
                 TaskLine.read("W | 0 | submit form | 2026-09-08 | 2026-09-12").orElseThrow().toString());
     }
@@ -48,7 +48,7 @@ public class TaskLineTest {
     public void read_theWrongNumberOfFields_isNoTask() {
         assertTrue(TaskLine.read("T | 0 | read book | extra").isEmpty());
         assertTrue(TaskLine.read("D | 0 | return book").isEmpty());
-        assertTrue(TaskLine.read("E | 0 | meeting | 2pm").isEmpty());
+        assertTrue(TaskLine.read("E | 0 | meeting | 2026-09-08").isEmpty());
         assertTrue(TaskLine.read("W | 0 | form | 2026-09-08").isEmpty());
     }
 
@@ -78,17 +78,11 @@ public class TaskLineTest {
     }
 
     @Test
-    public void read_anEventWhoseEndsAreNotDates_isTakenInAnyOrder() {
-        Task standup = TaskLine.read("E | 0 | standup | 4pm | Mon 2pm").orElseThrow();
-        assertEquals("[E][ ] standup (from: 4pm to: Mon 2pm)", standup.toString());
-    }
-
-    @Test
     public void read_aTaskItRead_writesBackTheSameLine() {
         for (String line : new String[] {
             "T | 1 | read book",
             "D | 0 | return book | 2019-10-15",
-            "E | 1 | project meeting | Mon 2pm | 4pm",
+            "E | 1 | project meeting | 2019-08-06 | 2019-08-07",
             "W | 0 | submit form | 2026-09-08 | 2026-09-12",
         }) {
             assertEquals(line, TaskLine.read(line).orElseThrow().toSaveFormat(), line);
@@ -96,12 +90,12 @@ public class TaskLineTest {
     }
 
     @Test
-    public void read_anEventEndWrittenAsADateThatIsNotOne_isNoTask() {
-        // Never accepted at the keyboard, so a file holding one was edited by hand.
+    public void read_anEventEndThatIsNotADate_isNoTask() {
+        // Never accepted at the keyboard, so a file holding one was edited by hand, or
+        // written by a version of Tally that took an event's ends as free text. Either
+        // way the line is reported and set aside rather than loaded.
         assertTrue(TaskLine.read("E | 0 | trip | 2026-02-30 | 2026-03-05").isEmpty());
         assertTrue(TaskLine.read("E | 0 | trip | 2026-09-08 | 2026-13-45").isEmpty());
-        // An end that is no date at all is still the user's own business.
-        assertEquals("[E][ ] standup (from: Mon 2pm to: 4pm)",
-                TaskLine.read("E | 0 | standup | Mon 2pm | 4pm").orElseThrow().toString());
+        assertTrue(TaskLine.read("E | 0 | standup | Mon 2pm | 4pm").isEmpty());
     }
 }

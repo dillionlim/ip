@@ -37,9 +37,6 @@ final class Replies {
      * Returns when the user is next free for as long as they asked, or says there is
      * no such stretch.
      *
-     * <p>The reply says so when the tally holds a task whose days could not be read,
-     * because the answer is then drawn from less than everything on it.
-     *
      * @param query the run of days wanted, and the day to start looking from.
      * @return the lines to tell the user.
      */
@@ -49,10 +46,6 @@ final class Replies {
         String answer = found.isPresent()
                 ? describeRunFound(found.get(), days)
                 : describeNoRun(query.earliestDate(), days);
-
-        if (tasks.hasUnreadableDates()) {
-            return new String[] {answer, "Events whose times are not dates were not counted."};
-        }
         return new String[] {answer};
     }
 

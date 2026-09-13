@@ -20,7 +20,7 @@ import tally.task.Task;
  * <pre>
  * T | 1 | read book
  * D | 0 | return book | 2019-06-06
- * E | 0 | project meeting | Aug 6th 2pm | 4pm
+ * E | 0 | project meeting | 2019-08-06 | 2019-08-07
  * </pre>
  *
  * <p>A description containing " | " would be read back as extra fields and

@@ -31,7 +31,8 @@ public class TaskTest {
         assertFalse(new Todo("essay").isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 10))));
         assertFalse(new Deadline("essay", LocalDate.of(2026, 9, 10))
                 .isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 11))));
-        assertFalse(new Event("party", "2pm", "4pm").isSameAs(new Event("party", "2pm", "6pm")));
+        assertFalse(new Event("party", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 8))
+                .isSameAs(new Event("party", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 9))));
     }
 
     @Test
@@ -43,25 +44,18 @@ public class TaskTest {
     }
 
     @Test
-    public void constructor_eventWithDatedEndsRunningBackwards_isRefused() {
+    public void constructor_eventEndingBeforeItStarts_isRefused() {
         // This used to be accepted and quietly read as the same stretch of days, shown
         // to the user back to front. The parser and the storage reader both refuse it
         // now, for the same reason a window that ends before it starts is refused, so
         // one arriving here came from neither.
-        assertThrows(AssertionError.class, () -> new Event("trip", "2026-09-10", "2026-09-08"));
+        assertThrows(AssertionError.class, () ->
+                new Event("trip", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 8)));
     }
 
     @Test
-    public void constructor_eventEndsThatAreNotDates_areLeftAlone() {
-        // Nothing can tell whether "4pm" falls before "Mon 2pm", so neither is refused.
-        Event event = new Event("standup", "Mon 2pm", "4pm");
-        assertTrue(event.hasUnreadableDates());
-        assertFalse(event.occupies(LocalDate.of(2026, 9, 9)));
-    }
-
-    @Test
-    public void occupies_eventWithDatedEnds_coversTheDaysBetweenThem() {
-        Event trip = new Event("trip", "2026-09-08", "2026-09-10");
+    public void occupies_event_coversTheDaysBetweenItsEnds() {
+        Event trip = new Event("trip", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 10));
         assertFalse(trip.occupies(LocalDate.of(2026, 9, 7)));
         assertTrue(trip.occupies(LocalDate.of(2026, 9, 8)));
         assertTrue(trip.occupies(LocalDate.of(2026, 9, 10)));
@@ -73,8 +67,7 @@ public class TaskTest {
         // Both ends are ordinary dates, so the date form does not refuse them: listing
         // the 3.65 million days between them is what used to exhaust the heap. Asking
         // about one day has to stay cheap, which only holds if nothing is built.
-        Event doom = new Event("doom", "0001-01-01", "9999-12-31");
-        assertFalse(doom.hasUnreadableDates());
+        Event doom = new Event("doom", LocalDate.of(1, 1, 1), LocalDate.of(9999, 12, 31));
 
         // Asking a thousand times is the point: each answer has to cost nothing. Building
         // the three and a half million days between these ends even once takes a third of
@@ -85,21 +78,6 @@ public class TaskTest {
                 assertFalse(doom.occupies(LocalDate.of(10000, 1, 1)));
             }
         });
-    }
-
-    @Test
-    public void occupies_endsOutsideTheWrittenDateForm_takeUpNothing() {
-        Event odd = new Event("odd", "+999999999-12-30", "-999999999-01-01");
-        assertFalse(odd.occupies(LocalDate.of(2026, 9, 8)));
-        assertTrue(odd.hasUnreadableDates());
-    }
-
-    @Test
-    public void hasUnreadableDates_datesOrTextEnds_trueOnlyForText() {
-        assertFalse(new Event("trip", "2026-09-08", "2026-09-10").hasUnreadableDates());
-        assertTrue(new Event("standup", "Mon 2pm", "3pm").hasUnreadableDates());
-        // One end readable and the other not still leaves the pair unusable.
-        assertTrue(new Event("standup", "2026-09-08", "3pm").hasUnreadableDates());
     }
 
     @Test
@@ -139,9 +117,12 @@ public class TaskTest {
     }
 
     @Test
-    public void toString_event_showsBothTimes() {
-        Event event = new Event("project meeting", "Mon 2pm", "4pm");
-        assertEquals("[E][ ] project meeting (from: Mon 2pm to: 4pm)", event.toString());
+    public void toString_event_showsBothEndsInTheDisplayFormat() {
+        Event event = new Event("project meeting",
+                LocalDate.of(2019, 8, 6), LocalDate.of(2019, 8, 7));
+        // Level-8 asks that a date be shown in a different format from the one typed.
+        assertEquals("[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)",
+                event.toString());
     }
 
     @Test
@@ -161,9 +142,10 @@ public class TaskTest {
     }
 
     @Test
-    public void toSaveFormat_event_writesBothTimesSeparately() {
-        assertEquals("E | 0 | project meeting | Mon 2pm | 4pm",
-                new Event("project meeting", "Mon 2pm", "4pm").toSaveFormat());
+    public void toSaveFormat_event_writesBothDatesInTheFormTheyAreReadBackFrom() {
+        assertEquals("E | 0 | project meeting | 2019-08-06 | 2019-08-07",
+                new Event("project meeting", LocalDate.of(2019, 8, 6), LocalDate.of(2019, 8, 7))
+                        .toSaveFormat());
     }
 
     @Test
@@ -179,47 +161,23 @@ public class TaskTest {
         // A todo is owed whenever; it does not stand between the user and a free day.
         Task todo = new Todo("read book");
         assertFalse(todo.occupies(LocalDate.of(2026, 9, 9)));
-        assertFalse(todo.hasUnreadableDates(), "a todo names no times to fail to read");
-    }
-
-    @Test
-    public void constructor_datesWrittenWithExtraSpacing_areStillRead() {
-        // The data file is edited by hand, so a date can arrive with a space in front
-        // of it. Tidying the ends and then reading the untidied text left an event
-        // showing two dates and counting as having none, so the free-day search stepped
-        // straight over it while the list showed it plainly.
-        Event padded = new Event("trip", "  2026-09-08", "2026-09-10 ");
-        assertFalse(padded.hasUnreadableDates(), "the dates were shown but not read");
-        assertTrue(padded.occupies(LocalDate.of(2026, 9, 9)));
-        assertEquals("[E][ ] trip (from: 2026-09-08 to: 2026-09-10)", padded.toString());
-    }
-
-    @Test
-    public void constructor_paddedEndsRunningBackwards_areStillRefused() {
-        // Untidied reading also let this past the check, and saving then wrote it back
-        // tidied, so a file that loaded was rejected as damaged on the next start.
-        assertThrows(AssertionError.class, () -> new Event("trip", " 2026-09-12", "2026-09-08 "));
-    }
-
-    @Test
-    public void isWrittenAsDate_theShapeAlone_isWhatItAnswersAbout() {
-        // True for anything in the date's shape, whether or not the day exists: that is
-        // what separates a date got wrong from something that was never meant as one.
-        assertTrue(Task.isWrittenAsDate("2026-09-18"));
-        assertTrue(Task.isWrittenAsDate("2026-02-30"));
-        assertTrue(Task.isWrittenAsDate("2026-13-45"));
-        assertFalse(Task.isWrittenAsDate("Mon 2pm"));
-        assertFalse(Task.isWrittenAsDate("2026-09-12 4pm"));
-        assertFalse(Task.isWrittenAsDate("2026-9-1"));
     }
 
     @Test
     public void readDate_paddedByAHandEditedFile_readsTheDayItNames() {
-        // The two have to agree on what the text is before they can agree on what it
-        // says. While only the shape check tidied, a padded date was a date nobody
-        // could read, which is the description of a day that does not exist.
-        assertTrue(Task.isWrittenAsDate(" 2026-09-08 "));
-        assertEquals(LocalDate.of(2026, 9, 8), Task.readDate(" 2026-09-08 ").orElseThrow());
-        assertTrue(Task.readDate(" 2026-02-30 ").isEmpty());
+        // The data file is meant to be corrected by hand, and a space either side of a
+        // date is the most ordinary thing such an edit leaves behind. Reading the text
+        // as it came left that date unreadable, which is how a damaged file is reported.
+        assertEquals(LocalDate.of(2026, 9, 8), Task.readDate("  2026-09-08 ").orElseThrow());
+    }
+
+    @Test
+    public void readDate_theShapeAloneIsNotEnough_needsTheDayToExist() {
+        // A date read here has already been shown to the user as a day, so a month with
+        // thirty days cannot be allowed to have a thirty-first.
+        assertTrue(Task.readDate("2026-02-30").isEmpty());
+        assertTrue(Task.readDate("2026-13-45").isEmpty());
+        assertTrue(Task.readDate("2026-9-1").isEmpty());
+        assertTrue(Task.readDate("Mon 2pm").isEmpty());
     }
 }
