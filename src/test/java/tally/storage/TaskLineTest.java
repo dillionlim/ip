@@ -1,6 +1,7 @@
 package tally.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,8 @@ public class TaskLineTest {
 
     @Test
     public void read_theDoneFlag_decidesWhetherTheTaskIsDone() {
-        assertEquals(false, TaskLine.read("T | 0 | read book").orElseThrow().isDone());
-        assertEquals(true, TaskLine.read("T | 1 | read book").orElseThrow().isDone());
+        assertFalse(TaskLine.read("T | 0 | read book").orElseThrow().isDone());
+        assertTrue(TaskLine.read("T | 1 | read book").orElseThrow().isDone());
         // Anything else in that field is not a flag at all.
         assertTrue(TaskLine.read("T | 2 | read book").isEmpty());
         assertTrue(TaskLine.read("T | yes | read book").isEmpty());

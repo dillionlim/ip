@@ -95,9 +95,11 @@ public class TallyTest {
         Tally tally = makeTally();
         assertTrue(tally.getResponse("bye").contains("Session ended."));
         assertTrue(tally.isExiting());
-        // A front end that keeps taking input must not be told the conversation resumed.
-        tally.getResponse("list");
+        // A front end that keeps taking input must not be told the conversation
+        // resumed, nor be given the farewell a second time.
+        String afterwards = tally.getResponse("list");
         assertTrue(tally.isExiting(), "the goodbye was forgotten by the next command");
+        assertFalse(afterwards.contains("Session ended"), afterwards);
     }
 
     @Test

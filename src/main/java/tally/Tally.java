@@ -105,14 +105,16 @@ public class Tally {
      */
     public String getResponse(String input) {
         assert !isConsole : "a console Tally prints its replies, leaving nothing to return";
-        String line = input.trim();
+        boolean wasExiting = isExiting;
         try {
-            if (!runCommand(line)) {
-                isExiting = true;
-                ui.showGoodbye();
-            }
+            runCommand(input.trim());
         } catch (TallyException exception) {
             ui.showError(exception.getMessage());
+        }
+        // Only the command that ends the conversation is answered with the farewell. A
+        // front end that keeps taking input afterwards must not be given it again.
+        if (isExiting && !wasExiting) {
+            ui.showGoodbye();
         }
         return ui.takePendingResponse();
     }
@@ -155,11 +157,8 @@ public class Tally {
         greet();
 
         while (!isExiting && ui.hasNextCommand()) {
-            String line = ui.readCommand();
             try {
-                if (!runCommand(line)) {
-                    isExiting = true;
-                }
+                runCommand(ui.readCommand());
             } catch (TallyException exception) {
                 ui.showError(exception.getMessage());
             }
@@ -170,14 +169,16 @@ public class Tally {
     }
 
     /**
-     * Carries out one command from the user, and says whether the conversation
-     * carries on afterwards.
+     * Carries out one command from the user.
+     *
+     * <p>Saying goodbye is carried out by noting it: isExiting is set here rather than
+     * answered back to the caller, since a true or a false says nothing about which of
+     * the two it means, and both callers already read the field afterwards.
      *
      * @param line the line the user typed, with surrounding spaces removed.
-     * @return whether the conversation should carry on afterwards.
      * @throws TallyException if Tally cannot carry out the command.
      */
-    private boolean runCommand(String line) throws TallyException {
+    private void runCommand(String line) throws TallyException {
         Command command = Parser.parseCommand(line);
         assert command != null
                 : "Parser.parseCommand returns a constant or throws, so it never yields null";
@@ -186,7 +187,8 @@ public class Tally {
         // quietly ending the conversation and taking the rest of the input with it.
         Parser.rejectUnwantedArguments(command, arguments);
         if (command == Command.BYE) {
-            return false;
+            isExiting = true;
+            return;
         }
 
         String[] replyLines = carryOut(command, arguments);
@@ -199,7 +201,6 @@ public class Tally {
         // The reply waits until the tally is safely written, so that a save that fails
         // is not announced as a success and taken back in the same breath.
         ui.show(replyLines);
-        return true;
     }
 
     /**
