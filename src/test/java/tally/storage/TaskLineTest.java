@@ -90,6 +90,25 @@ public class TaskLineTest {
     }
 
     @Test
+    public void read_anEventEndCarryingATime_readsItBack() {
+        assertEquals("[E][ ] lecture (from: Sep 12 2026 4:00 pm to: Sep 12 2026 6:00 pm)",
+                TaskLine.read("E | 0 | lecture | 2026-09-12 16:00 | 2026-09-12 18:00")
+                        .orElseThrow().toString());
+        // An event saved before an end could carry a time is still read.
+        assertEquals("[E][ ] trip (from: Sep 12 2026 to: Sep 14 2026)",
+                TaskLine.read("E | 0 | trip | 2026-09-12 | 2026-09-14")
+                        .orElseThrow().toString());
+    }
+
+    @Test
+    public void read_anEventWhoseTimesRunBackwardsWithinADay_isNoTask() {
+        // Refused at the keyboard, so a file holding one was edited by hand.
+        assertTrue(TaskLine.read("E | 0 | meeting | 2026-09-12 18:00 | 2026-09-12 16:00")
+                .isEmpty());
+        assertTrue(TaskLine.read("E | 0 | meeting | 2026-09-12 | 2026-09-12 24:00").isEmpty());
+    }
+
+    @Test
     public void read_anEventEndThatIsNotADate_isNoTask() {
         // Never accepted at the keyboard, so a file holding one was edited by hand, or
         // written by a version of Tally that took an event's ends as free text. Either

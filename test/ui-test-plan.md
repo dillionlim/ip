@@ -532,7 +532,7 @@ A deadline needs a description and a /by date. Example: deadline return book /by
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from date and a /to date, in that order. Example: event project meeting /from 2026-08-06 /to 2026-08-07
+An event needs a description, a /from date and a /to date, in that order, each with an optional time after it. Example: event lecture /from 2026-08-06 16:00 /to 2026-08-06 18:00
 ____________________________________________________________
 
 ____________________________________________________________
@@ -822,7 +822,7 @@ I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-An event needs a description, a /from date and a /to date, in that order. Example: event project meeting /from 2026-08-06 /to 2026-08-07
+An event needs a description, a /from date and a /to date, in that order, each with an optional time after it. Example: event lecture /from 2026-08-06 16:00 /to 2026-08-06 18:00
 ____________________________________________________________
 
 ____________________________________________________________
@@ -2237,7 +2237,7 @@ tally.txt >>> T | 0 | read the tP user stories
 
 ## TC-41 - An event needs two dates, as a deadline needs one
 
-**Aim:** An event's ends were once kept as whatever the user typed, so `Mon 2pm` was taken, and so was `y`, and so was `2026-02-30`, which was shown back as though February had thirty days. An event runs across days like a window does, so both its ends are read as dates and refused when they are not, in the same words a deadline refuses the same text. The `list` at the end shows that nothing the first four commands named reached the tally.
+**Aim:** An event's ends were once kept as whatever the user typed, so `Mon 2pm` was taken, and so was `y`, and so was `2026-02-30`, which was shown back as though February had thirty days. Both ends are read as a date now, and refused when they are not. A time may follow a date, but only written as `HH:mm`, so `2026-09-12 4pm` is refused along with the rest. The `list` at the end shows that nothing the first four commands named reached the tally.
 
 **Input**
 ```text
@@ -2264,19 +2264,19 @@ I keep the count. You keep the promises.
 ____________________________________________________________
 
 ____________________________________________________________
-Unreadable date: "2026-02-30". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
+Unreadable date: "2026-02-30". The form is yyyy-mm-dd, and a time after it is written HH:mm. Example: 2019-10-15 16:00.
 ____________________________________________________________
 
 ____________________________________________________________
-Unreadable date: "Mon 2pm". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
+Unreadable date: "Mon 2pm". The form is yyyy-mm-dd, and a time after it is written HH:mm. Example: 2019-10-15 16:00.
 ____________________________________________________________
 
 ____________________________________________________________
-Unreadable date: "y". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
+Unreadable date: "y". The form is yyyy-mm-dd, and a time after it is written HH:mm. Example: 2019-10-15 16:00.
 ____________________________________________________________
 
 ____________________________________________________________
-Unreadable date: "2026-09-12 4pm". The form is yyyy-mm-dd, and has not changed. Example: 2019-10-15.
+Unreadable date: "2026-09-12 4pm". The form is yyyy-mm-dd, and a time after it is written HH:mm. Example: 2019-10-15 16:00.
 ____________________________________________________________
 
 ____________________________________________________________
@@ -2352,4 +2352,114 @@ tally.txt >>> T | 0 | keep me
 tally.txt.broken >>> E | 0 | project meeting | Mon 2pm | 4pm
 tally.txt.broken >>> E | 0 | trip | 2026-02-30 | 2026-03-05
 tally.txt.broken >>> T | 0 | keep me
+```
+
+## TC-43 - An event can carry the hours it runs between
+
+**Aim:** Most events are remembered by the day they fall on, but a lecture that runs from four to six needs the hours or its two ends say nothing a bare date does not. A time may follow either end's date, written as `HH:mm` and shown back on a clock face, as Level-8 asks of the date. An end given without a time is the whole of its day, so the third command here is a half-day event rather than a pair of ends the wrong way round, and the fourth is refused because within one day the hours decide. The file keeps the 24-hour form that was typed.
+
+**Input**
+```text
+event lecture /from 2026-09-12 16:00 /to 2026-09-12 18:00
+event trip /from 2026-09-12 09:30 /to 2026-09-14
+event packing /from 2026-09-11 20:00 /to 2026-09-11
+event backwards /from 2026-09-12 18:00 /to 2026-09-12 16:00
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] lecture (from: Sep 12 2026 4:00 pm to: Sep 12 2026 6:00 pm)
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] trip (from: Sep 12 2026 9:30 am to: Sep 14 2026)
+2 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] packing (from: Sep 11 2026 8:00 pm to: Sep 11 2026)
+3 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+An event cannot end before it starts. You have it backwards: ends 2026-09-12 16:00, starts 2026-09-12 18:00.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[E][ ] lecture (from: Sep 12 2026 4:00 pm to: Sep 12 2026 6:00 pm)
+2.[E][ ] trip (from: Sep 12 2026 9:30 am to: Sep 14 2026)
+3.[E][ ] packing (from: Sep 11 2026 8:00 pm to: Sep 11 2026)
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | lecture | 2026-09-12 16:00 | 2026-09-12 18:00
+tally.txt >>> E | 0 | trip | 2026-09-12 09:30 | 2026-09-14
+tally.txt >>> E | 0 | packing | 2026-09-11 20:00 | 2026-09-11
+```
+
+## TC-44 - An hour of a day is enough to take the day
+
+**Aim:** The free-day search asks each task which days it takes up, and an event answers with every day it touches: an hour of a day is enough to make that day something other than free. The event here runs from the evening of the 9th to the morning of the 10th, so the first free day is the 11th, not the 10th.
+
+**Given the data file**
+```text
+E | 0 | conference | 2026-09-09 19:00 | 2026-09-10 08:00
+```
+
+**Input**
+```text
+free /from 2026-09-09
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Next free day: Sep 11 2026.
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | conference | 2026-09-09 19:00 | 2026-09-10 08:00
 ```

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 import tally.TallyException;
 import tally.task.Deadline;
 import tally.task.Event;
+import tally.task.Moment;
 import tally.task.Task;
 import tally.task.Todo;
 import tally.task.Window;
@@ -136,7 +137,8 @@ public class StorageSaveTest {
         done.markAsDone();
         List<Task> savedTasks = List.of(done,
                 new Deadline("return book", LocalDate.of(2019, 6, 6)),
-                new Event("project meeting", LocalDate.of(2019, 8, 6), LocalDate.of(2019, 8, 7)),
+                new Event("project meeting", Moment.read("2019-08-06").orElseThrow(),
+                        Moment.read("2019-08-07 16:00").orElseThrow()),
                 new Window("submit form", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 12)));
         storage.save(savedTasks);
 

@@ -3,11 +3,11 @@ package tally.storage;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 import tally.task.Deadline;
 import tally.task.Event;
+import tally.task.Moment;
 import tally.task.Task;
 import tally.task.Todo;
 import tally.task.Window;
@@ -111,7 +111,13 @@ final class TaskLine {
      * @return the event, or null if the line cannot be read.
      */
     private static Task readEvent(String description, String startText, String endText) {
-        return readSpanned(startText, endText, (start, end) -> new Event(description, start, end));
+        Optional<Moment> start = Moment.read(startText);
+        Optional<Moment> end = Moment.read(endText);
+        if (start.isEmpty() || end.isEmpty()
+                || Event.hasBackwardsEnds(start.get(), end.get())) {
+            return null;
+        }
+        return new Event(description, start.get(), end.get());
     }
 
     /**
@@ -123,31 +129,11 @@ final class TaskLine {
      * @return the window task, or null if the line cannot be read.
      */
     private static Task readWindow(String description, String startDateText, String endDateText) {
-        return readSpanned(startDateText, endDateText, (start, end) ->
-                new Window(description, start, end));
-    }
-
-    /**
-     * Returns a task running between two dated ends, or null if the file holds no such
-     * pair of days.
-     *
-     * <p>A line the parser would have refused was edited by hand, and is damage rather
-     * than something to ask the user about, so it is reported the way any other
-     * malformed line is: by returning null. Letting a backwards pair through would
-     * leave the free-day search asking about a stretch with no days in it.
-     *
-     * @param startText the first date field as it appears in the file.
-     * @param endText the second date field as it appears in the file.
-     * @param makeTask what to build once the two days are known to be in order.
-     * @return the task, or null if either date cannot be read or they run backwards.
-     */
-    private static Task readSpanned(String startText, String endText,
-            BiFunction<LocalDate, LocalDate, Task> makeTask) {
-        Optional<LocalDate> start = Task.readDate(startText);
-        Optional<LocalDate> end = Task.readDate(endText);
+        Optional<LocalDate> start = Task.readDate(startDateText);
+        Optional<LocalDate> end = Task.readDate(endDateText);
         if (start.isEmpty() || end.isEmpty() || end.get().isBefore(start.get())) {
             return null;
         }
-        return makeTask.apply(start.get(), end.get());
+        return new Window(description, start.get(), end.get());
     }
 }
