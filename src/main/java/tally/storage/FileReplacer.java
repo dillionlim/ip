@@ -124,9 +124,11 @@ final class FileReplacer {
      * @throws IOException if the permissions can be read but not written.
      */
     private static void copyPermissions(Path existing, Path replacement) throws IOException {
-        boolean isPosix = Files.exists(existing)
+        // Not a question of whether the file system is POSIX: there is nothing to copy
+        // from a file that is not there yet, which is the ordinary case on a first save.
+        boolean shouldCopyPosixPermissions = Files.exists(existing)
                 && Files.getFileStore(existing).supportsFileAttributeView(PosixFileAttributeView.class);
-        if (isPosix) {
+        if (shouldCopyPosixPermissions) {
             Files.setPosixFilePermissions(replacement, Files.getPosixFilePermissions(existing));
         }
     }
