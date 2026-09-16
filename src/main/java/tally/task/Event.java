@@ -1,6 +1,7 @@
 package tally.task;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * A task that runs from one moment to another.
@@ -64,7 +65,28 @@ public class Event extends Task {
      */
     @Override
     public boolean occupies(LocalDate day) {
-        return !day.isBefore(start.date()) && !day.isAfter(end.date());
+        return !day.isBefore(start.date()) && !day.isAfter(findLastDayTakenUp());
+    }
+
+    /**
+     * Returns the last day this event is on, which is not always the day its end names.
+     *
+     * <p>Midnight is the close of one day rather than a moment of the next, so an event
+     * running to 00:00 on the 10th leaves the whole of the 10th free. There being no
+     * 24:00 to write instead, that is the only way to say "until midnight", and reading
+     * it as a day taken would cost a free day for the sake of no minutes at all.
+     *
+     * <p>An event that both starts and ends at midnight on one day keeps that day, since
+     * it has no other to fall back to.
+     *
+     * @return the last day the event takes up.
+     */
+    private LocalDate findLastDayTakenUp() {
+        boolean endsAtMidnight = end.time().filter(LocalTime.MIDNIGHT::equals).isPresent();
+        if (endsAtMidnight && end.date().isAfter(start.date())) {
+            return end.date().minusDays(1);
+        }
+        return end.date();
     }
 
     /**

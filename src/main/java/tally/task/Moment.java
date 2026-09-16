@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -40,6 +41,17 @@ public record Moment(LocalDate date, Optional<LocalTime> time) {
      */
     private static final DateTimeFormatter DISPLAY_TIME =
             DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+
+    /**
+     * Creates a moment, keeping the hour no finer than the minute it is written in.
+     *
+     * <p>Nothing typed or saved carries seconds, and one that reached an hour here
+     * would be written to the data file as "16:04:33", which is not a form the reader
+     * takes: the task would be reported as damage on the next start.
+     */
+    public Moment {
+        time = time.map(hour -> hour.truncatedTo(ChronoUnit.MINUTES));
+    }
 
     /**
      * Returns the moment some text names, if it names one at all.
@@ -80,8 +92,8 @@ public record Moment(LocalDate date, Optional<LocalTime> time) {
      * <p>An end written without an hour runs to the close of its day, which is what
      * makes "from the 12th at four to the 14th" an event rather than a contradiction.
      *
-     * @return the day and hour, the last minute of the day standing in for an hour not
-     *     given.
+     * @return the day and hour, the last instant of the day standing in for an hour
+     *     not given.
      */
     public LocalDateTime asEnd() {
         return date.atTime(time.orElse(LocalTime.MAX));

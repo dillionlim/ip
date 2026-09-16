@@ -98,7 +98,9 @@ back to front.
 
 Tally reads an event as **happening** on every day it touches, so none of them is
 offered when you ask for a free day. An hour of a day is enough: an event running
-from the evening of the 9th to the morning of the 10th takes both. That is what
+from the evening of the 9th to the morning of the 10th takes both. An event that
+ends at `00:00` is the exception, since midnight closes the day before it rather
+than opening the one it names, and `00:00` is the only way to write it. That is what
 separates it from a window below, which is a period you *may* do the work in.
 
 #### `window`: something you may do any time between two dates

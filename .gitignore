@@ -3,6 +3,10 @@
 /out/
 /*.iml
 
+# VS Code files. settings.json names this machine's JDK by absolute path, which
+# would be wrong on anyone else's.
+/.vscode/
+
 # Compiled Java bytecode (e.g. when compiling with javac outside the IDE)
 *.class
 
