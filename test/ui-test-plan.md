@@ -2520,3 +2520,62 @@ ____________________________________________________________
 tally.txt >>> E | 0 | red-eye | 2026-09-09 22:00 | 2026-09-10 00:00
 tally.txt >>> E | 0 | just over | 2026-09-10 23:00 | 2026-09-11 00:01
 ```
+
+## TC-46 - One moment written two ways is one event
+
+**Aim:** Tally refuses to add a task it already holds. A start written as a bare day and one written as that day at midnight are two spellings of one moment, so the second is the same event and is refused rather than recorded beside the first, which is what happened while events were told apart by their saved line alone. An end is a different matter: without a time it is the close of its day, where `00:00` is the open of it, so the third command here is a different event and is taken.
+
+**Input**
+```text
+event party /from 2026-09-08 /to 2026-09-09
+event party /from 2026-09-08 00:00 /to 2026-09-09
+event party /from 2026-09-08 /to 2026-09-09 00:00
+list
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] party (from: Sep 08 2026 to: Sep 09 2026)
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+Already on record as task 1. Once is enough.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] party (from: Sep 08 2026 to: Sep 09 2026 12:00 am)
+2 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+On record:
+1.[E][ ] party (from: Sep 08 2026 to: Sep 09 2026)
+2.[E][ ] party (from: Sep 08 2026 to: Sep 09 2026 12:00 am)
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | party | 2026-09-08 | 2026-09-09
+tally.txt >>> E | 0 | party | 2026-09-08 | 2026-09-09 00:00
+```

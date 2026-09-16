@@ -199,10 +199,13 @@ public abstract class Task {
      * <p>Whether either is done does not enter into it: marking a task done does not
      * turn it into a different task, so adding it again would still be adding it twice.
      *
-     * <p>Compared by the line each would be saved as, because that line already holds
-     * exactly what distinguishes one task from another, and is the one form every kind
-     * of task can be reduced to. Overriding equals was the alternative, and a task that
-     * can be marked done is not a value that should carry equality.
+     * <p>Compared by the line each would be saved as, because that line holds what
+     * distinguishes one task from another, and is the one form every kind of task can
+     * be reduced to. Overriding equals was the alternative, and a task that can be
+     * marked done is not a value that should carry equality.
+     *
+     * <p>A kind of task whose saved line can be written two ways says so itself, by
+     * overriding this. An event is the one that does.
      *
      * @param other the task to compare with.
      * @return true when the two record the same thing.
