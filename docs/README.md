@@ -193,9 +193,10 @@ Both parts are optional. On its own, `free` finds the next day nothing takes up.
 `/for` asks for that many free days in a row, and `/from` starts the search
 somewhere other than today. Tally looks a year ahead and no further.
 
-A deadline takes up the day it falls on, and an event and a window take up every
-day between their two ends, whatever hours they name within those days. A todo
-takes up nothing, since it is owed whenever.
+A deadline takes up the day it falls on, a window takes up every day between its
+two ends, and an event takes up every day it touches, which is every day between
+its ends unless it ends at midnight on the last of them. A todo takes up nothing,
+since it is owed whenever.
 
 > **You:** `free /for 3 /from 2026-09-19`
 >

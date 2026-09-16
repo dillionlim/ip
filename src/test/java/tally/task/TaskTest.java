@@ -42,6 +42,22 @@ public class TaskTest {
     }
 
     @Test
+    public void isSameAs_oneMomentWrittenTwoWays_isOneEvent() {
+        // A start written as a bare day and one written as that day at midnight are two
+        // lines naming one moment, so the events over them are one event. Told apart by
+        // the saved line alone, the second was recorded alongside the first.
+        assertTrue(new Event("party", at("2026-09-08"), at("2026-09-09"))
+                .isSameAs(new Event("party", at("2026-09-08 00:00"), at("2026-09-09"))));
+        // An end is a different matter: without an hour it is the close of its day,
+        // where midnight is the open of it, so these two are not the same event.
+        assertFalse(new Event("party", at("2026-09-08"), at("2026-09-09"))
+                .isSameAs(new Event("party", at("2026-09-08"), at("2026-09-09 00:00"))));
+        // A task of another kind is never the same thing, whatever its line says.
+        assertFalse(new Event("party", at("2026-09-08"), at("2026-09-09"))
+                .isSameAs(new Todo("party")));
+    }
+
+    @Test
     public void constructor_windowEndingBeforeItStarts_isRefused() {
         // The class documents that the end is never before the start. The parser and the
         // storage reader both enforce it, so one arriving here came from neither.

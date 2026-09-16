@@ -6,10 +6,10 @@ import java.time.LocalTime;
 /**
  * A task that runs from one moment to another.
  *
- * <p>Both ends are days, either of which may carry an hour. An event and a window cover
- * the same span of days between them; what differs is what the span means. An event is
- * happening on every one of those days, so none of them can be offered as free, while a
- * window is a period the work may be done within.
+ * <p>Both ends are days, either of which may carry an hour. An event is happening on
+ * every day it touches, so none of them can be offered as free, where a window is a
+ * period the work may be done within. An event that ends at midnight is over before the
+ * day its end names, and leaves that day free.
  */
 public class Event extends Task {
     /** The letter standing for this kind of task in the data file. */
@@ -61,7 +61,8 @@ public class Event extends Task {
      * make the day something other than free.
      *
      * @param day the day being considered.
-     * @return true when the day falls between the two ends, both included.
+     * @return true when the day falls between the day the event starts and the last day
+     *     it is on, both included.
      */
     @Override
     public boolean occupies(LocalDate day) {
@@ -87,6 +88,28 @@ public class Event extends Task {
             return end.date().minusDays(1);
         }
         return end.date();
+    }
+
+    /**
+     * Returns whether this event records the same thing as another task.
+     *
+     * <p>A task is otherwise told apart by the line it would be saved as, which for an
+     * event is not enough: a start written "2026-09-08" and one written
+     * "2026-09-08 00:00" are two lines naming one moment, and two events built from
+     * them run over exactly the same time. Comparing the moments rather than the text
+     * is what keeps the second from being added alongside the first.
+     *
+     * @param other the task to compare with.
+     * @return true when the two are events over the same stretch of the same thing.
+     */
+    @Override
+    public boolean isSameAs(Task other) {
+        if (!(other instanceof Event event)) {
+            return false;
+        }
+        return getDescription().equals(event.getDescription())
+                && start.asStart().equals(event.start.asStart())
+                && end.asEnd().equals(event.end.asEnd());
     }
 
     /**
