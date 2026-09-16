@@ -2463,3 +2463,60 @@ ____________________________________________________________
 ```text
 tally.txt >>> E | 0 | conference | 2026-09-09 19:00 | 2026-09-10 08:00
 ```
+
+## TC-45 - An event ending at midnight leaves that day free
+
+**Aim:** There is no `24:00` to write, so `00:00` on the following day is the only way to say an event runs until midnight. Midnight is the close of one day rather than a moment of the next, so the day the end names is still free, and the free-day search says so. The second event here ends a minute later, which is a moment of that day and takes it.
+
+**Input**
+```text
+event red-eye /from 2026-09-09 22:00 /to 2026-09-10 00:00
+free /from 2026-09-10
+event just over /from 2026-09-10 23:00 /to 2026-09-11 00:01
+free /from 2026-09-11
+bye
+```
+
+**Expected output**
+```text
+____________________________________________________________
+ _____     _ _
+|_   _|_ _| | |_   _
+  | |/ _` | | | | | |
+  | | (_| | | | |_| |
+  |_|\__,_|_|_|\__, |
+               |___/
+Tally.
+I keep the count. You keep the promises.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] red-eye (from: Sep 09 2026 10:00 pm to: Sep 10 2026 12:00 am)
+1 task on record.
+____________________________________________________________
+
+____________________________________________________________
+Next free day: Sep 10 2026.
+____________________________________________________________
+
+____________________________________________________________
+Recorded:
+[E][ ] just over (from: Sep 10 2026 11:00 pm to: Sep 11 2026 12:01 am)
+2 tasks on record.
+____________________________________________________________
+
+____________________________________________________________
+Next free day: Sep 12 2026.
+____________________________________________________________
+
+____________________________________________________________
+Session ended. Your tasks did not.
+____________________________________________________________
+```
+
+**Expected files after the run**
+```text
+tally.txt >>> E | 0 | red-eye | 2026-09-09 22:00 | 2026-09-10 00:00
+tally.txt >>> E | 0 | just over | 2026-09-10 23:00 | 2026-09-11 00:01
+```

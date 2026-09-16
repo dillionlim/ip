@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -77,6 +79,33 @@ public class TaskTest {
         assertTrue(trip.occupies(LocalDate.of(2026, 9, 8)));
         assertTrue(trip.occupies(LocalDate.of(2026, 9, 10)));
         assertFalse(trip.occupies(LocalDate.of(2026, 9, 11)));
+    }
+
+    @Test
+    public void occupies_anEndAtMidnight_leavesThatDayFree() {
+        // There is no 24:00 to write, so 00:00 on the next day is the only way to say
+        // "until midnight". Counting that day as taken would cost a free day for no
+        // minutes at all.
+        Event redEye = new Event("red-eye", at("2026-09-09 22:00"), at("2026-09-10 00:00"));
+        assertTrue(redEye.occupies(LocalDate.of(2026, 9, 9)));
+        assertFalse(redEye.occupies(LocalDate.of(2026, 9, 10)));
+        // A minute past midnight is a moment of the day, so the day is taken.
+        Event justOver = new Event("just over", at("2026-09-09 22:00"), at("2026-09-10 00:01"));
+        assertTrue(justOver.occupies(LocalDate.of(2026, 9, 10)));
+        // An event with nowhere else to fall keeps the day it names.
+        Event stroke = new Event("stroke", at("2026-09-09 00:00"), at("2026-09-09 00:00"));
+        assertTrue(stroke.occupies(LocalDate.of(2026, 9, 9)));
+    }
+
+    @Test
+    public void constructor_anHourFinerThanAMinute_isKeptToTheMinute() {
+        // Nothing typed or saved carries seconds. One that survived would be written to
+        // the file as "16:04:33", which the reader refuses, so the task would come back
+        // as damage on the next start.
+        Moment fine = new Moment(LocalDate.of(2026, 9, 12),
+                Optional.of(LocalTime.of(16, 4, 33)));
+        assertEquals("2026-09-12 16:04", fine.toSaveFormat());
+        assertEquals(Optional.of(fine), Moment.read(fine.toSaveFormat()));
     }
 
     @Test
