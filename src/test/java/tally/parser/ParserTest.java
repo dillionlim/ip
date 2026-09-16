@@ -327,14 +327,52 @@ public class ParserTest {
     }
 
     @Test
+    public void parseEvent_endsCarryingTimes_keepThem() throws TallyException {
+        assertEquals("[E][ ] lecture (from: Sep 12 2026 4:00 pm to: Sep 12 2026 6:00 pm)",
+                Parser.parseEvent("lecture /from 2026-09-12 16:00 /to 2026-09-12 18:00")
+                        .toString());
+        // A time on one end only: the other stays the whole day it names.
+        assertEquals("[E][ ] trip (from: Sep 12 2026 9:30 am to: Sep 14 2026)",
+                Parser.parseEvent("trip /from 2026-09-12 09:30 /to 2026-09-14").toString());
+    }
+
+    @Test
+    public void parseEvent_endsOnOneDayInTheWrongOrder_throws() {
+        // Two ends on the same day could not be told apart while an event was a pair of
+        // dates, so an afternoon running back to the morning was recorded as it was typed.
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("meeting /from 2026-09-12 18:00 /to 2026-09-12 16:00"));
+    }
+
+    @Test
+    public void parseEvent_anEndWithNoTime_isTheWholeOfItsDay() {
+        // The end runs to the close of its day, so an afternoon start is still inside it.
+        assertDoesNotThrow(() ->
+                Parser.parseEvent("trip /from 2026-09-12 16:00 /to 2026-09-12"));
+        // The start begins when its day does, so a morning end is not before it.
+        assertDoesNotThrow(() ->
+                Parser.parseEvent("trip /from 2026-09-12 /to 2026-09-12 09:00"));
+    }
+
+    @Test
+    public void parseEvent_aTimeWrittenAnyOtherWay_throws() {
+        // The 24-hour form is the only one read, as yyyy-mm-dd is for the date.
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("lecture /from 2026-09-12 4pm /to 2026-09-12 6pm"));
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("lecture /from 2026-09-12 1600 /to 2026-09-12 1800"));
+        // An hour in the date's shape but naming no hour of any day.
+        assertThrows(TallyException.class, () ->
+                Parser.parseEvent("lecture /from 2026-09-12 25:00 /to 2026-09-12 26:00"));
+    }
+
+    @Test
     public void parseEvent_anEndThatIsNotADate_throws() {
         // An event kept its ends as written, so any of these was taken and shown back
         // as though it named a time Tally understood. A deadline refused the same text
         // from the start, and an event is no less a stretch of days for being one.
         assertThrows(TallyException.class, () ->
                 Parser.parseEvent("standup /from Mon 2pm /to 4pm"));
-        assertThrows(TallyException.class, () ->
-                Parser.parseEvent("lecture /from 2026-09-12 4pm /to 6pm"));
         assertThrows(TallyException.class, () -> Parser.parseEvent("x /from y /to z"));
     }
 

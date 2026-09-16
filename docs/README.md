@@ -59,10 +59,10 @@ deadline DESCRIPTION /by yyyy-mm-dd
 > 1 task on record.
 > ```
 
-#### `event`: something that runs from one day to another
+#### `event`: something that runs from one moment to another
 
 ```
-event DESCRIPTION /from yyyy-mm-dd /to yyyy-mm-dd
+event DESCRIPTION /from yyyy-mm-dd [HH:mm] /to yyyy-mm-dd [HH:mm]
 ```
 
 > **You:** `event CS2103T recess week /from 2026-09-19 /to 2026-09-27`
@@ -79,9 +79,27 @@ else is refused rather than kept as written. An event that begins and ends on on
 day is ordinary; write the same date twice. One that ends before it starts is
 refused.
 
-Tally reads an event as **happening** on every day between its two ends, so none
-of them is offered when you ask for a free day. That is what separates it from a
-window below, which is a period you *may* do the work in.
+**Either end may carry a time**, written after the date on a 24-hour clock as
+`HH:mm`. It is shown back to you on a clock face:
+
+> **You:** `event CS2103T lecture /from 2026-09-12 16:00 /to 2026-09-12 18:00`
+>
+> **Tally:**
+> ```
+> Recorded:
+> [E][ ] CS2103T lecture (from: Sep 12 2026 4:00 pm to: Sep 12 2026 6:00 pm)
+> 2 tasks on record.
+> ```
+
+Leave the time off and Tally takes the whole day: as a start, from the moment the
+day begins, and as an end, until it is over. So `event packing /from 2026-09-11
+20:00 /to 2026-09-11` runs from eight in the evening to midnight, and is not
+back to front.
+
+Tally reads an event as **happening** on every day it touches, so none of them is
+offered when you ask for a free day. An hour of a day is enough: an event running
+from the evening of the 9th to the morning of the 10th takes both. That is what
+separates it from a window below, which is a period you *may* do the work in.
 
 #### `window`: something you may do any time between two dates
 
@@ -174,7 +192,8 @@ Both parts are optional. On its own, `free` finds the next day nothing takes up.
 somewhere other than today. Tally looks a year ahead and no further.
 
 A deadline takes up the day it falls on, and an event and a window take up every
-day between their two ends. A todo takes up nothing, since it is owed whenever.
+day between their two ends, whatever hours they name within those days. A todo
+takes up nothing, since it is owed whenever.
 
 > **You:** `free /for 3 /from 2026-09-19`
 >
@@ -197,7 +216,7 @@ bye
 | --- | --- | --- |
 | Add a todo | `todo DESCRIPTION` | `todo read the tP user stories` |
 | Add a deadline | `deadline DESCRIPTION /by yyyy-mm-dd` | `deadline submit iP /by 2026-09-18` |
-| Add an event | `event DESCRIPTION /from yyyy-mm-dd /to yyyy-mm-dd` | `event recess week /from 2026-09-19 /to 2026-09-27` |
+| Add an event | `event DESCRIPTION /from yyyy-mm-dd [HH:mm] /to yyyy-mm-dd [HH:mm]` | `event lecture /from 2026-09-12 16:00 /to 2026-09-12 18:00` |
 | Add a window | `window DESCRIPTION /between yyyy-mm-dd /and yyyy-mm-dd` | `window book flights /between 2026-09-20 /and 2026-09-26` |
 | List everything | `list` | `list` |
 | Mark done | `mark NUMBER` | `mark 1` |
@@ -210,7 +229,8 @@ bye
 ## Worth knowing
 
 - **Dates are written `yyyy-mm-dd`**, everywhere Tally reads one. `2026-09-18`, not
-  `18/9/26`, and not `Mon 2pm`.
+  `18/9/26`, and not `Mon 2pm`. A time, which only an event takes, is written
+  `HH:mm` on a 24-hour clock: `16:00`, not `4pm`.
 - **Commands don't care about capitals.** `List`, `TODO` and `bye` all work.
 - **The same task twice is refused.** Tally tells you where the first one is rather
   than leaving you two entries you cannot tell apart. A saved file naming the same
@@ -225,7 +245,7 @@ bye
 | What you see | What it means |
 | --- | --- |
 | `Unknown command. The ones I answer to: ...` | The first word was not a command. The list that follows is all of them. |
-| `Unreadable date: "monday". The form is yyyy-mm-dd...` | Write the date as `2026-09-18`. |
+| `Unreadable date: "monday". The form is yyyy-mm-dd...` | Write the date as `2026-09-18`. On an event, a time after it is written `16:00`. |
 | `Already on record as task 3. Once is enough.` | That task is already there, at number 3. |
 | `Line 2 of tally.txt could not be read...` | Someone edited the saved file by hand and a line no longer makes sense. Tally keeps the rest, and copies the whole file to `tally.txt.broken` so you can repair it. A file saved by v0.5 or earlier can hold an event whose ends are not dates, such as `E \| 0 \| meeting \| Mon 2pm \| 4pm`; those lines are reported this way, and the tasks are worth adding again as dates. |
 | `tally.txt could not be read...` | Tally could not open the file at all, so it started empty, and it will **not** write over a file it could not read. Move it aside or fix its permissions, then start Tally again. |

@@ -1,5 +1,6 @@
 package tally.task;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,8 +32,11 @@ public class TaskTest {
         assertFalse(new Todo("essay").isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 10))));
         assertFalse(new Deadline("essay", LocalDate.of(2026, 9, 10))
                 .isSameAs(new Deadline("essay", LocalDate.of(2026, 9, 11))));
-        assertFalse(new Event("party", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 8))
-                .isSameAs(new Event("party", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 9))));
+        assertFalse(new Event("party", at("2026-09-08"), at("2026-09-08"))
+                .isSameAs(new Event("party", at("2026-09-08"), at("2026-09-09"))));
+        // Same days, one of them carrying an hour the other does not.
+        assertFalse(new Event("party", at("2026-09-08"), at("2026-09-08"))
+                .isSameAs(new Event("party", at("2026-09-08 16:00"), at("2026-09-08"))));
     }
 
     @Test
@@ -50,12 +54,25 @@ public class TaskTest {
         // now, for the same reason a window that ends before it starts is refused, so
         // one arriving here came from neither.
         assertThrows(AssertionError.class, () ->
-                new Event("trip", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 8)));
+                new Event("trip", at("2026-09-10"), at("2026-09-08")));
+        // Within one day the hours decide, which a pair of bare dates could not show.
+        assertThrows(AssertionError.class, () ->
+                new Event("meeting", at("2026-09-10 18:00"), at("2026-09-10 16:00")));
+    }
+
+    @Test
+    public void constructor_anEndWithNoHour_runsToTheCloseOfItsDay() {
+        // "From the 10th at four to the 10th" is a half-day event, not a contradiction:
+        // an end given without an hour is the whole of its day.
+        assertDoesNotThrow(() -> new Event("trip", at("2026-09-10 16:00"), at("2026-09-10")));
+        // A start given without an hour begins when its day does, so this is not
+        // backwards either.
+        assertDoesNotThrow(() -> new Event("trip", at("2026-09-10"), at("2026-09-10 09:00")));
     }
 
     @Test
     public void occupies_event_coversTheDaysBetweenItsEnds() {
-        Event trip = new Event("trip", LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 10));
+        Event trip = new Event("trip", at("2026-09-08"), at("2026-09-10"));
         assertFalse(trip.occupies(LocalDate.of(2026, 9, 7)));
         assertTrue(trip.occupies(LocalDate.of(2026, 9, 8)));
         assertTrue(trip.occupies(LocalDate.of(2026, 9, 10)));
@@ -67,7 +84,7 @@ public class TaskTest {
         // Both ends are ordinary dates, so the date form does not refuse them: listing
         // the 3.65 million days between them is what used to exhaust the heap. Asking
         // about one day has to stay cheap, which only holds if nothing is built.
-        Event doom = new Event("doom", LocalDate.of(1, 1, 1), LocalDate.of(9999, 12, 31));
+        Event doom = new Event("doom", at("0001-01-01"), at("9999-12-31"));
 
         // Asking a thousand times is the point: each answer has to cost nothing. Building
         // the three and a half million days between these ends even once takes a third of
@@ -118,11 +135,29 @@ public class TaskTest {
 
     @Test
     public void toString_event_showsBothEndsInTheDisplayFormat() {
-        Event event = new Event("project meeting",
-                LocalDate.of(2019, 8, 6), LocalDate.of(2019, 8, 7));
+        Event event = new Event("project meeting", at("2019-08-06"), at("2019-08-07"));
         // Level-8 asks that a date be shown in a different format from the one typed.
         assertEquals("[E][ ] project meeting (from: Aug 06 2019 to: Aug 07 2019)",
                 event.toString());
+    }
+
+    @Test
+    public void toString_eventCarryingHours_showsThemOnAClockFace() {
+        // 16:00 is typed and 4:00 pm is shown, for the same reason the date is.
+        Event lecture = new Event("lecture", at("2026-09-12 16:00"), at("2026-09-12 18:00"));
+        assertEquals("[E][ ] lecture (from: Sep 12 2026 4:00 pm to: Sep 12 2026 6:00 pm)",
+                lecture.toString());
+        // Midday and midnight are the two a twelve-hour clock most often gets wrong.
+        Event vigil = new Event("vigil", at("2026-09-12 00:00"), at("2026-09-12 12:00"));
+        assertEquals("[E][ ] vigil (from: Sep 12 2026 12:00 am to: Sep 12 2026 12:00 pm)",
+                vigil.toString());
+    }
+
+    @Test
+    public void toString_eventWithAnHourAtOneEndOnly_showsTheOtherAsADay() {
+        Event trip = new Event("trip", at("2026-09-12 09:30"), at("2026-09-14"));
+        assertEquals("[E][ ] trip (from: Sep 12 2026 9:30 am to: Sep 14 2026)",
+                trip.toString());
     }
 
     @Test
@@ -142,9 +177,13 @@ public class TaskTest {
     }
 
     @Test
-    public void toSaveFormat_event_writesBothDatesInTheFormTheyAreReadBackFrom() {
+    public void toSaveFormat_event_writesBothEndsInTheFormTheyAreReadBackFrom() {
         assertEquals("E | 0 | project meeting | 2019-08-06 | 2019-08-07",
-                new Event("project meeting", LocalDate.of(2019, 8, 6), LocalDate.of(2019, 8, 7))
+                new Event("project meeting", at("2019-08-06"), at("2019-08-07")).toSaveFormat());
+        // The file keeps the 24-hour form that was typed, not the clock face shown, or
+        // the event cannot be read back on the next run.
+        assertEquals("E | 0 | lecture | 2026-09-12 16:00 | 2026-09-12 18:00",
+                new Event("lecture", at("2026-09-12 16:00"), at("2026-09-12 18:00"))
                         .toSaveFormat());
     }
 
@@ -179,5 +218,16 @@ public class TaskTest {
         assertTrue(Task.readDate("2026-13-45").isEmpty());
         assertTrue(Task.readDate("2026-9-1").isEmpty());
         assertTrue(Task.readDate("Mon 2pm").isEmpty());
+    }
+
+    /**
+     * Returns the moment some text names, failing the test if it names none.
+     *
+     * @param text a date, optionally followed by a time, as a user would write it.
+     * @return the moment it names.
+     */
+    private static Moment at(String text) {
+        return Moment.read(text).orElseThrow(() ->
+                new AssertionError("the test wrote a moment Tally cannot read: " + text));
     }
 }

@@ -54,7 +54,8 @@ public class TaskListTest {
     @Test
     public void findFreeRun_anEvent_takesUpEveryDayItRunsAcross() {
         TaskList tasks = new TaskList();
-        tasks.add(new Event("trip", LocalDate.of(2026, 9, 9), LocalDate.of(2026, 9, 11)));
+        tasks.add(new Event("trip", Moment.read("2026-09-09").orElseThrow(),
+                Moment.read("2026-09-11").orElseThrow()));
         assertEquals(Optional.of(LocalDate.of(2026, 9, 12)), tasks.findFreeRun(1, SEP_9));
     }
 
